@@ -121,7 +121,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aebe94cffc6318e488ba9787f0753331, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _followDistance: 2
+  _plantEffect: {fileID: 7825784472277451091, guid: 5f36821b84bf0db4b97e1065224fb35a, type: 3}
+  _minFollowDistance: 1
+  _maxFollowDistance: 2
 --- !u!1 &4034463867579444076
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
 namespace LemonBerry
 {
+    using System;
     using System.Collections;
     using UnityEngine;
     using UnityEngine.AI;
@@ -8,10 +9,13 @@ namespace LemonBerry
     [RequireComponent(typeof(NavMeshAgent))]
     public class WaterDroplet : MonoBehaviour
     {
+        [SerializeField] private GameObject _plantEffect;
         [SerializeField] private float _minFollowDistance = 1;
         [SerializeField] private float _maxFollowDistance = 2;
         private NavMeshAgent _navAgent;
         private Vector3 _offset;
+
+        public event Action<WaterDroplet> OnEnteredSeed;
 
         private void Awake()
         {
@@ -45,6 +49,26 @@ namespace LemonBerry
         {
             _target = growable;
             StopCoroutine(_followRoutine);
+            _navAgent.SetDestination(growable.Position);
+            _followRoutine = StartCoroutine(CheckForSeed());
+        }
+
+        public IEnumerator CheckForSeed()
+        {
+            while (_navAgent.remainingDistance > 0.1f)
+            {
+                yield return null;
+            }
+
+            OnArrivedAtSeed();
+        }
+
+        private void OnArrivedAtSeed()
+        {
+            gameObject.SetActive(false);
+            OnEnteredSeed?.Invoke(this);
+            _target.AddWater(this);
+            Instantiate(_plantEffect, transform.position, Quaternion.identity);
         }
     }
 

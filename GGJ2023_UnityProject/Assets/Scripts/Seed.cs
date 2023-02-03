@@ -1,14 +1,17 @@
 namespace LemonBerry
 {
+    using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Events;
 
     public interface IGrowable
     {
+        public Vector3 Position { get; }
         public int GrowCost { get; }
         bool IsGrown { get; set; }
         void Grow();
         void UnGrow();
+        void AddWater(WaterDroplet waterDroplet);
     }
 
     public class Seed : Grabbable, IGrowable
@@ -21,6 +24,7 @@ namespace LemonBerry
 
         private bool _isGrown;
 
+        public Vector3 Position => transform.position;
         public int GrowCost => _growCost;
         public bool IsGrown
         {
@@ -62,6 +66,21 @@ namespace LemonBerry
             _meshRenderer.material.color = Color.white;
             Rigidbody.isKinematic = false;
             OnUnGrown?.Invoke();
+
+            foreach (var droplet in _droplets)
+            {
+                droplet.gameObject.SetActive(true);
+                droplet.StartCoroutine(droplet.FollowPlayer());
+                PlayerController.Instance.AddFollower(droplet);
+            }
+        }
+
+        private readonly List<WaterDroplet> _droplets = new();
+        public void AddWater(WaterDroplet waterDroplet)
+        {
+            _droplets.Add(waterDroplet);
+            if (_droplets.Count >= GrowCost)
+                Grow();
         }
     }
 }

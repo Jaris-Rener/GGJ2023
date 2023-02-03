@@ -29,7 +29,7 @@ namespace LemonBerry
         private Vector2 _moveInputVec;
         private Vector3 _moveDir;
 
-        private List<WaterDroplet> _followers;
+        [SerializeField] private List<WaterDroplet> _followers;
 
         private Grabbable _heldObject;
 
@@ -40,6 +40,17 @@ namespace LemonBerry
             _interactInput.action.performed += Interact;
             _addWaterInput.action.performed += AddWater;
             _removeWaterInput.action.performed += RemoveWater;
+
+            foreach (var water in _followers)
+            {
+                water.OnEnteredSeed += RemoveFollower;
+            }
+        }
+
+        private void RemoveFollower(WaterDroplet obj)
+        {
+            obj.OnEnteredSeed -= RemoveFollower;
+            _followers.Remove(obj);
         }
 
         private void OnDestroy()
@@ -197,6 +208,11 @@ namespace LemonBerry
         private void Jump(InputAction.CallbackContext obj)
         {
             _rigidbody.AddForce(Vector3.up*_jumpForce);
+        }
+
+        public void AddFollower(WaterDroplet droplet)
+        {
+            _followers.Add(droplet);
         }
     }
 }
