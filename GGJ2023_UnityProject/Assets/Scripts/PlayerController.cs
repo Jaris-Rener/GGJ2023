@@ -7,7 +7,7 @@ namespace LemonBerry
     using UnityEngine.InputSystem;
 
     [RequireComponent(typeof(Rigidbody))]
-    public class PlayerController : MonoBehaviour
+    public class PlayerController : Singleton<PlayerController>
     {
         [SerializeField] private Transform _grabPoint;
 
@@ -28,6 +28,8 @@ namespace LemonBerry
         private Rigidbody _rigidbody;
         private Vector2 _moveInputVec;
         private Vector3 _moveDir;
+
+        private List<WaterDroplet> _followers;
 
         private Grabbable _heldObject;
 
@@ -62,7 +64,10 @@ namespace LemonBerry
                 if (interactable is Grabbable { IsHeld: true })
                     return;
 
-                growable.Grow();
+                for (int i = 0; i < Mathf.Min(growable.GrowCost, _followers.Count); i++)
+                {
+                    _followers[i].CommandTo(growable);
+                }
             }
         }
 

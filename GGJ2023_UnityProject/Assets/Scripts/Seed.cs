@@ -5,6 +5,7 @@ namespace LemonBerry
 
     public interface IGrowable
     {
+        public int GrowCost { get; }
         bool IsGrown { get; set; }
         void Grow();
         void UnGrow();
@@ -16,8 +17,11 @@ namespace LemonBerry
         public UnityEvent OnUnGrown;
 
         [SerializeField] private MeshRenderer _meshRenderer;
+        [SerializeField] private int _growCost = 1;
+
         private bool _isGrown;
 
+        public int GrowCost => _growCost;
         public bool IsGrown
         {
             get => _isGrown;
