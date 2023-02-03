@@ -17,6 +17,8 @@ namespace LemonBerry
         [SerializeField] private InputActionReference _jumpInput;
         [SerializeField] private InputActionReference _moveInput;
         [SerializeField] private InputActionReference _interactInput;
+        [SerializeField] private InputActionReference _addWaterInput;
+        [SerializeField] private InputActionReference _removeWaterInput;
         [SerializeField] private float _jumpForce = 100;
         [SerializeField] private float _moveSpeed = 5;
         [SerializeField] private float _rotSpeed = 15;
@@ -33,12 +35,29 @@ namespace LemonBerry
             _rigidbody = GetComponent<Rigidbody>();
             _jumpInput.action.performed += Jump;
             _interactInput.action.performed += Interact;
+            _addWaterInput.action.performed += AddWater;
         }
 
         private void OnDestroy()
         {
             _jumpInput.action.performed -= Jump;
             _interactInput.action.performed -= Interact;
+            _addWaterInput.action.performed -= AddWater;
+        }
+
+        private void AddWater(InputAction.CallbackContext obj)
+        {
+            if (_heldObject != null)
+                return;
+
+            var interactable = _hoveredInteractables.FirstOrDefault();
+            if (interactable == null)
+                return;
+
+            if (interactable is IGrowable growable)
+            {
+                growable.Grow();
+            }
         }
 
         private void Interact(InputAction.CallbackContext obj)
@@ -49,7 +68,7 @@ namespace LemonBerry
                 return;
             }
 
-            var interactable = _hoveredInteractables[0];
+            var interactable = _hoveredInteractables.FirstOrDefault();
             if (interactable == null)
                 return;
 

@@ -1105,6 +1105,8 @@ MonoBehaviour:
   _jumpInput: {fileID: -8920359180540532399, guid: 774141d5b959a284a87a1c2b61c199e7, type: 3}
   _moveInput: {fileID: 2532877590887645745, guid: 774141d5b959a284a87a1c2b61c199e7, type: 3}
   _interactInput: {fileID: 1207722270012380995, guid: 774141d5b959a284a87a1c2b61c199e7, type: 3}
+  _addWaterInput: {fileID: 994013202349198038, guid: 774141d5b959a284a87a1c2b61c199e7, type: 3}
+  _removeWaterInput: {fileID: -1060475367826207081, guid: 774141d5b959a284a87a1c2b61c199e7, type: 3}
   _jumpForce: 250
   _moveSpeed: 5
   _rotSpeed: 15
