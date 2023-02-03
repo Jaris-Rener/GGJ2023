@@ -6,7 +6,7 @@ namespace LemonBerry
     {
         public virtual void Interact(){}
 
-        public void OnHoveredStart(){}
-        public void OnHoveredStop(){}
+        public virtual void OnHoveredStart(){}
+        public virtual void OnHoveredStop(){}
     }
 }
