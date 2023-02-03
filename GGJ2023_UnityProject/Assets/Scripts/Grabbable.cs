@@ -5,11 +5,14 @@ namespace LemonBerry
     [RequireComponent(typeof(Rigidbody))]
     public class Grabbable : Interactable
     {
-        private Rigidbody _rigidbody;
+        public bool CanGrab { get; set; } = true;
+        public bool IsHeld { get; set; }
+
+        protected Rigidbody Rigidbody;
 
         private void Awake()
         {
-            _rigidbody = GetComponent<Rigidbody>();
+            Rigidbody = GetComponent<Rigidbody>();
         }
 
         public override void Interact()
@@ -19,12 +22,14 @@ namespace LemonBerry
 
         public void Grab()
         {
-            _rigidbody.isKinematic = true;
+            IsHeld = true;
+            Rigidbody.isKinematic = true;
         }
 
         public void Release()
         {
-            _rigidbody.isKinematic = false;
+            IsHeld = false;
+            Rigidbody.isKinematic = false;
         }
     }
 }

@@ -36,6 +36,7 @@ namespace LemonBerry
             _jumpInput.action.performed += Jump;
             _interactInput.action.performed += Interact;
             _addWaterInput.action.performed += AddWater;
+            _removeWaterInput.action.performed += RemoveWater;
         }
 
         private void OnDestroy()
@@ -43,6 +44,7 @@ namespace LemonBerry
             _jumpInput.action.performed -= Jump;
             _interactInput.action.performed -= Interact;
             _addWaterInput.action.performed -= AddWater;
+            _removeWaterInput.action.performed -= RemoveWater;
         }
 
         private void AddWater(InputAction.CallbackContext obj)
@@ -56,7 +58,25 @@ namespace LemonBerry
 
             if (interactable is IGrowable growable)
             {
+                if (interactable is Grabbable { IsHeld: true })
+                    return;
+
                 growable.Grow();
+            }
+        }
+
+        private void RemoveWater(InputAction.CallbackContext obj)
+        {
+            if (_heldObject != null)
+                return;
+
+            var interactable = _hoveredInteractables.FirstOrDefault();
+            if (interactable == null)
+                return;
+
+            if (interactable is IGrowable growable)
+            {
+                growable.UnGrow();
             }
         }
 
@@ -75,6 +95,9 @@ namespace LemonBerry
             interactable.Interact();
             if (interactable is Grabbable grabbable)
             {
+                if (!grabbable.CanGrab)
+                    return;
+
                 grabbable.Grab();
                 Physics.IgnoreCollision(
                     interactable.GetComponent<Collider>(),
