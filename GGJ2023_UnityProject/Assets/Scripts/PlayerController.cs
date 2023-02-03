@@ -2,6 +2,7 @@ namespace LemonBerry
 {
     using System.Collections.Generic;
     using System.Linq;
+    using DG.Tweening;
     using UnityEngine;
     using UnityEngine.InputSystem;
 
@@ -105,7 +106,9 @@ namespace LemonBerry
                     ignore: true);
 
                 grabbable.transform.SetParent(_grabPoint);
-                grabbable.transform.localPosition = Vector3.zero;
+                grabbable.transform.DOKill();
+                grabbable.transform.DOLocalMove(Vector3.zero, 0.1f);
+                grabbable.transform.DOLocalRotate(new Vector3(90, 0, 0), 0.1f);
                 _heldObject = grabbable;
             }
         }
