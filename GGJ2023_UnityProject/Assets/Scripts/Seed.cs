@@ -71,6 +71,7 @@ namespace LemonBerry
             IsGrown = false;
             _meshRenderer.enabled = true;
             _collider.enabled = true;
+            _collider.isTrigger = false;
             _meshRenderer.material.color = _startColor;
             Rigidbody.isKinematic = false;
             OnUnGrown?.Invoke();
@@ -109,8 +110,8 @@ namespace LemonBerry
         {
             _meshRenderer.material.color = Color.green;
             Rigidbody.isKinematic = true;
-            // _meshRenderer.enabled = false;
-            // _collider.enabled = false;
+            _meshRenderer.enabled = false;
+            _collider.isTrigger = true;
 
             if (_faceUpWhenGrown)
                 yield return transform
