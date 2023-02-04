@@ -16,6 +16,8 @@ namespace LemonBerry
         [SerializeField] private AudioClip _grabSound;
         [SerializeField] private AudioClip _dropSound;
         [SerializeField] private Animator _animator;
+
+        [SerializeField] private Transform _satchel;
         [SerializeField] private Transform _grabPoint;
 
         [SerializeField] private Transform _groundCheckPoint;
@@ -55,11 +57,6 @@ namespace LemonBerry
             _interactInput.action.performed += Interact;
             _addWaterInput.action.performed += AddWater;
             _removeWaterInput.action.performed += RemoveWater;
-
-            foreach (var water in _followers)
-            {
-                water.OnEnteredSeed += RemoveFollower;
-            }
         }
 
         private void Update()
@@ -109,19 +106,8 @@ namespace LemonBerry
             }
         }
 
-        private void WalkStop(InputAction.CallbackContext obj)
-        {
-            _audioSource.Stop();
-        }
-
-        private void WalkStart(InputAction.CallbackContext obj)
-        {
-            _audioSource.Play();
-        }
-
         private void RemoveFollower(WaterDroplet obj)
         {
-            obj.OnEnteredSeed -= RemoveFollower;
             _followers.Remove(obj);
         }
 
@@ -139,9 +125,12 @@ namespace LemonBerry
                 if (interactable is Grabbable { IsHeld: true })
                     return;
 
-                for (int i = 0; i < Mathf.Min(growable.RemainingGrowCost - growable.PendingWater, _followers.Count); i++)
+                var addCount = Mathf.Min(growable.RemainingGrowCost - growable.PendingWater, _followers.Count);
+                print($"{addCount} (R{growable.RemainingGrowCost} P{growable.PendingWater} F{_followers.Count})");
+                for (int i = addCount - 1; i >= 0; i--)
                 {
                     _followers[i].CommandTo(growable);
+                    RemoveFollower(_followers[i]);
                 }
             }
         }
@@ -157,7 +146,12 @@ namespace LemonBerry
 
             if (interactable is IGrowable growable)
             {
-                growable.UnGrow();
+                var droplets = growable.RemoveWater();
+                foreach (var droplet in droplets)
+                {
+                    droplet.gameObject.SetActive(true);
+                    StartCoroutine(droplet.MoveTo(_satchel, () => AddFollower(droplet)));
+                }
             }
         }
 
@@ -278,6 +272,7 @@ namespace LemonBerry
 
         public void AddFollower(WaterDroplet droplet)
         {
+            droplet.transform.SetParent(_satchel);
             _followers.Add(droplet);
         }
 
