@@ -116,6 +116,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _jumpSound: {fileID: 8300000, guid: 275e5c5e8cef20049908c95e44eaaa08, type: 3}
+  _grabSound: {fileID: 8300000, guid: 27ed6e8657b212d49b0c1e4f470e5b85, type: 3}
+  _dropSound: {fileID: 8300000, guid: 11de8a52be2592b48ae5b113e6724a36, type: 3}
   _animator: {fileID: 7449885934091941286}
   _grabPoint: {fileID: 1840878593156016074}
   _groundCheckPoint: {fileID: 1156904602}

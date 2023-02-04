@@ -151,7 +151,7 @@ MonoBehaviour:
   _audioSource: {fileID: 45166782653108159}
   _faceUpWhenGrown: 1
   _meshRenderer: {fileID: 4966324518307511193}
-  _growCost: 3
+  _growCost: 1
 --- !u!54 &4966324518307511189
 Rigidbody:
   m_ObjectHideFlags: 0
