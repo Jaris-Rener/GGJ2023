@@ -194,7 +194,7 @@ namespace LemonBerry
                 grabbable.transform.SetParent(_grabPoint);
                 grabbable.transform.DOKill();
                 grabbable.transform.DOLocalMove(Vector3.zero, 0.1f);
-                grabbable.transform.DOLocalRotate(new Vector3(90, 0, 0), 0.1f);
+                grabbable.transform.DOLocalRotate(new Vector3(0, 0, 0), 0.1f);
                 _heldObject = grabbable;
             }
         }
