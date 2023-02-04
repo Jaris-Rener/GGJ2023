@@ -7,6 +7,7 @@ namespace LemonBerry
     public class HUD : Singleton<HUD>
     {
         [SerializeField] private TextMeshProUGUI _promptText;
+        [SerializeField] private TextMeshProUGUI _waterCountText;
 
         private void Start()
         {
@@ -20,6 +21,7 @@ namespace LemonBerry
 
         private void Update()
         {
+            _waterCountText.text = PlayerController.Instance.Droplets.ToString();
             if (_promptInteractable == null)
             {
                 _promptText.text = string.Empty;
