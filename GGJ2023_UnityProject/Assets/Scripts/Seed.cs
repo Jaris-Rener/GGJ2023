@@ -3,7 +3,6 @@ namespace LemonBerry
     using System.Collections;
     using System.Collections.Generic;
     using DG.Tweening;
-    using Unity.AI.Navigation;
     using UnityEngine;
     using UnityEngine.Events;
 
@@ -23,6 +22,9 @@ namespace LemonBerry
         public UnityEvent OnGrown;
         public UnityEvent OnUnGrown;
 
+        [SerializeField] private AudioClip _growSound;
+        [SerializeField] private AudioClip _unGrowSound;
+        [SerializeField] private AudioSource _audioSource;
         [SerializeField] private bool _faceUpWhenGrown;
         [SerializeField] private MeshRenderer _meshRenderer;
         [SerializeField] private int _growCost = 1;
@@ -72,6 +74,7 @@ namespace LemonBerry
                     .DORotate(PlayerController.Instance.transform.eulerAngles, 0.1f)
                     .WaitForCompletion();
 
+            _audioSource.PlayOneShot(_growSound);
             OnGrown?.Invoke();
         }
 
@@ -92,6 +95,7 @@ namespace LemonBerry
                 PlayerController.Instance.AddFollower(droplet);
             }
 
+            _audioSource.PlayOneShot(_unGrowSound);
             _droplets.Clear();
         }
 

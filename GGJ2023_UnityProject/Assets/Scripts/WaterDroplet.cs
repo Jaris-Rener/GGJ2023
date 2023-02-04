@@ -14,12 +14,14 @@ namespace LemonBerry
 
         private Transform _followTransform;
         private Vector3 _offset;
+        private AIPath _aiPath;
         private AIDestinationSetter _aiDestinationSetter;
 
         public event Action<WaterDroplet> OnEnteredSeed;
 
         private void Awake()
         {
+            _aiPath = GetComponent<AIPath>();
             _followTransform = new GameObject("FollowTransform").transform;
             _aiDestinationSetter = GetComponent<AIDestinationSetter>();
             _aiDestinationSetter.target = _followTransform;
@@ -48,7 +50,7 @@ namespace LemonBerry
             while (true)
             {
                 UpdateTarget();
-                yield return new WaitForSeconds(Random.Range(5.5f, 7.5f));
+                yield return new WaitForSeconds(Random.Range(0.3f, 1f));
             }
         }
 
@@ -59,13 +61,32 @@ namespace LemonBerry
         {
             _target = growable;
             StopCoroutine(_followRoutine);
+            _followTransform.position = growable.Position;
             _followRoutine = StartCoroutine(CheckForSeed());
         }
 
         public IEnumerator CheckForSeed()
         {
             yield return null;
+            while (_aiPath.remainingDistance > 0.5f)
+            {
+                yield return null;
+            }
+
             OnArrivedAtSeed();
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            var growable = collision.transform.GetComponent<IGrowable>();
+            if (growable == null)
+                return;
+
+            if (growable == _target)
+            {
+                StopCoroutine(_followRoutine);
+                OnArrivedAtSeed();
+            }
         }
 
         private void OnArrivedAtSeed()

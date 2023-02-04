@@ -2657,14 +2657,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet (8)
       objectReference: {fileID: 0}
-    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
-      propertyPath: maxSpeed
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
-      propertyPath: slowWhenNotFacingTarget
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: target
       value: 
@@ -3175,17 +3167,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1840878593656913163, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
-      propertyPath: m_Mesh
-      value: 
-      objectReference: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
     - target: {fileID: 1840878593656913166, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 1840878593656913164, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
-    - {fileID: 1840878593656913163, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
+    m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
 --- !u!1001 &3603129118074295349
 PrefabInstance:

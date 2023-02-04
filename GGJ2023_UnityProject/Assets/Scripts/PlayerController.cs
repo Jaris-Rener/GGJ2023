@@ -1,6 +1,5 @@
 namespace LemonBerry
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
     using DG.Tweening;
@@ -10,6 +9,7 @@ namespace LemonBerry
     [RequireComponent(typeof(Rigidbody))]
     public class PlayerController : Singleton<PlayerController>
     {
+        [SerializeField] private AudioClip _jumpSound;
         [SerializeField] private Animator _animator;
         [SerializeField] private Transform _grabPoint;
 
@@ -34,6 +34,9 @@ namespace LemonBerry
         private Vector3 _moveDir;
         private bool _grounded;
 
+        [SerializeField] private AudioSource _walkingAudioSource;
+        [SerializeField] private AudioSource _audioSource;
+
         [SerializeField] private List<WaterDroplet> _followers;
 
         private Grabbable _heldObject;
@@ -50,6 +53,16 @@ namespace LemonBerry
             {
                 water.OnEnteredSeed += RemoveFollower;
             }
+        }
+
+        private void WalkStop(InputAction.CallbackContext obj)
+        {
+            _audioSource.Stop();
+        }
+
+        private void WalkStart(InputAction.CallbackContext obj)
+        {
+            _audioSource.Play();
         }
 
         private void RemoveFollower(WaterDroplet obj)
@@ -154,6 +167,15 @@ namespace LemonBerry
             PlayerLook();
             GroundedCheck();
             CheckInteractionArea();
+
+            if (_moveDir == Vector3.zero || !_grounded)
+            {
+                _walkingAudioSource.Stop();
+            }
+            else if (_walkingAudioSource.isPlaying == false)
+            {
+                _walkingAudioSource.Play();
+            }
         }
 
         private void OnGUI()
@@ -234,6 +256,7 @@ namespace LemonBerry
             if (!_grounded)
                 return;
 
+            _audioSource.PlayOneShot(_jumpSound, 1);
             _rigidbody.AddForce(Vector3.up*_jumpForce);
         }
 
