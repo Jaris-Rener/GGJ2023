@@ -3574,7 +3574,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1840878593979280376}
-  m_RootOrder: 10
+  m_RootOrder: 11
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2070525705
 PrefabInstance:
@@ -3820,6 +3820,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1323006146125213414, guid: 22846b02d04222344b91831510d6d97f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1323006146125213416, guid: 22846b02d04222344b91831510d6d97f, type: 3}
+      propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1323006146125213418, guid: 22846b02d04222344b91831510d6d97f, type: 3}
