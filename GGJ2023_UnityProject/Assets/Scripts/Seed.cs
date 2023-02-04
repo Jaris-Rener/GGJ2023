@@ -3,20 +3,22 @@ namespace LemonBerry
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Linq;
     using DG.Tweening;
     using UnityEngine;
     using UnityEngine.Events;
 
     public interface IGrowable
     {
-        public Vector3 Position { get; }
         public int GrowCost { get; }
         bool IsGrown { get; set; }
         int RemainingGrowCost { get; }
         int PendingWater { get; set; }
+        Transform Transform { get; }
         void Grow();
         void UnGrow();
         void AddWater(WaterDroplet waterDroplet);
+        List<WaterDroplet> RemoveWater();
     }
 
     public class Seed : Grabbable, IGrowable, IRespawn
@@ -38,8 +40,11 @@ namespace LemonBerry
         private bool _isGrown;
         private Vector3 _startPos;
 
-        public Vector3 Position => transform.position;
+        public Transform Transform => transform;
         public int GrowCost => _growCost;
+
+        public event Action<Seed> OnAddWater;
+        public event Action<Seed> OnRemoveWater;
 
         public bool IsGrown
         {
@@ -53,6 +58,7 @@ namespace LemonBerry
 
         public int RemainingGrowCost => GrowCost - _droplets.Count;
         public int PendingWater { get; set; }
+        public int Water => _droplets.Count;
 
         private void Start()
         {
@@ -79,22 +85,24 @@ namespace LemonBerry
             Rigidbody.isKinematic = false;
             OnUnGrown?.Invoke();
 
-            foreach (var droplet in _droplets)
-            {
-                droplet.gameObject.SetActive(true);
-                droplet.StartCoroutine(droplet.FollowPlayer());
-                PlayerController.Instance.AddFollower(droplet);
-            }
-
             _audioSource.PlayOneShot(_unGrowSound);
-            _droplets.Clear();
         }
 
         public void AddWater(WaterDroplet waterDroplet)
         {
             _droplets.Add(waterDroplet);
+            OnAddWater?.Invoke(this);
             if (_droplets.Count >= GrowCost)
                 Grow();
+        }
+
+        public List<WaterDroplet> RemoveWater()
+        {
+            UnGrow();
+            OnRemoveWater?.Invoke(this);
+            var droplets = _droplets.ToList();
+            _droplets.Clear();
+            return droplets;
         }
 
         public override void OnHoveredStart()

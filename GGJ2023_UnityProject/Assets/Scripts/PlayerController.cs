@@ -16,6 +16,8 @@ namespace LemonBerry
         [SerializeField] private AudioClip _grabSound;
         [SerializeField] private AudioClip _dropSound;
         [SerializeField] private Animator _animator;
+
+        [SerializeField] private Transform _satchel;
         [SerializeField] private Transform _grabPoint;
 
         [SerializeField] private Transform _groundCheckPoint;
@@ -40,6 +42,7 @@ namespace LemonBerry
 
         private readonly List<Interactable> _hoveredInteractables = new();
         private bool _grounded;
+        private bool _jumpReady;
 
         private Grabbable _heldObject;
         private Vector3 _moveDir;
@@ -51,15 +54,26 @@ namespace LemonBerry
         {
             _startPos = transform.position;
             _rigidbody = GetComponent<Rigidbody>();
-            _jumpInput.action.performed += Jump;
+            _jumpInput.action.performed += PrepareJump;
+            _jumpInput.action.canceled += Jump;
             _interactInput.action.performed += Interact;
             _addWaterInput.action.performed += AddWater;
             _removeWaterInput.action.performed += RemoveWater;
+        }
 
-            foreach (var water in _followers)
-            {
-                water.OnEnteredSeed += RemoveFollower;
-            }
+        private void OnDestroy()
+        {
+            _jumpInput.action.performed -= PrepareJump;
+            _jumpInput.action.canceled -= Jump;
+            _interactInput.action.performed -= Interact;
+            _addWaterInput.action.performed -= AddWater;
+            _removeWaterInput.action.performed -= RemoveWater;
+        }
+
+        private void PrepareJump(InputAction.CallbackContext obj)
+        {
+            _jumpReady = true;
+            _animator.SetBool("Crouching", true);
         }
 
         private void Update()
@@ -93,14 +107,6 @@ namespace LemonBerry
             _rigidbody.position += _moveDir*_moveSpeed*Time.deltaTime;
         }
 
-        private void OnDestroy()
-        {
-            _jumpInput.action.performed -= Jump;
-            _interactInput.action.performed -= Interact;
-            _addWaterInput.action.performed -= AddWater;
-            _removeWaterInput.action.performed -= RemoveWater;
-        }
-
         private void OnGUI()
         {
             foreach (var seed in FindObjectsOfType<Seed>())
@@ -109,19 +115,8 @@ namespace LemonBerry
             }
         }
 
-        private void WalkStop(InputAction.CallbackContext obj)
-        {
-            _audioSource.Stop();
-        }
-
-        private void WalkStart(InputAction.CallbackContext obj)
-        {
-            _audioSource.Play();
-        }
-
         private void RemoveFollower(WaterDroplet obj)
         {
-            obj.OnEnteredSeed -= RemoveFollower;
             _followers.Remove(obj);
         }
 
@@ -139,9 +134,12 @@ namespace LemonBerry
                 if (interactable is Grabbable { IsHeld: true })
                     return;
 
-                for (int i = 0; i < Mathf.Min(growable.RemainingGrowCost - growable.PendingWater, _followers.Count); i++)
+                var addCount = Mathf.Min(growable.RemainingGrowCost - growable.PendingWater, _followers.Count);
+                print($"{addCount} (R{growable.RemainingGrowCost} P{growable.PendingWater} F{_followers.Count})");
+                for (int i = addCount - 1; i >= 0; i--)
                 {
                     _followers[i].CommandTo(growable);
+                    RemoveFollower(_followers[i]);
                 }
             }
         }
@@ -157,7 +155,12 @@ namespace LemonBerry
 
             if (interactable is IGrowable growable)
             {
-                growable.UnGrow();
+                var droplets = growable.RemoveWater();
+                foreach (var droplet in droplets)
+                {
+                    droplet.gameObject.SetActive(true);
+                    StartCoroutine(droplet.MoveTo(_satchel, () => AddFollower(droplet)));
+                }
             }
         }
 
@@ -269,15 +272,18 @@ namespace LemonBerry
 
         private void Jump(InputAction.CallbackContext obj)
         {
+            _animator.SetBool("Crouching", false);
             if (!_grounded)
                 return;
 
+            _jumpReady = false;
             _audioSource.PlayOneShot(_jumpSound, 1);
             _rigidbody.AddForce(Vector3.up*_jumpForce);
         }
 
         public void AddFollower(WaterDroplet droplet)
         {
+            droplet.transform.SetParent(_satchel);
             _followers.Add(droplet);
         }
 

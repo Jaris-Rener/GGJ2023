@@ -93,7 +93,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4034463867328412113}
   - component: {fileID: 860493915966654214}
-  - component: {fileID: 4034463868936699321}
   m_Layer: 8
   m_Name: WaterDroplet
   m_TagString: Untagged
@@ -132,26 +131,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _plantEffect: {fileID: 7825784472277451091, guid: 5f36821b84bf0db4b97e1065224fb35a, type: 3}
-  _minFollowDistance: 1
-  _maxFollowDistance: 2
---- !u!143 &4034463868936699321
-CharacterController:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4034463867328412141}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Height: 0.5
-  m_Radius: 0.6
-  m_SlopeLimit: 100
-  m_StepOffset: 0.3
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.25, z: 0}
 --- !u!1 &4034463867579444076
 GameObject:
   m_ObjectHideFlags: 0
