@@ -55,7 +55,8 @@ namespace LemonBerry
 
         public IEnumerator CheckForSeed()
         {
-            while (_navAgent.remainingDistance > 0.1f)
+            yield return null;
+            while (_navAgent.remainingDistance > 0.2f)
             {
                 yield return null;
             }
