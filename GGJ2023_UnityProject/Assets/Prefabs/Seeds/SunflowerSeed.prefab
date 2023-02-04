@@ -112,7 +112,7 @@ GameObject:
   - component: {fileID: 4966324518307511188}
   - component: {fileID: 4966324518307511189}
   - component: {fileID: 45166782653108159}
-  - component: {fileID: 4576280646880478263}
+  - component: {fileID: 5298549215338899631}
   m_Layer: 6
   m_Name: SunflowerSeed
   m_TagString: Untagged
@@ -235,7 +235,7 @@ MonoBehaviour:
   _audioSource: {fileID: 45166782653108159}
   _faceUpWhenGrown: 1
   _meshRenderer: {fileID: 4966324518307511193}
-  _collider: {fileID: 4576280646880478263}
+  _collider: {fileID: 5298549215338899631}
   _growCost: 3
 --- !u!54 &4966324518307511189
 Rigidbody:
@@ -349,8 +349,8 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!135 &4576280646880478263
-SphereCollider:
+--- !u!64 &5298549215338899631
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -359,9 +359,10 @@ SphereCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.66578716
-  m_Center: {x: 0, y: 0.8401509, z: 0}
+  serializedVersion: 4
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4493585093827132993, guid: ab5cb4e10ebe24e35b8e0baa2090637a, type: 3}
 --- !u!1 &4980177835561498371
 GameObject:
   m_ObjectHideFlags: 0
@@ -454,7 +455,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 686940202868573660}
-  - component: {fileID: 3103767047970752248}
   m_Layer: 6
   m_Name: Sunflower (1)
   m_TagString: Untagged
@@ -479,21 +479,6 @@ Transform:
   m_Father: {fileID: 4966324518307511195}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3103767047970752248
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6474246312444646255}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1881e02c50f9e764987503d9f52b351b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _sunOrigin: {fileID: 0}
-  _radius: 0.4
-  _distance: 10
 --- !u!1 &8924914950704019585
 GameObject:
   m_ObjectHideFlags: 0
