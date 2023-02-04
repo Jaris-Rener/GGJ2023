@@ -1,5 +1,6 @@
 namespace LemonBerry
 {
+    using System.Linq;
     using UnityEngine;
 
 
@@ -11,13 +12,17 @@ namespace LemonBerry
 
         private void Update()
         {
-            if (Physics.SphereCast(_sunOrigin.position, _radius, _sunOrigin.forward, out var hit, _distance))
+            var hits = Physics.SphereCastAll(_sunOrigin.position, _radius, _sunOrigin.forward, _distance);
+            if (hits.Any())
             {
-                var sunReceiver = hit.transform.GetComponent<ISunReceiver>();
-                if (sunReceiver == null)
-                    return;
+                foreach (var hit in hits)
+                {
+                    var sunReceiver = hit.transform.GetComponent<ISunReceiver>();
+                    if (sunReceiver == null)
+                        return;
 
-                sunReceiver.OnSunlightReceived();
+                    sunReceiver.OnSunlightReceived();
+                }
             }
         }
 
