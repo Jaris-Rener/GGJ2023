@@ -42,6 +42,7 @@ namespace LemonBerry
 
         private readonly List<Interactable> _hoveredInteractables = new();
         private bool _grounded;
+        private bool _jumpReady;
 
         private Grabbable _heldObject;
         private Vector3 _moveDir;
@@ -53,10 +54,26 @@ namespace LemonBerry
         {
             _startPos = transform.position;
             _rigidbody = GetComponent<Rigidbody>();
-            _jumpInput.action.performed += Jump;
+            _jumpInput.action.performed += PrepareJump;
+            _jumpInput.action.canceled += Jump;
             _interactInput.action.performed += Interact;
             _addWaterInput.action.performed += AddWater;
             _removeWaterInput.action.performed += RemoveWater;
+        }
+
+        private void OnDestroy()
+        {
+            _jumpInput.action.performed -= PrepareJump;
+            _jumpInput.action.canceled -= Jump;
+            _interactInput.action.performed -= Interact;
+            _addWaterInput.action.performed -= AddWater;
+            _removeWaterInput.action.performed -= RemoveWater;
+        }
+
+        private void PrepareJump(InputAction.CallbackContext obj)
+        {
+            _jumpReady = true;
+            _animator.SetBool("Crouching", true);
         }
 
         private void Update()
@@ -88,14 +105,6 @@ namespace LemonBerry
 
             _moveDir = forward*_moveInputVec.y + right*_moveInputVec.x;
             _rigidbody.position += _moveDir*_moveSpeed*Time.deltaTime;
-        }
-
-        private void OnDestroy()
-        {
-            _jumpInput.action.performed -= Jump;
-            _interactInput.action.performed -= Interact;
-            _addWaterInput.action.performed -= AddWater;
-            _removeWaterInput.action.performed -= RemoveWater;
         }
 
         private void OnGUI()
@@ -263,9 +272,11 @@ namespace LemonBerry
 
         private void Jump(InputAction.CallbackContext obj)
         {
+            _animator.SetBool("Crouching", false);
             if (!_grounded)
                 return;
 
+            _jumpReady = false;
             _audioSource.PlayOneShot(_jumpSound, 1);
             _rigidbody.AddForce(Vector3.up*_jumpForce);
         }
