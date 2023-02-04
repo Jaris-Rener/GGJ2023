@@ -7,34 +7,56 @@ namespace Pathfinding {
 
 	[CustomGraphEditor(typeof(GridGraph), "Grid Graph")]
 	public class GridGraphEditor : GraphEditor {
-		[JsonMember]
+        public enum GridPivot {
+			Center,
+			TopLeft,
+			TopRight,
+			BottomLeft,
+			BottomRight
+		}
+
+        [JsonMember]
 		public bool locked = true;
 
-		[JsonMember]
+        [JsonMember]
 		public bool showExtra;
 
-		GraphTransform savedTransform;
-		Vector2 savedDimensions;
-		float savedNodeSize;
+        public bool isMouseDown;
 
-		public bool isMouseDown;
-
-		[JsonMember]
+        [JsonMember]
 		public GridPivot pivot;
 
-		[JsonMember]
+        [JsonMember]
 		public bool collisionPreviewOpen = true;
 
-		/// <summary>Cached gui style</summary>
+        GraphTransform savedTransform;
+        Vector2 savedDimensions;
+        float savedNodeSize;
+
+        /// <summary>Cached gui style</summary>
 		static GUIStyle lockStyle;
 
-		/// <summary>Cached gui style</summary>
+        /// <summary>Cached gui style</summary>
 		static GUIStyle gridPivotSelectBackground;
 
-		/// <summary>Cached gui style</summary>
+        /// <summary>Cached gui style</summary>
 		static GUIStyle gridPivotSelectButton;
 
-		/// <summary>Rounds a vector's components to multiples of 0.5 (i.e 0.5, 1.0, 1.5, etc.) if very close to them</summary>
+        GUIContent[] hexagonSizeContents = {
+			new GUIContent("Hexagon Width", "Distance between two opposing sides on the hexagon"),
+			new GUIContent("Hexagon Diameter", "Distance between two opposing vertices on the hexagon"),
+			new GUIContent("Node Size", "Raw node size value, this doesn't correspond to anything particular on the hexagon."),
+		};
+
+        Vector3[] arcBuffer = new Vector3[21];
+        Vector3[] lineBuffer = new Vector3[2];
+
+        float interpolatedGridWidthInNodes = -1;
+        float lastTime = 0;
+
+        static readonly Vector3[] handlePoints = new [] { new Vector3(0.0f, 0, 0.5f), new Vector3(1.0f, 0, 0.5f), new Vector3(0.5f, 0, 0.0f), new Vector3(0.5f, 0, 1.0f) };
+
+        /// <summary>Rounds a vector's components to multiples of 0.5 (i.e 0.5, 1.0, 1.5, etc.) if very close to them</summary>
 		public static Vector3 RoundVector3 (Vector3 v) {
 			const int Multiplier = 2;
 
@@ -44,7 +66,7 @@ namespace Pathfinding {
 			return v;
 		}
 
-		public override void OnInspectorGUI (NavGraph target) {
+        public override void OnInspectorGUI (NavGraph target) {
 			var graph = target as GridGraph;
 
 			DrawFirstSection(graph);
@@ -63,23 +85,23 @@ namespace Pathfinding {
 			DrawLastSection(graph);
 		}
 
-		bool IsHexagonal (GridGraph graph) {
+        bool IsHexagonal (GridGraph graph) {
 			return Mathf.Approximately(graph.isometricAngle, GridGraph.StandardIsometricAngle) && graph.neighbours == NumNeighbours.Six && graph.uniformEdgeCosts;
 		}
 
-		bool IsIsometric (GridGraph graph) {
+        bool IsIsometric (GridGraph graph) {
 			if (graph.aspectRatio != 1) return true;
 			if (IsHexagonal(graph)) return false;
 			return graph.isometricAngle != 0;
 		}
 
-		bool IsAdvanced (GridGraph graph) {
+        bool IsAdvanced (GridGraph graph) {
 			if (graph.inspectorGridMode == InspectorGridMode.Advanced) return true;
 			// Weird configuration
 			return (graph.neighbours == NumNeighbours.Six) != graph.uniformEdgeCosts;
 		}
 
-		InspectorGridMode DetermineGridType (GridGraph graph) {
+        InspectorGridMode DetermineGridType (GridGraph graph) {
 			bool hex = IsHexagonal(graph);
 			bool iso = IsIsometric(graph);
 			bool adv = IsAdvanced(graph);
@@ -90,23 +112,17 @@ namespace Pathfinding {
 			return graph.inspectorGridMode;
 		}
 
-		void DrawInspectorMode (GridGraph graph) {
+        void DrawInspectorMode (GridGraph graph) {
 			graph.inspectorGridMode = DetermineGridType(graph);
 			var newMode = (InspectorGridMode)EditorGUILayout.EnumPopup("Shape", (System.Enum)graph.inspectorGridMode);
 			if (newMode != graph.inspectorGridMode) graph.SetGridShape(newMode);
 		}
 
-		protected virtual void Draw2DMode (GridGraph graph) {
+        protected virtual void Draw2DMode (GridGraph graph) {
 			graph.is2D = EditorGUILayout.Toggle(new GUIContent("2D"), graph.is2D);
 		}
 
-		GUIContent[] hexagonSizeContents = {
-			new GUIContent("Hexagon Width", "Distance between two opposing sides on the hexagon"),
-			new GUIContent("Hexagon Diameter", "Distance between two opposing vertices on the hexagon"),
-			new GUIContent("Node Size", "Raw node size value, this doesn't correspond to anything particular on the hexagon."),
-		};
-
-		void DrawFirstSection (GridGraph graph) {
+        void DrawFirstSection (GridGraph graph) {
 			float prevRatio = graph.aspectRatio;
 
 			DrawInspectorMode(graph);
@@ -167,7 +183,7 @@ namespace Pathfinding {
 			DrawRotationField(graph);
 		}
 
-		void DrawRotationField (GridGraph graph) {
+        void DrawRotationField (GridGraph graph) {
 			if (graph.is2D) {
 				var right = Quaternion.Euler(graph.rotation) * Vector3.right;
 				var angle = Mathf.Atan2(right.y, right.x) * Mathf.Rad2Deg;
@@ -183,7 +199,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void DrawWidthDepthFields (GridGraph graph, out int newWidth, out int newDepth) {
+        void DrawWidthDepthFields (GridGraph graph, out int newWidth, out int newDepth) {
 			lockStyle = lockStyle ?? AstarPathEditor.astarSkin.FindStyle("GridSizeLock") ?? new GUIStyle();
 
 			GUILayout.BeginHorizontal();
@@ -218,7 +234,7 @@ namespace Pathfinding {
 					"instead of keeping the size the same and changing the number of nodes in the graph"), lockStyle);
 		}
 
-		void DrawIsometricField (GridGraph graph) {
+        void DrawIsometricField (GridGraph graph) {
 			var isometricGUIContent = new GUIContent("Isometric Angle", "For an isometric 2D game, you can use this parameter to scale the graph correctly.\nIt can also be used to create a hexagonal grid.\nYou may want to rotate the graph 45 degrees around the Y axis to make it line up better.");
 			var isometricOptions = new [] { new GUIContent("None (0°)"), new GUIContent("Isometric (≈54.74°)"), new GUIContent("Dimetric (60°)"), new GUIContent("Custom") };
 			var isometricValues = new [] { 0f, GridGraph.StandardIsometricAngle, GridGraph.StandardDimetricAngle };
@@ -247,7 +263,7 @@ namespace Pathfinding {
 			}
 		}
 
-		static Vector3 NormalizedPivotPoint (GridGraph graph, GridPivot pivot) {
+        static Vector3 NormalizedPivotPoint (GridGraph graph, GridPivot pivot) {
 			switch (pivot) {
 			case GridPivot.Center:
 			default:
@@ -263,7 +279,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void DrawPositionField (GridGraph graph) {
+        void DrawPositionField (GridGraph graph) {
 			GUILayout.BeginHorizontal();
 			var normalizedPivotPoint = NormalizedPivotPoint(graph, pivot);
 			var worldPoint = RoundVector3(graph.CalculateTransform().Transform(normalizedPivotPoint));
@@ -277,20 +293,20 @@ namespace Pathfinding {
 			GUILayout.EndHorizontal();
 		}
 
-		protected virtual void DrawMiddleSection (GridGraph graph) {
+        protected virtual void DrawMiddleSection (GridGraph graph) {
 			DrawNeighbours(graph);
 			DrawMaxClimb(graph);
 			DrawMaxSlope(graph);
 			DrawErosion(graph);
 		}
 
-		protected virtual void DrawCutCorners (GridGraph graph) {
+        protected virtual void DrawCutCorners (GridGraph graph) {
 			if (graph.inspectorGridMode == InspectorGridMode.Hexagonal) return;
 
 			graph.cutCorners = EditorGUILayout.Toggle(new GUIContent("Cut Corners", "Enables or disables cutting corners. See docs for image example"), graph.cutCorners);
 		}
 
-		protected virtual void DrawNeighbours (GridGraph graph) {
+        protected virtual void DrawNeighbours (GridGraph graph) {
 			if (graph.inspectorGridMode == InspectorGridMode.Hexagonal) return;
 
 			var neighboursGUIContent = new GUIContent("Connections", "Sets how many connections a node should have to it's neighbour nodes.");
@@ -318,20 +334,20 @@ namespace Pathfinding {
 			EditorGUI.indentLevel--;
 		}
 
-		protected virtual void DrawMaxClimb (GridGraph graph) {
+        protected virtual void DrawMaxClimb (GridGraph graph) {
 			if (!graph.collision.use2D) {
 				graph.maxClimb = EditorGUILayout.FloatField(new GUIContent("Max Climb", "How high in world units, relative to the graph, should a climbable level be. A zero (0) indicates infinity"), graph.maxClimb);
 				if (graph.maxClimb < 0) graph.maxClimb = 0;
 			}
 		}
 
-		protected void DrawMaxSlope (GridGraph graph) {
+        protected void DrawMaxSlope (GridGraph graph) {
 			if (!graph.collision.use2D) {
 				graph.maxSlope = EditorGUILayout.Slider(new GUIContent("Max Slope", "Sets the max slope in degrees for a point to be walkable. Only enabled if Height Testing is enabled."), graph.maxSlope, 0, 90F);
 			}
 		}
 
-		protected void DrawErosion (GridGraph graph) {
+        protected void DrawErosion (GridGraph graph) {
 			graph.erodeIterations = EditorGUILayout.IntField(new GUIContent("Erosion iterations", "Sets how many times the graph should be eroded. This adds extra margin to objects."), graph.erodeIterations);
 			graph.erodeIterations = graph.erodeIterations < 0 ? 0 : (graph.erodeIterations > 16 ? 16 : graph.erodeIterations); //Clamp iterations to [0,16]
 
@@ -350,7 +366,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void DrawLastSection (GridGraph graph) {
+        void DrawLastSection (GridGraph graph) {
 			GUILayout.BeginHorizontal();
 			GUILayout.Space(18);
 			graph.showMeshSurface = GUILayout.Toggle(graph.showMeshSurface, new GUIContent("Show surface", "Toggles gizmos for drawing the surface of the mesh"), EditorStyles.miniButtonLeft);
@@ -364,7 +380,7 @@ namespace Pathfinding {
 			DrawJPS(graph);
 		}
 
-		void DrawPenaltyModifications (GridGraph graph) {
+        void DrawPenaltyModifications (GridGraph graph) {
 			showExtra = EditorGUILayout.Foldout(showExtra, "Penalty Modifications");
 
 			if (showExtra) {
@@ -397,11 +413,11 @@ namespace Pathfinding {
 			}
 		}
 
-		protected virtual void DrawJPS (GridGraph graph) {
+        protected virtual void DrawJPS (GridGraph graph) {
 			// Jump point search is a pro only feature
 		}
 
-		/// <summary>Draws the inspector for a \link Pathfinding.GraphCollision GraphCollision class \endlink</summary>
+        /// <summary>Draws the inspector for a \link Pathfinding.GraphCollision GraphCollision class \endlink</summary>
 		protected virtual void DrawCollisionEditor (GraphCollision collision) {
 			collision = collision ?? new GraphCollision();
 
@@ -463,9 +479,7 @@ namespace Pathfinding {
 			}
 		}
 
-		Vector3[] arcBuffer = new Vector3[21];
-		Vector3[] lineBuffer = new Vector3[2];
-		void DrawArc (Vector2 center, float radius, float startAngle, float endAngle) {
+        void DrawArc (Vector2 center, float radius, float startAngle, float endAngle) {
 			// The AA line doesn't always properly close the gap even for full circles
 			endAngle += 1*Mathf.Deg2Rad;
 			var width = 4;
@@ -479,13 +493,13 @@ namespace Pathfinding {
 			Handles.DrawAAPolyLine(EditorResourceHelper.HandlesAALineTexture, width, arcBuffer);
 		}
 
-		void DrawLine (Vector2 a, Vector2 b) {
+        void DrawLine (Vector2 a, Vector2 b) {
 			lineBuffer[0] = a;
 			lineBuffer[1] = b;
 			Handles.DrawAAPolyLine(EditorResourceHelper.HandlesAALineTexture, 4, lineBuffer);
 		}
 
-		void DrawDashedLine (Vector2 a, Vector2 b, float dashLength) {
+        void DrawDashedLine (Vector2 a, Vector2 b, float dashLength) {
 			if (dashLength == 0) {
 				DrawLine(a, b);
 			} else {
@@ -499,14 +513,11 @@ namespace Pathfinding {
 			}
 		}
 
-		static int RoundUpToNextOddNumber (float x) {
+        static int RoundUpToNextOddNumber (float x) {
 			return Mathf.CeilToInt((x - 1)/2.0f)*2 + 1;
 		}
 
-		float interpolatedGridWidthInNodes = -1;
-		float lastTime = 0;
-
-		void DrawCollisionPreview (GraphCollision collision) {
+        void DrawCollisionPreview (GraphCollision collision) {
 			EditorGUILayout.BeginHorizontal();
 			GUILayout.Space(2);
 			collisionPreviewOpen = EditorGUILayout.Foldout(collisionPreviewOpen, "Preview");
@@ -598,13 +609,12 @@ namespace Pathfinding {
 			EditorGUILayout.Separator();
 		}
 
-		protected virtual void DrawUse2DPhysics (GraphCollision collision) {
+        protected virtual void DrawUse2DPhysics (GraphCollision collision) {
 			collision.use2D = EditorGUILayout.Toggle(new GUIContent("Use 2D Physics", "Use the Physics2D API for collision checking"), collision.use2D);
 		}
 
 
-
-		public static GridPivot PivotPointSelector (GridPivot pivot) {
+        public static GridPivot PivotPointSelector (GridPivot pivot) {
 			// Find required styles
 			gridPivotSelectBackground = gridPivotSelectBackground ?? AstarPathEditor.astarSkin.FindStyle("GridPivotSelectBackground");
 			gridPivotSelectButton = gridPivotSelectButton ?? AstarPathEditor.astarSkin.FindStyle("GridPivotSelectButton");
@@ -643,9 +653,7 @@ namespace Pathfinding {
 			return pivot;
 		}
 
-		static readonly Vector3[] handlePoints = new [] { new Vector3(0.0f, 0, 0.5f), new Vector3(1.0f, 0, 0.5f), new Vector3(0.5f, 0, 0.0f), new Vector3(0.5f, 0, 1.0f) };
-
-		public override void OnSceneGUI (NavGraph target) {
+        public override void OnSceneGUI (NavGraph target) {
 			Event e = Event.current;
 
 			var graph = target as GridGraph;
@@ -718,13 +726,5 @@ namespace Pathfinding {
 
 			Handles.matrix = Matrix4x4.identity;
 		}
-
-		public enum GridPivot {
-			Center,
-			TopLeft,
-			TopRight,
-			BottomLeft,
-			BottomRight
-		}
-	}
+    }
 }

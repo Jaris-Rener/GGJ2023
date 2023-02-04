@@ -11,7 +11,7 @@ namespace Pathfinding {
 	/// </summary>
 	[System.Serializable]
 	public class AutoRepathPolicy {
-		/// <summary>Policy mode for how often to recalculate an agent's path.</summary>
+        /// <summary>Policy mode for how often to recalculate an agent's path.</summary>
 		public enum Mode {
 			/// <summary>
 			/// Never automatically recalculate the path.
@@ -38,13 +38,13 @@ namespace Pathfinding {
 			Dynamic,
 		}
 
-		/// <summary>Policy to use when recalculating paths</summary>
+        /// <summary>Policy to use when recalculating paths</summary>
 		public Mode mode = Mode.Dynamic;
 
-		/// <summary>Number of seconds between each automatic path recalculation for Mode.EveryNSeconds</summary>
+        /// <summary>Number of seconds between each automatic path recalculation for Mode.EveryNSeconds</summary>
 		public float interval = 0.5f;
 
-		/// <summary>
+        /// <summary>
 		/// How sensitive the agent should be to changes in its destination for Mode.Dynamic.
 		/// A higher value means the destination has to move less for the path to be recalculated.
 		///
@@ -52,16 +52,16 @@ namespace Pathfinding {
 		/// </summary>
 		public float sensitivity = 10.0f;
 
-		/// <summary>Maximum number of seconds between each automatic path recalculation for Mode.Dynamic</summary>
+        /// <summary>Maximum number of seconds between each automatic path recalculation for Mode.Dynamic</summary>
 		public float maximumInterval = 2.0f;
 
-		/// <summary>If true the sensitivity will be visualized as a circle in the scene view when the game is playing</summary>
+        /// <summary>If true the sensitivity will be visualized as a circle in the scene view when the game is playing</summary>
 		public bool visualizeSensitivity = false;
 
-		Vector3 lastDestination = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
-		float lastRepathTime = float.NegativeInfinity;
+        Vector3 lastDestination = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+        float lastRepathTime = float.NegativeInfinity;
 
-		/// <summary>True if the path should be recalculated according to the policy</summary>
+        /// <summary>True if the path should be recalculated according to the policy</summary>
 		public virtual bool ShouldRecalculatePath (IAstarAI ai) {
 			if (mode == Mode.Never || float.IsPositiveInfinity(ai.destination.x)) return false;
 
@@ -79,22 +79,22 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Reset the runtime variables so that the policy behaves as if the game just started</summary>
+        /// <summary>Reset the runtime variables so that the policy behaves as if the game just started</summary>
 		public virtual void Reset () {
 			lastRepathTime = float.NegativeInfinity;
 		}
 
-		/// <summary>Must be called when a path request has been scheduled</summary>
+        /// <summary>Must be called when a path request has been scheduled</summary>
 		public virtual void DidRecalculatePath (Vector3 destination) {
 			lastRepathTime = Time.time;
 			lastDestination = destination;
 		}
 
-		public void DrawGizmos (IAstarAI ai) {
+        public void DrawGizmos (IAstarAI ai) {
 			if (visualizeSensitivity && !float.IsPositiveInfinity(lastDestination.x)) {
 				float r = Mathf.Sqrt(Mathf.Max((ai.position - lastDestination).sqrMagnitude, ai.radius*ai.radius)/(sensitivity*sensitivity));
 				Draw.Gizmos.CircleXZ(lastDestination, r, Color.magenta);
 			}
 		}
-	}
+    }
 }

@@ -16,13 +16,193 @@ namespace Pathfinding {
 	/// </summary>
 	[RequireComponent(typeof(Seeker))]
 	public abstract class AIBase : VersionedMonoBehaviour {
-		/// <summary>\copydoc Pathfinding::IAstarAI::radius</summary>
+        public static readonly Color ShapeGizmoColor = new Color(240/255f, 213/255f, 30/255f);
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::radius</summary>
 		public float radius = 0.5f;
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::height</summary>
+        /// <summary>\copydoc Pathfinding::IAstarAI::height</summary>
 		public float height = 2;
 
-		/// <summary>
+        /// <summary>\copydoc Pathfinding::IAstarAI::canMove</summary>
+		public bool canMove = true;
+
+        /// <summary>Max speed in world units per second</summary>
+		[UnityEngine.Serialization.FormerlySerializedAs("speed")]
+		public float maxSpeed = 1;
+
+        /// <summary>
+		/// Gravity to use.
+		/// If set to (NaN,NaN,NaN) then Physics.Gravity (configured in the Unity project settings) will be used.
+		/// If set to (0,0,0) then no gravity will be used and no raycast to check for ground penetration will be performed.
+		/// </summary>
+		public Vector3 gravity = new Vector3(float.NaN, float.NaN, float.NaN);
+
+        /// <summary>
+		/// Layer mask to use for ground placement.
+		/// Make sure this does not include the layer of any colliders attached to this gameobject.
+		///
+		/// See: <see cref="gravity"/>
+		/// See: https://docs.unity3d.com/Manual/Layers.html
+		/// </summary>
+		public LayerMask groundMask = -1;
+
+        [SerializeField]
+		[HideInInspector]
+		[FormerlySerializedAs("centerOffset")]
+		float centerOffsetCompatibility = float.NaN;
+
+        [SerializeField]
+		[HideInInspector]
+		[UnityEngine.Serialization.FormerlySerializedAs("repathRate")]
+		float repathRateCompatibility = float.NaN;
+
+        [SerializeField]
+		[HideInInspector]
+		[UnityEngine.Serialization.FormerlySerializedAs("canSearch")]
+		[UnityEngine.Serialization.FormerlySerializedAs("repeatedlySearchPaths")]
+		bool canSearchCompability = false;
+
+        /// <summary>
+		/// Determines which direction the agent moves in.
+		/// For 3D games you most likely want the ZAxisIsForward option as that is the convention for 3D games.
+		/// For 2D games you most likely want the YAxisIsForward option as that is the convention for 2D games.
+		///
+		/// Using the YAxisForward option will also allow the agent to assume that the movement will happen in the 2D (XY) plane instead of the XZ plane
+		/// if it does not know. This is important only for the point graph which does not have a well defined up direction. The other built-in graphs (e.g the grid graph)
+		/// will all tell the agent which movement plane it is supposed to use.
+		///
+		/// [Open online documentation to see images]
+		/// </summary>
+		[UnityEngine.Serialization.FormerlySerializedAs("rotationIn2D")]
+		public OrientationMode orientation = OrientationMode.ZAxisForward;
+
+        /// <summary>
+		/// If true, the AI will rotate to face the movement direction.
+		/// See: <see cref="orientation"/>
+		/// </summary>
+		public bool enableRotation = true;
+
+        /// <summary>
+		/// Determines how the agent recalculates its path automatically.
+		/// This corresponds to the settings under the "Recalculate Paths Automatically" field in the inspector.
+		/// </summary>
+		public AutoRepathPolicy autoRepath = new AutoRepathPolicy();
+
+        [UnityEngine.Serialization.FormerlySerializedAs("target")][SerializeField][HideInInspector]
+		Transform targetCompatibility;
+
+        /// <summary>Accumulated movement deltas from the <see cref="Move"/> method</summary>
+		Vector3 accumulatedMovementDelta = Vector3.zero;
+
+        /// <summary>Cached CharacterController component</summary>
+		protected CharacterController controller;
+
+        /// <summary>Amount which the character wants or tried to move with during the last frame</summary>
+		protected Vector2 lastDeltaPosition;
+
+        /// <summary>Delta time used for movement during the last frame</summary>
+		protected float lastDeltaTime;
+
+
+        /// <summary>
+		/// Plane which this agent is moving in.
+		/// This is used to convert between world space and a movement plane to make it possible to use this script in
+		/// both 2D games and 3D games.
+		/// </summary>
+		public IMovementPlane movementPlane = GraphTransform.identityTransform;
+
+        /// <summary>Last frame index when <see cref="prevPosition1"/> was updated</summary>
+		protected int prevFrame;
+
+        /// <summary>Position of the character at the end of the last frame</summary>
+		protected Vector3 prevPosition1;
+
+        /// <summary>Position of the character at the end of the frame before the last frame</summary>
+		protected Vector3 prevPosition2;
+
+        /// <summary>Cached Rigidbody component</summary>
+		protected Rigidbody rigid;
+
+        /// <summary>Cached Rigidbody component</summary>
+		protected Rigidbody2D rigid2D;
+
+        /// <summary>Cached Seeker component</summary>
+		protected Seeker seeker;
+
+        /// <summary>
+		/// Position of the agent.
+		/// If <see cref="updatePosition"/> is true then this value will be synchronized every frame with Transform.position.
+		/// </summary>
+		protected Vector3 simulatedPosition;
+
+        /// <summary>
+		/// Rotation of the agent.
+		/// If <see cref="updateRotation"/> is true then this value will be synchronized every frame with Transform.rotation.
+		/// </summary>
+		protected Quaternion simulatedRotation;
+
+        /// <summary>
+		/// True if the Start method has been executed.
+		/// Used to test if coroutines should be started in OnEnable to prevent calculating paths
+		/// in the awake stage (or rather before start on frame 0).
+		/// </summary>
+		bool startHasRun = false;
+
+        /// <summary>Cached Transform component</summary>
+		protected Transform tr;
+
+        /// <summary>
+		/// Determines if the character's position should be coupled to the Transform's position.
+		/// If false then all movement calculations will happen as usual, but the object that this component is attached to will not move
+		/// instead only the <see cref="position"/> property will change.
+		///
+		/// This is useful if you want to control the movement of the character using some other means such
+		/// as for example root motion but still want the AI to move freely.
+		/// See: Combined with calling <see cref="MovementUpdate"/> from a separate script instead of it being called automatically one can take a similar approach to what is documented here: https://docs.unity3d.com/Manual/nav-CouplingAnimationAndNavigation.html
+		///
+		/// See: <see cref="canMove"/> which in contrast to this field will disable all movement calculations.
+		/// See: <see cref="updateRotation"/>
+		/// </summary>
+		[System.NonSerialized]
+		public bool updatePosition = true;
+
+        /// <summary>
+		/// Determines if the character's rotation should be coupled to the Transform's rotation.
+		/// If false then all movement calculations will happen as usual, but the object that this component is attached to will not rotate
+		/// instead only the <see cref="rotation"/> property will change.
+		///
+		/// See: <see cref="updatePosition"/>
+		/// </summary>
+		[System.NonSerialized]
+		public bool updateRotation = true;
+
+        /// <summary>
+		/// Current desired velocity of the agent (does not include local avoidance and physics).
+		/// Lies in the movement plane.
+		/// </summary>
+		protected Vector2 velocity2D;
+
+        /// <summary>
+		/// Velocity due to gravity.
+		/// Perpendicular to the movement plane.
+		///
+		/// When the agent is grounded this may not accurately reflect the velocity of the agent.
+		/// It may be non-zero even though the agent is not moving.
+		/// </summary>
+		protected float verticalVelocity;
+
+        /// <summary>Only when the previous path has been calculated should the script consider searching for a new path</summary>
+		protected bool waitingForPathCalculation = false;
+
+        protected AIBase () {
+			// Note that this needs to be set here in the constructor and not in e.g Awake
+			// because it is possible that other code runs and sets the destination property
+			// before the Awake method on this script runs.
+			destination = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+		}
+
+        /// <summary>
 		/// Determines how often the agent will search for new paths (in seconds).
 		/// The agent will plan a new path to the target every N seconds.
 		///
@@ -43,7 +223,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// \copydoc Pathfinding::IAstarAI::canSearch
 		/// Deprecated: This has been superseded by \reflink{autoRepath.mode}.
 		/// </summary>
@@ -62,30 +242,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::canMove</summary>
-		public bool canMove = true;
-
-		/// <summary>Max speed in world units per second</summary>
-		[UnityEngine.Serialization.FormerlySerializedAs("speed")]
-		public float maxSpeed = 1;
-
-		/// <summary>
-		/// Gravity to use.
-		/// If set to (NaN,NaN,NaN) then Physics.Gravity (configured in the Unity project settings) will be used.
-		/// If set to (0,0,0) then no gravity will be used and no raycast to check for ground penetration will be performed.
-		/// </summary>
-		public Vector3 gravity = new Vector3(float.NaN, float.NaN, float.NaN);
-
-		/// <summary>
-		/// Layer mask to use for ground placement.
-		/// Make sure this does not include the layer of any colliders attached to this gameobject.
-		///
-		/// See: <see cref="gravity"/>
-		/// See: https://docs.unity3d.com/Manual/Layers.html
-		/// </summary>
-		public LayerMask groundMask = -1;
-
-		/// <summary>
+        /// <summary>
 		/// Offset along the Y coordinate for the ground raycast start position.
 		/// Normally the pivot of the character is at the character's feet, but you usually want to fire the raycast
 		/// from the character's center, so this value should be half of the character's height.
@@ -100,37 +257,7 @@ namespace Pathfinding {
 			get { return height * 0.5f; } set { height = value * 2; }
 		}
 
-		[SerializeField]
-		[HideInInspector]
-		[FormerlySerializedAs("centerOffset")]
-		float centerOffsetCompatibility = float.NaN;
-
-		[SerializeField]
-		[HideInInspector]
-		[UnityEngine.Serialization.FormerlySerializedAs("repathRate")]
-		float repathRateCompatibility = float.NaN;
-
-		[SerializeField]
-		[HideInInspector]
-		[UnityEngine.Serialization.FormerlySerializedAs("canSearch")]
-		[UnityEngine.Serialization.FormerlySerializedAs("repeatedlySearchPaths")]
-		bool canSearchCompability = false;
-
-		/// <summary>
-		/// Determines which direction the agent moves in.
-		/// For 3D games you most likely want the ZAxisIsForward option as that is the convention for 3D games.
-		/// For 2D games you most likely want the YAxisIsForward option as that is the convention for 2D games.
-		///
-		/// Using the YAxisForward option will also allow the agent to assume that the movement will happen in the 2D (XY) plane instead of the XZ plane
-		/// if it does not know. This is important only for the point graph which does not have a well defined up direction. The other built-in graphs (e.g the grid graph)
-		/// will all tell the agent which movement plane it is supposed to use.
-		///
-		/// [Open online documentation to see images]
-		/// </summary>
-		[UnityEngine.Serialization.FormerlySerializedAs("rotationIn2D")]
-		public OrientationMode orientation = OrientationMode.ZAxisForward;
-
-		/// <summary>
+        /// <summary>
 		/// If true, the forward axis of the character will be along the Y axis instead of the Z axis.
 		///
 		/// Deprecated: Use <see cref="orientation"/> instead
@@ -141,25 +268,7 @@ namespace Pathfinding {
 			set { orientation = value ? OrientationMode.YAxisForward : OrientationMode.ZAxisForward; }
 		}
 
-		/// <summary>
-		/// If true, the AI will rotate to face the movement direction.
-		/// See: <see cref="orientation"/>
-		/// </summary>
-		public bool enableRotation = true;
-
-		/// <summary>
-		/// Position of the agent.
-		/// If <see cref="updatePosition"/> is true then this value will be synchronized every frame with Transform.position.
-		/// </summary>
-		protected Vector3 simulatedPosition;
-
-		/// <summary>
-		/// Rotation of the agent.
-		/// If <see cref="updateRotation"/> is true then this value will be synchronized every frame with Transform.rotation.
-		/// </summary>
-		protected Quaternion simulatedRotation;
-
-		/// <summary>
+        /// <summary>
 		/// Position of the agent.
 		/// In world space.
 		/// If <see cref="updatePosition"/> is true then this value is idential to transform.position.
@@ -168,7 +277,7 @@ namespace Pathfinding {
 		/// </summary>
 		public Vector3 position { get { return updatePosition ? tr.position : simulatedPosition; } }
 
-		/// <summary>
+        /// <summary>
 		/// Rotation of the agent.
 		/// If <see cref="updateRotation"/> is true then this value is identical to transform.rotation.
 		/// </summary>
@@ -183,110 +292,10 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Accumulated movement deltas from the <see cref="Move"/> method</summary>
-		Vector3 accumulatedMovementDelta = Vector3.zero;
-
-		/// <summary>
-		/// Current desired velocity of the agent (does not include local avoidance and physics).
-		/// Lies in the movement plane.
-		/// </summary>
-		protected Vector2 velocity2D;
-
-		/// <summary>
-		/// Velocity due to gravity.
-		/// Perpendicular to the movement plane.
-		///
-		/// When the agent is grounded this may not accurately reflect the velocity of the agent.
-		/// It may be non-zero even though the agent is not moving.
-		/// </summary>
-		protected float verticalVelocity;
-
-		/// <summary>Cached Seeker component</summary>
-		protected Seeker seeker;
-
-		/// <summary>Cached Transform component</summary>
-		protected Transform tr;
-
-		/// <summary>Cached Rigidbody component</summary>
-		protected Rigidbody rigid;
-
-		/// <summary>Cached Rigidbody component</summary>
-		protected Rigidbody2D rigid2D;
-
-		/// <summary>Cached CharacterController component</summary>
-		protected CharacterController controller;
-
-
-		/// <summary>
-		/// Plane which this agent is moving in.
-		/// This is used to convert between world space and a movement plane to make it possible to use this script in
-		/// both 2D games and 3D games.
-		/// </summary>
-		public IMovementPlane movementPlane = GraphTransform.identityTransform;
-
-		/// <summary>
-		/// Determines if the character's position should be coupled to the Transform's position.
-		/// If false then all movement calculations will happen as usual, but the object that this component is attached to will not move
-		/// instead only the <see cref="position"/> property will change.
-		///
-		/// This is useful if you want to control the movement of the character using some other means such
-		/// as for example root motion but still want the AI to move freely.
-		/// See: Combined with calling <see cref="MovementUpdate"/> from a separate script instead of it being called automatically one can take a similar approach to what is documented here: https://docs.unity3d.com/Manual/nav-CouplingAnimationAndNavigation.html
-		///
-		/// See: <see cref="canMove"/> which in contrast to this field will disable all movement calculations.
-		/// See: <see cref="updateRotation"/>
-		/// </summary>
-		[System.NonSerialized]
-		public bool updatePosition = true;
-
-		/// <summary>
-		/// Determines if the character's rotation should be coupled to the Transform's rotation.
-		/// If false then all movement calculations will happen as usual, but the object that this component is attached to will not rotate
-		/// instead only the <see cref="rotation"/> property will change.
-		///
-		/// See: <see cref="updatePosition"/>
-		/// </summary>
-		[System.NonSerialized]
-		public bool updateRotation = true;
-
-		/// <summary>
-		/// Determines how the agent recalculates its path automatically.
-		/// This corresponds to the settings under the "Recalculate Paths Automatically" field in the inspector.
-		/// </summary>
-		public AutoRepathPolicy autoRepath = new AutoRepathPolicy();
-
-		/// <summary>Indicates if gravity is used during this frame</summary>
+        /// <summary>Indicates if gravity is used during this frame</summary>
 		protected bool usingGravity { get; set; }
 
-		/// <summary>Delta time used for movement during the last frame</summary>
-		protected float lastDeltaTime;
-
-		/// <summary>Last frame index when <see cref="prevPosition1"/> was updated</summary>
-		protected int prevFrame;
-
-		/// <summary>Position of the character at the end of the last frame</summary>
-		protected Vector3 prevPosition1;
-
-		/// <summary>Position of the character at the end of the frame before the last frame</summary>
-		protected Vector3 prevPosition2;
-
-		/// <summary>Amount which the character wants or tried to move with during the last frame</summary>
-		protected Vector2 lastDeltaPosition;
-
-		/// <summary>Only when the previous path has been calculated should the script consider searching for a new path</summary>
-		protected bool waitingForPathCalculation = false;
-
-		[UnityEngine.Serialization.FormerlySerializedAs("target")][SerializeField][HideInInspector]
-		Transform targetCompatibility;
-
-		/// <summary>
-		/// True if the Start method has been executed.
-		/// Used to test if coroutines should be started in OnEnable to prevent calculating paths
-		/// in the awake stage (or rather before start on frame 0).
-		/// </summary>
-		bool startHasRun = false;
-
-		/// <summary>
+        /// <summary>
 		/// Target to move towards.
 		/// The AI will try to follow/move towards this target.
 		/// It can be a point on the ground where the player has clicked in an RTS for example, or it can be the player object in a zombie game.
@@ -310,66 +319,41 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::destination</summary>
+        /// <summary>\copydoc Pathfinding::IAstarAI::destination</summary>
 		public Vector3 destination { get; set; }
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::velocity</summary>
+        /// <summary>\copydoc Pathfinding::IAstarAI::velocity</summary>
 		public Vector3 velocity {
 			get {
 				return lastDeltaTime > 0.000001f ? (prevPosition1 - prevPosition2) / lastDeltaTime : Vector3.zero;
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Velocity that this agent wants to move with.
 		/// Includes gravity and local avoidance if applicable.
 		/// </summary>
 		public Vector3 desiredVelocity { get { return lastDeltaTime > 0.00001f ? movementPlane.ToWorld(lastDeltaPosition / lastDeltaTime, verticalVelocity) : Vector3.zero; } }
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::isStopped</summary>
+        /// <summary>\copydoc Pathfinding::IAstarAI::isStopped</summary>
 		public bool isStopped { get; set; }
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::onSearchPath</summary>
+        /// <summary>\copydoc Pathfinding::IAstarAI::onSearchPath</summary>
 		public System.Action onSearchPath { get; set; }
 
-		/// <summary>True if the path should be automatically recalculated as soon as possible</summary>
+        /// <summary>True if the path should be automatically recalculated as soon as possible</summary>
 		protected virtual bool shouldRecalculatePath {
 			get {
 				return !waitingForPathCalculation && autoRepath.ShouldRecalculatePath((IAstarAI)this);
 			}
 		}
 
-		protected AIBase () {
-			// Note that this needs to be set here in the constructor and not in e.g Awake
-			// because it is possible that other code runs and sets the destination property
-			// before the Awake method on this script runs.
-			destination = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+        protected override void Reset () {
+			ResetShape();
+			base.Reset();
 		}
 
-		/// <summary>
-		/// Looks for any attached components like RVOController and CharacterController etc.
-		///
-		/// This is done during <see cref="OnEnable"/>. If you are adding/removing components during runtime you may want to call this function
-		/// to make sure that this script finds them. It is unfortunately prohibitive from a performance standpoint to look for components every frame.
-		/// </summary>
-		public virtual void FindComponents () {
-			tr = transform;
-			seeker = GetComponent<Seeker>();
-			// Find attached movement components
-			controller = GetComponent<CharacterController>();
-			rigid = GetComponent<Rigidbody>();
-			rigid2D = GetComponent<Rigidbody2D>();
-		}
-
-		/// <summary>Called when the component is enabled</summary>
-		protected virtual void OnEnable () {
-			FindComponents();
-			// Make sure we receive callbacks when paths are calculated
-			seeker.pathCallback += OnPathComplete;
-			Init();
-		}
-
-		/// <summary>
+        /// <summary>
 		/// Starts searching for paths.
 		/// If you override this method you should in most cases call base.Start () at the start of it.
 		/// See: <see cref="Init"/>
@@ -379,43 +363,7 @@ namespace Pathfinding {
 			Init();
 		}
 
-		void Init () {
-			if (startHasRun) {
-				// Clamp the agent to the navmesh (which is what the Teleport call will do essentially. Though only some movement scripts require this, like RichAI).
-				// The Teleport call will also make sure some variables are properly initialized (like #prevPosition1 and #prevPosition2)
-				if (canMove) Teleport(position, false);
-				autoRepath.Reset();
-				if (shouldRecalculatePath) SearchPath();
-			}
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::Teleport</summary>
-		public virtual void Teleport (Vector3 newPosition, bool clearPath = true) {
-			if (clearPath) ClearPath();
-			prevPosition1 = prevPosition2 = simulatedPosition = newPosition;
-			if (updatePosition) tr.position = newPosition;
-			if (clearPath) SearchPath();
-		}
-
-		protected void CancelCurrentPathRequest () {
-			waitingForPathCalculation = false;
-			// Abort calculation of the current path
-			if (seeker != null) seeker.CancelCurrentPathRequest();
-		}
-
-		protected virtual void OnDisable () {
-			ClearPath();
-
-			// Make sure we no longer receive callbacks when paths complete
-			seeker.pathCallback -= OnPathComplete;
-
-			velocity2D = Vector3.zero;
-			accumulatedMovementDelta = Vector3.zero;
-			verticalVelocity = 0f;
-			lastDeltaTime = 0;
-		}
-
-		/// <summary>
+        /// <summary>
 		/// Called every frame.
 		/// If no rigidbodies are used then all movement happens here.
 		/// </summary>
@@ -434,7 +382,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Called every physics update.
 		/// If rigidbodies are used then all movement happens here.
 		/// </summary>
@@ -447,16 +395,97 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::MovementUpdate</summary>
+        /// <summary>Called when the component is enabled</summary>
+		protected virtual void OnEnable () {
+			FindComponents();
+			// Make sure we receive callbacks when paths are calculated
+			seeker.pathCallback += OnPathComplete;
+			Init();
+		}
+
+        protected virtual void OnDisable () {
+			ClearPath();
+
+			// Make sure we no longer receive callbacks when paths complete
+			seeker.pathCallback -= OnPathComplete;
+
+			velocity2D = Vector3.zero;
+			accumulatedMovementDelta = Vector3.zero;
+			verticalVelocity = 0f;
+			lastDeltaTime = 0;
+		}
+
+        protected virtual void OnDrawGizmos () {
+			if (!Application.isPlaying || !enabled) FindComponents();
+
+			var color = ShapeGizmoColor;
+			if (orientation == OrientationMode.YAxisForward) {
+				Draw.Gizmos.Cylinder(position, Vector3.forward, 0, radius * tr.localScale.x, color);
+			} else {
+				Draw.Gizmos.Cylinder(position, rotation * Vector3.up, tr.localScale.y * height, radius * tr.localScale.x, color);
+			}
+
+			if (!float.IsPositiveInfinity(destination.x) && Application.isPlaying) Draw.Gizmos.CircleXZ(destination, 0.2f, Color.blue);
+
+			autoRepath.DrawGizmos((IAstarAI)this);
+		}
+
+        protected virtual void OnDrawGizmosSelected () {
+			// When selected in the Unity inspector it's nice to make the component react instantly if
+			// any other components are attached/detached or enabled/disabled.
+			// We don't want to do this normally every frame because that would be expensive.
+			if (Application.isPlaying) FindComponents();
+		}
+
+        /// <summary>
+		/// Looks for any attached components like RVOController and CharacterController etc.
+		///
+		/// This is done during <see cref="OnEnable"/>. If you are adding/removing components during runtime you may want to call this function
+		/// to make sure that this script finds them. It is unfortunately prohibitive from a performance standpoint to look for components every frame.
+		/// </summary>
+		public virtual void FindComponents () {
+			tr = transform;
+			seeker = GetComponent<Seeker>();
+			// Find attached movement components
+			controller = GetComponent<CharacterController>();
+			rigid = GetComponent<Rigidbody>();
+			rigid2D = GetComponent<Rigidbody2D>();
+		}
+
+        void Init () {
+			if (startHasRun) {
+				// Clamp the agent to the navmesh (which is what the Teleport call will do essentially. Though only some movement scripts require this, like RichAI).
+				// The Teleport call will also make sure some variables are properly initialized (like #prevPosition1 and #prevPosition2)
+				if (canMove) Teleport(position, false);
+				autoRepath.Reset();
+				if (shouldRecalculatePath) SearchPath();
+			}
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::Teleport</summary>
+		public virtual void Teleport (Vector3 newPosition, bool clearPath = true) {
+			if (clearPath) ClearPath();
+			prevPosition1 = prevPosition2 = simulatedPosition = newPosition;
+			if (updatePosition) tr.position = newPosition;
+			if (clearPath) SearchPath();
+		}
+
+        protected void CancelCurrentPathRequest () {
+			waitingForPathCalculation = false;
+			// Abort calculation of the current path
+			if (seeker != null) seeker.CancelCurrentPathRequest();
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::MovementUpdate</summary>
 		public void MovementUpdate (float deltaTime, out Vector3 nextPosition, out Quaternion nextRotation) {
 			lastDeltaTime = deltaTime;
 			MovementUpdateInternal(deltaTime, out nextPosition, out nextRotation);
 		}
 
-		/// <summary>Called during either Update or FixedUpdate depending on if rigidbodies are used for movement or not</summary>
+        /// <summary>Called during either Update or FixedUpdate depending on if rigidbodies are used for movement or not</summary>
 		protected abstract void MovementUpdateInternal(float deltaTime, out Vector3 nextPosition, out Quaternion nextRotation);
 
-		/// <summary>
+        /// <summary>
 		/// Outputs the start point and end point of the next automatic path request.
 		/// This is a separate method to make it easy for subclasses to swap out the endpoints
 		/// of path requests. For example the <see cref="LocalSpaceRichAI"/> script which requires the endpoints
@@ -467,7 +496,7 @@ namespace Pathfinding {
 			end = destination;
 		}
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::SearchPath</summary>
+        /// <summary>\copydoc Pathfinding::IAstarAI::SearchPath</summary>
 		public virtual void SearchPath () {
 			if (float.IsPositiveInfinity(destination.x)) return;
 			if (onSearchPath != null) onSearchPath();
@@ -480,7 +509,7 @@ namespace Pathfinding {
 			SetPath(p);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Position of the base of the character.
 		/// This is used for pathfinding as the character's pivot point is sometimes placed
 		/// at the center of the character instead of near the feet. In a building with multiple floors
@@ -492,10 +521,10 @@ namespace Pathfinding {
 			return position;
 		}
 
-		/// <summary>Called when a requested path has been calculated</summary>
+        /// <summary>Called when a requested path has been calculated</summary>
 		protected abstract void OnPathComplete(Path newPath);
 
-		/// <summary>
+        /// <summary>
 		/// Clears the current path of the agent.
 		///
 		/// Usually invoked using <see cref="SetPath(null)"/>
@@ -505,7 +534,7 @@ namespace Pathfinding {
 		/// </summary>
 		protected abstract void ClearPath();
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::SetPath</summary>
+        /// <summary>\copydoc Pathfinding::IAstarAI::SetPath</summary>
 		public void SetPath (Path path) {
 			if (path == null) {
 				CancelCurrentPathRequest();
@@ -530,7 +559,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Accelerates the agent downwards.
 		/// See: <see cref="verticalVelocity"/>
 		/// See: <see cref="gravity"/>
@@ -546,13 +575,13 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Calculates how far to move during a single frame</summary>
+        /// <summary>Calculates how far to move during a single frame</summary>
 		protected Vector2 CalculateDeltaToMoveThisFrame (Vector2 position, float distanceToEndOfPath, float deltaTime) {
 			// Direction and distance to move during this frame
 			return Vector2.ClampMagnitude(velocity2D * deltaTime, distanceToEndOfPath);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Simulates rotating the agent towards the specified direction and returns the new rotation.
 		///
 		/// Note that this only calculates a new rotation, it does not change the actual rotation of the agent.
@@ -566,7 +595,7 @@ namespace Pathfinding {
 			return SimulateRotationTowards(movementPlane.ToPlane(direction), maxDegrees);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Simulates rotating the agent towards the specified direction and returns the new rotation.
 		///
 		/// Note that this only calculates a new rotation, it does not change the actual rotation of the agent.
@@ -586,12 +615,12 @@ namespace Pathfinding {
 			return simulatedRotation;
 		}
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::Move</summary>
+        /// <summary>\copydoc Pathfinding::IAstarAI::Move</summary>
 		public virtual void Move (Vector3 deltaPosition) {
 			accumulatedMovementDelta += deltaPosition;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Moves the agent to a position.
 		///
 		/// This is used if you want to override how the agent moves. For example if you are using
@@ -612,7 +641,7 @@ namespace Pathfinding {
 			FinalizePosition(nextPosition);
 		}
 
-		void FinalizeRotation (Quaternion nextRotation) {
+        void FinalizeRotation (Quaternion nextRotation) {
 			simulatedRotation = nextRotation;
 			if (updateRotation) {
 				if (rigid != null) rigid.MoveRotation(nextRotation);
@@ -621,7 +650,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void FinalizePosition (Vector3 nextPosition) {
+        void FinalizePosition (Vector3 nextPosition) {
 			// Use a local variable, it is significantly faster
 			Vector3 currentPosition = simulatedPosition;
 			bool positionDirty1 = false;
@@ -664,7 +693,7 @@ namespace Pathfinding {
 			UpdateVelocity();
 		}
 
-		protected void UpdateVelocity () {
+        protected void UpdateVelocity () {
 			var currentFrame = Time.frameCount;
 
 			if (currentFrame != prevFrame) prevPosition2 = prevPosition1;
@@ -672,7 +701,7 @@ namespace Pathfinding {
 			prevFrame = currentFrame;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Constrains the character's position to lie on the navmesh.
 		/// Not all movement scripts have support for this.
 		///
@@ -685,7 +714,7 @@ namespace Pathfinding {
 			return position;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Checks if the character is grounded and prevents ground penetration.
 		///
 		/// Sets <see cref="verticalVelocity"/> to zero if the character is grounded.
@@ -717,36 +746,7 @@ namespace Pathfinding {
 			return position;
 		}
 
-		protected virtual void OnDrawGizmosSelected () {
-			// When selected in the Unity inspector it's nice to make the component react instantly if
-			// any other components are attached/detached or enabled/disabled.
-			// We don't want to do this normally every frame because that would be expensive.
-			if (Application.isPlaying) FindComponents();
-		}
-
-		public static readonly Color ShapeGizmoColor = new Color(240/255f, 213/255f, 30/255f);
-
-		protected virtual void OnDrawGizmos () {
-			if (!Application.isPlaying || !enabled) FindComponents();
-
-			var color = ShapeGizmoColor;
-			if (orientation == OrientationMode.YAxisForward) {
-				Draw.Gizmos.Cylinder(position, Vector3.forward, 0, radius * tr.localScale.x, color);
-			} else {
-				Draw.Gizmos.Cylinder(position, rotation * Vector3.up, tr.localScale.y * height, radius * tr.localScale.x, color);
-			}
-
-			if (!float.IsPositiveInfinity(destination.x) && Application.isPlaying) Draw.Gizmos.CircleXZ(destination, 0.2f, Color.blue);
-
-			autoRepath.DrawGizmos((IAstarAI)this);
-		}
-
-		protected override void Reset () {
-			ResetShape();
-			base.Reset();
-		}
-
-		void ResetShape () {
+        void ResetShape () {
 			var cc = GetComponent<CharacterController>();
 
 			if (cc != null) {
@@ -755,7 +755,7 @@ namespace Pathfinding {
 			}
 		}
 
-		protected override int OnUpgradeSerializedData (int version, bool unityThread) {
+        protected override int OnUpgradeSerializedData (int version, bool unityThread) {
 			if (unityThread && !float.IsNaN(centerOffsetCompatibility)) {
 				height = centerOffsetCompatibility*2;
 				ResetShape();
@@ -770,5 +770,5 @@ namespace Pathfinding {
 			}
 			return 5;
 		}
-	}
+    }
 }

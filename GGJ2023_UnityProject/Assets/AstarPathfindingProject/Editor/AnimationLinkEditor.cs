@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace Pathfinding {
 	[CustomEditor(typeof(AnimationLink))]
 	public class AnimationLinkEditor : Editor {
-		public override void OnInspectorGUI () {
+        public override void OnInspectorGUI () {
 			DrawDefaultInspector();
 
 			var script = target as AnimationLink;
@@ -20,5 +20,5 @@ namespace Pathfinding {
 			}
 			EditorGUI.EndDisabledGroup();
 		}
-	}
+    }
 }

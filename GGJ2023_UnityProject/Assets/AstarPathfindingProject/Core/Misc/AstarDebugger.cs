@@ -36,62 +36,65 @@ namespace Pathfinding {
 	/// </summary>
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_astar_debugger.php")]
 	public class AstarDebugger : VersionedMonoBehaviour {
-		public int yOffset = 5;
+        public int yOffset = 5;
 
-		public bool show = true;
-		public bool showInEditor = false;
+        public bool show = true;
+        public bool showInEditor = false;
 
-		public bool showFPS = false;
-		public bool showPathProfile = false;
-		public bool showMemProfile = false;
-		public bool showGraph = false;
+        public bool showFPS = false;
+        public bool showPathProfile = false;
+        public bool showMemProfile = false;
+        public bool showGraph = false;
 
-		public int graphBufferSize = 200;
+        public int graphBufferSize = 200;
 
-		/// <summary>
+        /// <summary>
 		/// Font to use.
 		/// A monospaced font is the best
 		/// </summary>
 		public Font font = null;
-		public int fontSize = 12;
 
-		StringBuilder text = new StringBuilder();
-		string cachedText;
-		float lastUpdate = -999;
+        public int fontSize = 12;
+        private int allocMem = 0;
+        private int allocRate = 0;
 
-		private GraphPoint[] graph;
+        private Rect boxRect;
+        string cachedText;
 
-		struct GraphPoint {
-			public float fps, memory;
-			public bool collectEvent;
-		}
+        private Camera cam;
+        private int collectAlloc = 0;
 
-		private float delayedDeltaTime = 1;
-		private float lastCollect = 0;
-		private float lastCollectNum = 0;
-		private float delta = 0;
-		private float lastDeltaTime = 0;
-		private int allocRate = 0;
-		private int lastAllocMemory = 0;
-		private float lastAllocSet = -9999;
-		private int allocMem = 0;
-		private int collectAlloc = 0;
-		private int peakAlloc = 0;
+        PathTypeDebug[] debugTypes = new PathTypeDebug[] {
+			new PathTypeDebug("ABPath", () => PathPool.GetSize(typeof(ABPath)), () => PathPool.GetTotalCreated(typeof(ABPath)))
+		};
 
-		private int fpsDropCounterSize = 200;
-		private float[] fpsDrops;
+        private float delayedDeltaTime = 1;
+        private float delta = 0;
 
-		private Rect boxRect;
+        private int fpsDropCounterSize = 200;
+        private float[] fpsDrops;
 
-		private GUIStyle style;
+        private GraphPoint[] graph;
+        float graphHeight = 100;
+        float graphOffset = 50;
 
-		private Camera cam;
+        float graphWidth = 100;
+        private int lastAllocMemory = 0;
+        private float lastAllocSet = -9999;
+        private float lastCollect = 0;
+        private float lastCollectNum = 0;
+        private float lastDeltaTime = 0;
+        float lastUpdate = -999;
+        int maxNodePool = 0;
 
-		float graphWidth = 100;
-		float graphHeight = 100;
-		float graphOffset = 50;
+        int maxVecPool = 0;
+        private int peakAlloc = 0;
 
-		public void Start () {
+        private GUIStyle style;
+
+        StringBuilder text = new StringBuilder();
+
+        public void Start () {
 			useGUILayout = false;
 
 			fpsDrops = new float[fpsDropCounterSize];
@@ -110,33 +113,7 @@ namespace Pathfinding {
 			}
 		}
 
-		int maxVecPool = 0;
-		int maxNodePool = 0;
-
-		PathTypeDebug[] debugTypes = new PathTypeDebug[] {
-			new PathTypeDebug("ABPath", () => PathPool.GetSize(typeof(ABPath)), () => PathPool.GetTotalCreated(typeof(ABPath)))
-		};
-
-		struct PathTypeDebug {
-			string name;
-			System.Func<int> getSize;
-			System.Func<int> getTotalCreated;
-			public PathTypeDebug (string name, System.Func<int> getSize, System.Func<int> getTotalCreated) {
-				this.name = name;
-				this.getSize = getSize;
-				this.getTotalCreated = getTotalCreated;
-			}
-
-			public void Print (StringBuilder text) {
-				int totCreated = getTotalCreated();
-
-				if (totCreated > 0) {
-					text.Append("\n").Append(("  " + name).PadRight(25)).Append(getSize()).Append("/").Append(totCreated);
-				}
-			}
-		}
-
-		public void LateUpdate () {
+        public void LateUpdate () {
 			if (!show || (!Application.isPlaying && !showInEditor)) return;
 
 			if (Time.unscaledDeltaTime <= 0.0001f)
@@ -201,11 +178,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void DrawGraphLine (int index, Matrix4x4 m, float x1, float x2, float y1, float y2, Color color) {
-			Debug.DrawLine(cam.ScreenToWorldPoint(m.MultiplyPoint3x4(new Vector3(x1, y1))), cam.ScreenToWorldPoint(m.MultiplyPoint3x4(new Vector3(x2, y2))), color);
-		}
-
-		public void OnGUI () {
+        public void OnGUI () {
 			if (!show || (!Application.isPlaying && !showInEditor)) return;
 
 			if (style == null) {
@@ -333,5 +306,33 @@ namespace Pathfinding {
 				GUI.Label(new Rect(55, Screen.height - AstarMath.MapTo(minFPS, maxFPS, 0 + graphOffset, graphHeight + graphOffset, line) - 10, 100, 20), line.ToString("0 FPS"));
 			}
 		}
-	}
+
+        void DrawGraphLine (int index, Matrix4x4 m, float x1, float x2, float y1, float y2, Color color) {
+			Debug.DrawLine(cam.ScreenToWorldPoint(m.MultiplyPoint3x4(new Vector3(x1, y1))), cam.ScreenToWorldPoint(m.MultiplyPoint3x4(new Vector3(x2, y2))), color);
+		}
+
+        struct GraphPoint {
+			public float fps, memory;
+			public bool collectEvent;
+		}
+
+        struct PathTypeDebug {
+			string name;
+			System.Func<int> getSize;
+			System.Func<int> getTotalCreated;
+			public PathTypeDebug (string name, System.Func<int> getSize, System.Func<int> getTotalCreated) {
+				this.name = name;
+				this.getSize = getSize;
+				this.getTotalCreated = getTotalCreated;
+			}
+
+			public void Print (StringBuilder text) {
+				int totCreated = getTotalCreated();
+
+				if (totCreated > 0) {
+					text.Append("\n").Append(("  " + name).PadRight(25)).Append(getSize()).Append("/").Append(totCreated);
+				}
+			}
+		}
+    }
 }

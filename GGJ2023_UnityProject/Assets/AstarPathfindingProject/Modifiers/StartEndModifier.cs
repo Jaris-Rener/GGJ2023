@@ -16,41 +16,7 @@ namespace Pathfinding {
 	/// \ingroup modifiers
 	/// </summary>
 	public class StartEndModifier : PathModifier {
-		public override int Order { get { return 0; } }
-
-		/// <summary>
-		/// Add points to the path instead of replacing them.
-		/// If for example <see cref="exactEndPoint"/> is set to ClosestOnNode then the path will be modified so that
-		/// the path goes first to the center of the last node in the path and then goes to the closest point
-		/// on the node to the end point in the path request.
-		///
-		/// If this is false however then the relevant points in the path will simply be replaced.
-		/// In the above example the path would go directly to the closest point on the node without passing
-		/// through the center of the node.
-		/// </summary>
-		public bool addPoints;
-
-		/// <summary>
-		/// How the start point of the path will be determined.
-		/// See: <see cref="Exactness"/>
-		/// </summary>
-		public Exactness exactStartPoint = Exactness.ClosestOnNode;
-
-		/// <summary>
-		/// How the end point of the path will be determined.
-		/// See: <see cref="Exactness"/>
-		/// </summary>
-		public Exactness exactEndPoint = Exactness.ClosestOnNode;
-
-		/// <summary>
-		/// Will be called when a path is processed.
-		/// The value which is returned will be used as the start point of the path
-		/// and potentially clamped depending on the value of the <see cref="exactStartPoint"/> field.
-		/// Only used for the Original, Interpolate and NodeConnection modes.
-		/// </summary>
-		public System.Func<Vector3> adjustStartPoint;
-
-		/// <summary>
+        /// <summary>
 		/// Sets where the start and end points of a path should be placed.
 		///
 		/// Here is a legend showing what the different items in the above images represent.
@@ -100,7 +66,31 @@ namespace Pathfinding {
 			NodeConnection,
 		}
 
-		/// <summary>
+        /// <summary>
+		/// Add points to the path instead of replacing them.
+		/// If for example <see cref="exactEndPoint"/> is set to ClosestOnNode then the path will be modified so that
+		/// the path goes first to the center of the last node in the path and then goes to the closest point
+		/// on the node to the end point in the path request.
+		///
+		/// If this is false however then the relevant points in the path will simply be replaced.
+		/// In the above example the path would go directly to the closest point on the node without passing
+		/// through the center of the node.
+		/// </summary>
+		public bool addPoints;
+
+        /// <summary>
+		/// How the start point of the path will be determined.
+		/// See: <see cref="Exactness"/>
+		/// </summary>
+		public Exactness exactStartPoint = Exactness.ClosestOnNode;
+
+        /// <summary>
+		/// How the end point of the path will be determined.
+		/// See: <see cref="Exactness"/>
+		/// </summary>
+		public Exactness exactEndPoint = Exactness.ClosestOnNode;
+
+        /// <summary>
 		/// Do a straight line check from the node's center to the point determined by the <see cref="Exactness"/>.
 		/// There are very few cases where you will want to use this. It is mostly here for
 		/// backwards compatibility reasons.
@@ -108,9 +98,10 @@ namespace Pathfinding {
 		/// Version: Since 4.1 this field only has an effect for the <see cref="Exactness"/> mode Original because that's the only one where it makes sense.
 		/// </summary>
 		public bool useRaycasting;
-		public LayerMask mask = -1;
 
-		/// <summary>
+        public LayerMask mask = -1;
+
+        /// <summary>
 		/// Do a straight line check from the node's center to the point determined by the <see cref="Exactness"/>.
 		/// See: <see cref="useRaycasting"/>
 		///
@@ -118,10 +109,19 @@ namespace Pathfinding {
 		/// </summary>
 		public bool useGraphRaycasting;
 
-		List<GraphNode> connectionBuffer;
-		System.Action<GraphNode> connectionBufferAddDelegate;
+        /// <summary>
+		/// Will be called when a path is processed.
+		/// The value which is returned will be used as the start point of the path
+		/// and potentially clamped depending on the value of the <see cref="exactStartPoint"/> field.
+		/// Only used for the Original, Interpolate and NodeConnection modes.
+		/// </summary>
+		public System.Func<Vector3> adjustStartPoint;
 
-		public override void Apply (Path _p) {
+        List<GraphNode> connectionBuffer;
+        System.Action<GraphNode> connectionBufferAddDelegate;
+        public override int Order { get { return 0; } }
+
+        public override void Apply (Path _p) {
 			var p = _p as ABPath;
 
 			// This modifier only supports ABPaths (doesn't make much sense for other paths anyway)
@@ -180,7 +180,7 @@ namespace Pathfinding {
 			}
 		}
 
-		Vector3 Snap (ABPath path, Exactness mode, bool start, out bool forceAddPoint, out int closestConnectionIndex) {
+        Vector3 Snap (ABPath path, Exactness mode, bool start, out bool forceAddPoint, out int closestConnectionIndex) {
 			var index = start ? 0 : path.path.Count - 1;
 			var node = path.path[index];
 			var nodePos = (Vector3)node.position;
@@ -260,7 +260,7 @@ namespace Pathfinding {
 			}
 		}
 
-		protected Vector3 GetClampedPoint (Vector3 from, Vector3 to, GraphNode hint) {
+        protected Vector3 GetClampedPoint (Vector3 from, Vector3 to, GraphNode hint) {
 			Vector3 point = to;
 			RaycastHit hit;
 
@@ -281,5 +281,5 @@ namespace Pathfinding {
 
 			return point;
 		}
-	}
+    }
 }

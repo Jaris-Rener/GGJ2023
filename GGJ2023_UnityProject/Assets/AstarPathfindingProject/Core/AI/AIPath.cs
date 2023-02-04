@@ -60,7 +60,9 @@ namespace Pathfinding {
 	/// </summary>
 	[AddComponentMenu("Pathfinding/AI/AIPath (2D,3D)")]
 	public partial class AIPath : AIBase, IAstarAI {
-		/// <summary>
+        static NNConstraint cachedNNConstraint = NNConstraint.Default;
+
+        /// <summary>
 		/// How quickly the agent accelerates.
 		/// Positive values represent an acceleration in world units per second squared.
 		/// Negative values are interpreted as an inverse time of how long it should take for the agent to reach its max speed.
@@ -73,7 +75,7 @@ namespace Pathfinding {
 		/// </summary>
 		public float maxAcceleration = -2.5f;
 
-		/// <summary>
+        /// <summary>
 		/// Rotation speed in degrees per second.
 		/// Rotation is calculated using Quaternion.RotateTowards. This variable represents the rotation speed in degrees per second.
 		/// The higher it is, the faster the character will be able to rotate.
@@ -81,10 +83,10 @@ namespace Pathfinding {
 		[UnityEngine.Serialization.FormerlySerializedAs("turningSpeed")]
 		public float rotationSpeed = 360;
 
-		/// <summary>Distance from the end of the path where the AI will start to slow down</summary>
+        /// <summary>Distance from the end of the path where the AI will start to slow down</summary>
 		public float slowdownDistance = 0.6F;
 
-		/// <summary>
+        /// <summary>
 		/// How far the AI looks ahead along the path to determine the point it moves to.
 		/// In world units.
 		/// If you enable the <see cref="alwaysDrawGizmos"/> toggle this value will be visualized in the scene view as a blue circle around the agent.
@@ -101,22 +103,22 @@ namespace Pathfinding {
 		/// </summary>
 		public float pickNextWaypointDist = 2;
 
-		/// <summary>
+        /// <summary>
 		/// Distance to the end point to consider the end of path to be reached.
 		/// When the end is within this distance then <see cref="OnTargetReached"/> will be called and <see cref="reachedEndOfPath"/> will return true.
 		/// </summary>
 		public float endReachedDistance = 0.2F;
 
-		/// <summary>Draws detailed gizmos constantly in the scene view instead of only when the agent is selected and settings are being modified</summary>
+        /// <summary>Draws detailed gizmos constantly in the scene view instead of only when the agent is selected and settings are being modified</summary>
 		public bool alwaysDrawGizmos;
 
-		/// <summary>
+        /// <summary>
 		/// Slow down when not facing the target direction.
 		/// Incurs at a small performance overhead.
 		/// </summary>
 		public bool slowWhenNotFacingTarget = true;
 
-		/// <summary>
+        /// <summary>
 		/// What to do when within <see cref="endReachedDistance"/> units from the destination.
 		/// The character can either stop immediately when it comes within that distance, which is useful for e.g archers
 		/// or other ranged units that want to fire on a target. Or the character can continue to try to reach the exact
@@ -128,7 +130,7 @@ namespace Pathfinding {
 		/// </summary>
 		public CloseToDestinationMode whenCloseToDestination = CloseToDestinationMode.Stop;
 
-		/// <summary>
+        /// <summary>
 		/// Ensure that the character is always on the traversable surface of the navmesh.
 		/// When this option is enabled a <see cref="AstarPath.GetNearest"/> query will be done every frame to find the closest node that the agent can walk on
 		/// and if the agent is not inside that node, then the agent will be moved to it.
@@ -156,88 +158,23 @@ namespace Pathfinding {
 		/// </summary>
 		public bool constrainInsideGraph = false;
 
-		/// <summary>Current path which is followed</summary>
-		protected Path path;
-
-		/// <summary>Helper which calculates points along the current path</summary>
+        /// <summary>Helper which calculates points along the current path</summary>
 		protected PathInterpolator interpolator = new PathInterpolator();
 
-		#region IAstarAI implementation
+        /// <summary>Current path which is followed</summary>
+		protected Path path;
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::Teleport</summary>
-		public override void Teleport (Vector3 newPosition, bool clearPath = true) {
+        protected override void OnDisable () {
+			base.OnDisable();
+
+			// Release current path so that it can be pooled
+			if (path != null) path.Release(this);
+			path = null;
+			interpolator.SetPath(null);
 			reachedEndOfPath = false;
-			base.Teleport(newPosition, clearPath);
 		}
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::remainingDistance</summary>
-		public float remainingDistance {
-			get {
-				return interpolator.valid ? interpolator.remainingDistance + movementPlane.ToPlane(interpolator.position - position).magnitude : float.PositiveInfinity;
-			}
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::reachedDestination</summary>
-		public bool reachedDestination {
-			get {
-				if (!reachedEndOfPath) return false;
-				if (!interpolator.valid || remainingDistance + movementPlane.ToPlane(destination - interpolator.endPoint).magnitude > endReachedDistance) return false;
-
-				// Don't do height checks in 2D mode
-				if (orientation != OrientationMode.YAxisForward) {
-					// Check if the destination is above the head of the character or far below the feet of it
-					float yDifference;
-					movementPlane.ToPlane(destination - position, out yDifference);
-					var h = tr.localScale.y * height;
-					if (yDifference > h || yDifference < -h*0.5) return false;
-				}
-
-				return true;
-			}
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::reachedEndOfPath</summary>
-		public bool reachedEndOfPath { get; protected set; }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::hasPath</summary>
-		public bool hasPath {
-			get {
-				return interpolator.valid;
-			}
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::pathPending</summary>
-		public bool pathPending {
-			get {
-				return waitingForPathCalculation;
-			}
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::steeringTarget</summary>
-		public Vector3 steeringTarget {
-			get {
-				return interpolator.valid ? interpolator.position : position;
-			}
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::radius</summary>
-		float IAstarAI.radius { get { return radius; } set { radius = value; } }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::height</summary>
-		float IAstarAI.height { get { return height; } set { height = value; } }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::maxSpeed</summary>
-		float IAstarAI.maxSpeed { get { return maxSpeed; } set { maxSpeed = value; } }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::canSearch</summary>
-		bool IAstarAI.canSearch { get { return canSearch; } set { canSearch = value; } }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::canMove</summary>
-		bool IAstarAI.canMove { get { return canMove; } set { canMove = value; } }
-
-		#endregion
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::GetRemainingPath</summary>
+        /// <summary>\copydoc Pathfinding::IAstarAI::GetRemainingPath</summary>
 		public void GetRemainingPath (List<Vector3> buffer, out bool stale) {
 			buffer.Clear();
 			buffer.Add(position);
@@ -250,17 +187,7 @@ namespace Pathfinding {
 			interpolator.GetRemainingPath(buffer);
 		}
 
-		protected override void OnDisable () {
-			base.OnDisable();
-
-			// Release current path so that it can be pooled
-			if (path != null) path.Release(this);
-			path = null;
-			interpolator.SetPath(null);
-			reachedEndOfPath = false;
-		}
-
-		/// <summary>
+        /// <summary>
 		/// The end of the path has been reached.
 		/// If you want custom logic for when the AI has reached it's destination add it here. You can
 		/// also create a new script which inherits from this one and override the function in that script.
@@ -271,7 +198,7 @@ namespace Pathfinding {
 		public virtual void OnTargetReached () {
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Called when a requested path has been calculated.
 		/// A path is first requested by <see cref="UpdatePath"/>, it is then calculated, probably in the same or the next frame.
 		/// Finally it is returned to the seeker which forwards it to this function.
@@ -331,7 +258,7 @@ namespace Pathfinding {
 			}
 		}
 
-		protected override void ClearPath () {
+        protected override void ClearPath () {
 			CancelCurrentPathRequest();
 			if (path != null) path.Release(this);
 			path = null;
@@ -339,7 +266,7 @@ namespace Pathfinding {
 			reachedEndOfPath = false;
 		}
 
-		/// <summary>Called during either Update or FixedUpdate depending on if rigidbodies are used for movement or not</summary>
+        /// <summary>Called during either Update or FixedUpdate depending on if rigidbodies are used for movement or not</summary>
 		protected override void MovementUpdateInternal (float deltaTime, out Vector3 nextPosition, out Quaternion nextRotation) {
 			float currentAcceleration = maxAcceleration;
 
@@ -402,7 +329,7 @@ namespace Pathfinding {
 			CalculateNextRotation(slowdown, out nextRotation);
 		}
 
-		protected virtual void CalculateNextRotation (float slowdown, out Quaternion nextRotation) {
+        protected virtual void CalculateNextRotation (float slowdown, out Quaternion nextRotation) {
 			if (lastDeltaTime > 0.00001f && enableRotation) {
 				Vector2 desiredRotationDirection;
 				desiredRotationDirection = velocity2D;
@@ -417,8 +344,7 @@ namespace Pathfinding {
 			}
 		}
 
-		static NNConstraint cachedNNConstraint = NNConstraint.Default;
-		protected override Vector3 ClampToNavmesh (Vector3 position, out bool positionChanged) {
+        protected override Vector3 ClampToNavmesh (Vector3 position, out bool positionChanged) {
 			if (constrainInsideGraph) {
 				cachedNNConstraint.tags = seeker.traversableTags;
 				cachedNNConstraint.graphMask = seeker.graphMask;
@@ -444,26 +370,107 @@ namespace Pathfinding {
 			return position;
 		}
 
+        protected override int OnUpgradeSerializedData (int version, bool unityThread) {
+			// Approximately convert from a damping value to a degrees per second value.
+			if (version < 1) rotationSpeed *= 90;
+			return base.OnUpgradeSerializedData(version, unityThread);
+		}
+
+        #region IAstarAI implementation
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::Teleport</summary>
+		public override void Teleport (Vector3 newPosition, bool clearPath = true) {
+			reachedEndOfPath = false;
+			base.Teleport(newPosition, clearPath);
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::remainingDistance</summary>
+		public float remainingDistance {
+			get {
+				return interpolator.valid ? interpolator.remainingDistance + movementPlane.ToPlane(interpolator.position - position).magnitude : float.PositiveInfinity;
+			}
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::reachedDestination</summary>
+		public bool reachedDestination {
+			get {
+				if (!reachedEndOfPath) return false;
+				if (!interpolator.valid || remainingDistance + movementPlane.ToPlane(destination - interpolator.endPoint).magnitude > endReachedDistance) return false;
+
+				// Don't do height checks in 2D mode
+				if (orientation != OrientationMode.YAxisForward) {
+					// Check if the destination is above the head of the character or far below the feet of it
+					float yDifference;
+					movementPlane.ToPlane(destination - position, out yDifference);
+					var h = tr.localScale.y * height;
+					if (yDifference > h || yDifference < -h*0.5) return false;
+				}
+
+				return true;
+			}
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::reachedEndOfPath</summary>
+		public bool reachedEndOfPath { get; protected set; }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::hasPath</summary>
+		public bool hasPath {
+			get {
+				return interpolator.valid;
+			}
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::pathPending</summary>
+		public bool pathPending {
+			get {
+				return waitingForPathCalculation;
+			}
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::steeringTarget</summary>
+		public Vector3 steeringTarget {
+			get {
+				return interpolator.valid ? interpolator.position : position;
+			}
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::radius</summary>
+		float IAstarAI.radius { get { return radius; } set { radius = value; } }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::height</summary>
+		float IAstarAI.height { get { return height; } set { height = value; } }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::maxSpeed</summary>
+		float IAstarAI.maxSpeed { get { return maxSpeed; } set { maxSpeed = value; } }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::canSearch</summary>
+		bool IAstarAI.canSearch { get { return canSearch; } set { canSearch = value; } }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::canMove</summary>
+		bool IAstarAI.canMove { get { return canMove; } set { canMove = value; } }
+
+        #endregion
+
 #if UNITY_EDITOR
-		[System.NonSerialized]
+        [System.NonSerialized]
 		int gizmoHash = 0;
 
-		[System.NonSerialized]
+        [System.NonSerialized]
 		float lastChangedTime = float.NegativeInfinity;
 
-		protected static readonly Color GizmoColor = new Color(46.0f/255, 104.0f/255, 201.0f/255);
+        protected static readonly Color GizmoColor = new Color(46.0f/255, 104.0f/255, 201.0f/255);
 
-		protected override void OnDrawGizmos () {
+        protected override void OnDrawGizmos () {
 			base.OnDrawGizmos();
 			if (alwaysDrawGizmos) OnDrawGizmosInternal();
 		}
 
-		protected override void OnDrawGizmosSelected () {
+        protected override void OnDrawGizmosSelected () {
 			base.OnDrawGizmosSelected();
 			if (!alwaysDrawGizmos) OnDrawGizmosInternal();
 		}
 
-		void OnDrawGizmosInternal () {
+        void OnDrawGizmosInternal () {
 			var newGizmoHash = pickNextWaypointDist.GetHashCode() ^ slowdownDistance.GetHashCode() ^ endReachedDistance.GetHashCode();
 
 			if (newGizmoHash != gizmoHash && gizmoHash != 0) lastChangedTime = Time.realtimeSinceStartup;
@@ -481,11 +488,5 @@ namespace Pathfinding {
 			}
 		}
 #endif
-
-		protected override int OnUpgradeSerializedData (int version, bool unityThread) {
-			// Approximately convert from a damping value to a degrees per second value.
-			if (version < 1) rotationSpeed *= 90;
-			return base.OnUpgradeSerializedData(version, unityThread);
-		}
-	}
+    }
 }

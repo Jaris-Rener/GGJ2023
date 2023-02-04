@@ -17,46 +17,34 @@ namespace Pathfinding.Examples {
 	/// </summary>
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_examples_1_1_mine_bot_animation.php")]
 	public class MineBotAnimation : VersionedMonoBehaviour {
-		/// <summary>
+        /// <summary>
 		/// Animation component.
 		/// Should hold animations "awake" and "forward"
 		/// </summary>
 		public Animator anim;
 
-		/// <summary>
+        /// <summary>
 		/// Effect which will be instantiated when end of path is reached.
 		/// See: <see cref="OnTargetReached"/>
 		/// </summary>
 		public GameObject endOfPathEffect;
 
-		bool isAtDestination;
+        IAstarAI ai;
 
-		IAstarAI ai;
-		Transform tr;
+        bool isAtDestination;
 
-		protected override void Awake () {
+        /// <summary>Point for the last spawn of <see cref="endOfPathEffect"/></summary>
+		protected Vector3 lastTarget;
+
+        Transform tr;
+
+        protected override void Awake () {
 			base.Awake();
 			ai = GetComponent<IAstarAI>();
 			tr = GetComponent<Transform>();
 		}
 
-		/// <summary>Point for the last spawn of <see cref="endOfPathEffect"/></summary>
-		protected Vector3 lastTarget;
-
-		/// <summary>
-		/// Called when the end of path has been reached.
-		/// An effect (<see cref="endOfPathEffect)"/> is spawned when this function is called
-		/// However, since paths are recalculated quite often, we only spawn the effect
-		/// when the current position is some distance away from the previous spawn-point
-		/// </summary>
-		void OnTargetReached () {
-			if (endOfPathEffect != null && Vector3.Distance(tr.position, lastTarget) > 1) {
-				GameObject.Instantiate(endOfPathEffect, tr.position, tr.rotation);
-				lastTarget = tr.position;
-			}
-		}
-
-		protected void Update () {
+        protected void Update () {
 			if (ai.reachedEndOfPath) {
 				if (!isAtDestination) OnTargetReached();
 				isAtDestination = true;
@@ -69,5 +57,18 @@ namespace Pathfinding.Examples {
 			// Speed relative to the character size
 			anim.SetFloat("NormalizedSpeed", relVelocity.magnitude / anim.transform.lossyScale.x);
 		}
-	}
+
+        /// <summary>
+		/// Called when the end of path has been reached.
+		/// An effect (<see cref="endOfPathEffect)"/> is spawned when this function is called
+		/// However, since paths are recalculated quite often, we only spawn the effect
+		/// when the current position is some distance away from the previous spawn-point
+		/// </summary>
+		void OnTargetReached () {
+			if (endOfPathEffect != null && Vector3.Distance(tr.position, lastTarget) > 1) {
+				GameObject.Instantiate(endOfPathEffect, tr.position, tr.rotation);
+				lastTarget = tr.position;
+			}
+		}
+    }
 }

@@ -14,7 +14,7 @@ namespace Pathfinding {
 	/// \ingroup utils
 	/// </summary>
 	public static class GraphUpdateUtilities {
-		/// <summary>
+        /// <summary>
 		/// Updates graphs and checks if all nodes are still reachable from each other.
 		/// Graphs are updated, then a check is made to see if the nodes are still reachable from each other.
 		/// If they are not, the graphs are reverted to before the update and false is returned.\n
@@ -54,7 +54,7 @@ namespace Pathfinding {
 			return worked;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Updates graphs and checks if all nodes are still reachable from each other.
 		/// Graphs are updated, then a check is made to see if the nodes are still reachable from each other.
 		/// If they are not, the graphs are reverted to before the update and false is returned.
@@ -105,5 +105,5 @@ namespace Pathfinding {
 
 			return worked;
 		}
-	}
+    }
 }

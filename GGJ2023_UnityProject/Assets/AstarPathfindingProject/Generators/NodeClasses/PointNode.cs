@@ -10,7 +10,7 @@ namespace Pathfinding {
 	/// See: PointGraph
 	/// </summary>
 	public class PointNode : GraphNode {
-		/// <summary>
+        /// <summary>
 		/// All connections from this node.
 		/// See: <see cref="AddConnection"/>
 		/// See: <see cref="RemoveConnection"/>
@@ -21,7 +21,7 @@ namespace Pathfinding {
 		/// </summary>
 		public Connection[] connections;
 
-		/// <summary>
+        /// <summary>
 		/// GameObject this node was created from (if any).
 		/// Warning: When loading a graph from a saved file or from cache, this field will be null.
 		///
@@ -38,14 +38,14 @@ namespace Pathfinding {
 		/// </summary>
 		public GameObject gameObject;
 
-		public void SetPosition (Int3 value) {
+        public PointNode (AstarPath astar) : base(astar) {
+		}
+
+        public void SetPosition (Int3 value) {
 			position = value;
 		}
 
-		public PointNode (AstarPath astar) : base(astar) {
-		}
-
-		/// <summary>
+        /// <summary>
 		/// Closest point on the surface of this node to the point p.
 		///
 		/// For a point node this is always the node's <see cref="position"/> sicne it has no surface.
@@ -54,12 +54,12 @@ namespace Pathfinding {
 			return (Vector3)this.position;
 		}
 
-		public override void GetConnections (System.Action<GraphNode> action) {
+        public override void GetConnections (System.Action<GraphNode> action) {
 			if (connections == null) return;
 			for (int i = 0; i < connections.Length; i++) action(connections[i].node);
 		}
 
-		public override void ClearConnections (bool alsoReverse) {
+        public override void ClearConnections (bool alsoReverse) {
 			if (alsoReverse && connections != null) {
 				for (int i = 0; i < connections.Length; i++) {
 					connections[i].node.RemoveConnection(this);
@@ -70,7 +70,7 @@ namespace Pathfinding {
 			AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
 		}
 
-		public override void UpdateRecursiveG (Path path, PathNode pathNode, PathHandler handler) {
+        public override void UpdateRecursiveG (Path path, PathNode pathNode, PathHandler handler) {
 			pathNode.UpdateG(path);
 
 			handler.heap.Add(pathNode);
@@ -84,13 +84,13 @@ namespace Pathfinding {
 			}
 		}
 
-		public override bool ContainsConnection (GraphNode node) {
+        public override bool ContainsConnection (GraphNode node) {
 			if (connections == null) return false;
 			for (int i = 0; i < connections.Length; i++) if (connections[i].node == node) return true;
 			return false;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Add a connection from this node to the specified node.
 		/// If the connection already exists, the cost will simply be updated and
 		/// no extra connection added.
@@ -142,7 +142,7 @@ namespace Pathfinding {
 			(this.Graph as PointGraph).RegisterConnectionLength((node.position - position).sqrMagnitudeLong);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Removes any connection from this node to the specified node.
 		/// If no such connection exists, nothing will be done.
 		///
@@ -188,7 +188,7 @@ namespace Pathfinding {
 			}
 		}
 
-		public override void Open (Path path, PathNode pathNode, PathHandler handler) {
+        public override void Open (Path path, PathNode pathNode, PathHandler handler) {
 			if (connections == null) return;
 
 			for (int i = 0; i < connections.Length; i++) {
@@ -222,7 +222,7 @@ namespace Pathfinding {
 			}
 		}
 
-		public override int GetGizmoHashCode () {
+        public override int GetGizmoHashCode () {
 			var hash = base.GetGizmoHashCode();
 
 			if (connections != null) {
@@ -233,17 +233,17 @@ namespace Pathfinding {
 			return hash;
 		}
 
-		public override void SerializeNode (GraphSerializationContext ctx) {
+        public override void SerializeNode (GraphSerializationContext ctx) {
 			base.SerializeNode(ctx);
 			ctx.SerializeInt3(position);
 		}
 
-		public override void DeserializeNode (GraphSerializationContext ctx) {
+        public override void DeserializeNode (GraphSerializationContext ctx) {
 			base.DeserializeNode(ctx);
 			position = ctx.DeserializeInt3();
 		}
 
-		public override void SerializeReferences (GraphSerializationContext ctx) {
+        public override void SerializeReferences (GraphSerializationContext ctx) {
 			if (connections == null) {
 				ctx.writer.Write(-1);
 			} else {
@@ -255,7 +255,7 @@ namespace Pathfinding {
 			}
 		}
 
-		public override void DeserializeReferences (GraphSerializationContext ctx) {
+        public override void DeserializeReferences (GraphSerializationContext ctx) {
 			int count = ctx.reader.ReadInt32();
 
 			if (count == -1) {
@@ -268,5 +268,5 @@ namespace Pathfinding {
 				}
 			}
 		}
-	}
+    }
 }

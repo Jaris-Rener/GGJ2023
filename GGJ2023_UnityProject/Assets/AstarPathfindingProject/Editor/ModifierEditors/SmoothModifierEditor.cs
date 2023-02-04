@@ -5,7 +5,7 @@ namespace Pathfinding {
 	[CustomEditor(typeof(SimpleSmoothModifier))]
 	[CanEditMultipleObjects]
 	public class SmoothModifierEditor : EditorBase {
-		protected override void Inspector () {
+        protected override void Inspector () {
 			var smoothType = FindProperty("smoothType");
 
 			PropertyField("smoothType");
@@ -41,5 +41,5 @@ namespace Pathfinding {
 				}
 			}
 		}
-	}
+    }
 }

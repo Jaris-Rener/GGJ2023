@@ -5,7 +5,7 @@ namespace Pathfinding {
 	[CustomEditor(typeof(AILerp), true)]
 	[CanEditMultipleObjects]
 	public class AILerpEditor : BaseAIEditor {
-		protected override void Inspector () {
+        protected override void Inspector () {
 			Section("Pathfinding");
 			AutoRepathInspector();
 
@@ -27,5 +27,5 @@ namespace Pathfinding {
 
 			DebugInspector();
 		}
-	}
+    }
 }

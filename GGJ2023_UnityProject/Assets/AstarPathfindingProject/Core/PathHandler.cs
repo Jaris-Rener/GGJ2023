@@ -12,17 +12,17 @@ namespace Pathfinding {
 	/// See: https://en.wikipedia.org/wiki/A*_search_algorithm
 	/// </summary>
 	public class PathNode {
-		/// <summary>Reference to the actual graph node</summary>
+        /// <summary>Reference to the actual graph node</summary>
 		public GraphNode node;
 
-		/// <summary>Parent node in the search tree</summary>
+        /// <summary>Parent node in the search tree</summary>
 		public PathNode parent;
 
-		/// <summary>The path request (in this thread, if multithreading is used) which last used this node</summary>
+        /// <summary>The path request (in this thread, if multithreading is used) which last used this node</summary>
 		public ushort pathID;
 
 #if DECREASE_KEY
-		/// <summary>
+        /// <summary>
 		/// Index of the node in the binary heap.
 		/// The open list in the A* algorithm is backed by a binary heap.
 		/// To support fast 'decrease key' operations, the index of the node
@@ -31,21 +31,7 @@ namespace Pathfinding {
 		public ushort heapIndex = BinaryHeap.NotInHeap;
 #endif
 
-		/// <summary>Bitpacked variable which stores several fields</summary>
-		private uint flags;
-
-		/// <summary>Cost uses the first 28 bits</summary>
-		private const uint CostMask = (1U << 28) - 1U;
-
-		/// <summary>Flag 1 is at bit 28</summary>
-		private const int Flag1Offset = 28;
-		private const uint Flag1Mask = (uint)(1 << Flag1Offset);
-
-		/// <summary>Flag 2 is at bit 29</summary>
-		private const int Flag2Offset = 29;
-		private const uint Flag2Mask = (uint)(1 << Flag2Offset);
-
-		public uint cost {
+        public uint cost {
 			get {
 				return flags & CostMask;
 			}
@@ -54,7 +40,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Use as temporary flag during pathfinding.
 		/// Pathfinders (only) can use this during pathfinding to mark
 		/// nodes. When done, this flag should be reverted to its default state (false) to
@@ -69,7 +55,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Use as temporary flag during pathfinding.
 		/// Pathfinders (only) can use this during pathfinding to mark
 		/// nodes. When done, this flag should be reverted to its default state (false) to
@@ -84,70 +70,86 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Backing field for the G score</summary>
-		private uint g;
-
-		/// <summary>Backing field for the H score</summary>
-		private uint h;
-
-		/// <summary>G score, cost to get to this node</summary>
+        /// <summary>G score, cost to get to this node</summary>
 		public uint G { get { return g; } set { g = value; } }
 
-		/// <summary>H score, estimated cost to get to to the target</summary>
+        /// <summary>H score, estimated cost to get to to the target</summary>
 		public uint H { get { return h; } set { h = value; } }
 
-		/// <summary>F score. H score + G score</summary>
+        /// <summary>F score. H score + G score</summary>
 		public uint F { get { return g+h; } }
 
-		public void UpdateG (Path path) {
+        /// <summary>Bitpacked variable which stores several fields</summary>
+		private uint flags;
+
+        /// <summary>Cost uses the first 28 bits</summary>
+		private const uint CostMask = (1U << 28) - 1U;
+
+        /// <summary>Flag 1 is at bit 28</summary>
+		private const int Flag1Offset = 28;
+
+        private const uint Flag1Mask = (uint)(1 << Flag1Offset);
+
+        /// <summary>Flag 2 is at bit 29</summary>
+		private const int Flag2Offset = 29;
+
+        private const uint Flag2Mask = (uint)(1 << Flag2Offset);
+
+        /// <summary>Backing field for the G score</summary>
+		private uint g;
+
+        /// <summary>Backing field for the H score</summary>
+		private uint h;
+
+        public void UpdateG (Path path) {
 #if ASTAR_NO_TRAVERSAL_COST
 			g = parent.g + cost;
 #else
 			g = parent.g + cost + path.GetTraversalCost(node);
 #endif
 		}
-	}
+    }
 
 	/// <summary>Handles thread specific path data.</summary>
 	public class PathHandler {
-		/// <summary>
-		/// Current PathID.
-		/// See: <see cref="PathID"/>
-		/// </summary>
-		private ushort pathID;
+        public readonly int threadID;
+        public readonly int totalThreadCount;
 
-		public readonly int threadID;
-		public readonly int totalThreadCount;
-
-		/// <summary>
+        /// <summary>
 		/// Binary heap to keep track of nodes on the "Open list".
 		/// See: https://en.wikipedia.org/wiki/A*_search_algorithm
 		/// </summary>
 		public readonly BinaryHeap heap = new BinaryHeap(128);
 
-		/// <summary>ID for the path currently being calculated or last path that was calculated</summary>
+        /// <summary>ID for the path currently being calculated or last path that was calculated</summary>
 		public ushort PathID { get { return pathID; } }
 
-		/// <summary>Array of all PathNodes</summary>
+        /// <summary>Array of all PathNodes</summary>
 		public PathNode[] nodes = new PathNode[0];
 
-		/// <summary>
+        /// <summary>
 		/// StringBuilder that paths can use to build debug strings.
 		/// Better for performance and memory usage to use a single StringBuilder instead of each path creating its own
 		/// </summary>
 		public readonly System.Text.StringBuilder DebugStringBuilder = new System.Text.StringBuilder();
 
-		public PathHandler (int threadID, int totalThreadCount) {
+        /// <summary>
+		/// Current PathID.
+		/// See: <see cref="PathID"/>
+		/// </summary>
+		private ushort pathID;
+
+        public PathHandler (int threadID, int totalThreadCount) {
 			this.threadID = threadID;
 			this.totalThreadCount = totalThreadCount;
 		}
 
-		public void InitializeForPath (Path p) {
+        public void InitializeForPath (Path p) {
 			pathID = p.pathID;
 			heap.Clear();
 		}
 
-		/// <summary>Internal method to clean up node data</summary>
+        /// <summary>Internal method to clean up node data</summary>
 		public void DestroyNode (GraphNode node) {
 			PathNode pn = GetPathNode(node);
 
@@ -161,7 +163,7 @@ namespace Pathfinding {
 			pn.H = 0;
 		}
 
-		/// <summary>Internal method to initialize node data</summary>
+        /// <summary>Internal method to initialize node data</summary>
 		public void InitializeNode (GraphNode node) {
 			//Get the index of the node
 			int ind = node.NodeIndex;
@@ -183,11 +185,11 @@ namespace Pathfinding {
 			nodes[ind].node = node;
 		}
 
-		public PathNode GetPathNode (int nodeIndex) {
+        public PathNode GetPathNode (int nodeIndex) {
 			return nodes[nodeIndex];
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the PathNode corresponding to the specified node.
 		/// The PathNode is specific to this PathHandler since multiple PathHandlers
 		/// are used at the same time if multithreading is enabled.
@@ -196,7 +198,7 @@ namespace Pathfinding {
 			return nodes[node.NodeIndex];
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Set all nodes' pathIDs to 0.
 		/// See: Pathfinding.PathNode.pathID
 		/// </summary>
@@ -205,5 +207,5 @@ namespace Pathfinding {
 				if (nodes[i] != null) nodes[i].pathID = 0;
 			}
 		}
-	}
+    }
 }

@@ -5,6 +5,7 @@ namespace LemonBerry
     public class Mushroom : MonoBehaviour
     {
         [SerializeField] private float _bounceForce = 300;
+
         private void OnCollisionEnter(Collision collision)
         {
             var rb = collision.gameObject.GetComponent<Rigidbody>();

@@ -4,45 +4,45 @@ using Pathfinding.Serialization;
 namespace Pathfinding {
 	/// <summary>Interface for something that holds a triangle based navmesh</summary>
 	public interface INavmeshHolder : ITransformedGraph, INavmesh {
-		/// <summary>Position of vertex number i in the world</summary>
+        /// <summary>Position of vertex number i in the world</summary>
 		Int3 GetVertex(int i);
 
-		/// <summary>
+        /// <summary>
 		/// Position of vertex number i in coordinates local to the graph.
 		/// The up direction is always the +Y axis for these coordinates.
 		/// </summary>
 		Int3 GetVertexInGraphSpace(int i);
 
-		int GetVertexArrayIndex(int index);
+        int GetVertexArrayIndex(int index);
 
-		/// <summary>Transforms coordinates from graph space to world space</summary>
+        /// <summary>Transforms coordinates from graph space to world space</summary>
 		void GetTileCoordinates(int tileIndex, out int x, out int z);
-	}
+    }
 
 	/// <summary>Node represented by a triangle</summary>
 	public class TriangleMeshNode : MeshNode {
-		public TriangleMeshNode (AstarPath astar) : base(astar) {}
-
-		/// <summary>Internal vertex index for the first vertex</summary>
+        /// <summary>Internal vertex index for the first vertex</summary>
 		public int v0;
 
-		/// <summary>Internal vertex index for the second vertex</summary>
+        /// <summary>Internal vertex index for the second vertex</summary>
 		public int v1;
 
-		/// <summary>Internal vertex index for the third vertex</summary>
+        /// <summary>Internal vertex index for the third vertex</summary>
 		public int v2;
 
-		/// <summary>Holds INavmeshHolder references for all graph indices to be able to access them in a performant manner</summary>
+        /// <summary>Holds INavmeshHolder references for all graph indices to be able to access them in a performant manner</summary>
 		protected static INavmeshHolder[] _navmeshHolders = new INavmeshHolder[0];
 
-		/// <summary>Used for synchronised access to the <see cref="_navmeshHolders"/> array</summary>
+        /// <summary>Used for synchronised access to the <see cref="_navmeshHolders"/> array</summary>
 		protected static readonly System.Object lockObject = new System.Object();
 
-		public static INavmeshHolder GetNavmeshHolder (uint graphIndex) {
+        public TriangleMeshNode (AstarPath astar) : base(astar) {}
+
+        public static INavmeshHolder GetNavmeshHolder (uint graphIndex) {
 			return _navmeshHolders[(int)graphIndex];
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Sets the internal navmesh holder for a given graph index.
 		/// Warning: Internal method
 		/// </summary>
@@ -59,7 +59,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Set the position of this node to the average of its 3 vertices</summary>
+        /// <summary>Set the position of this node to the average of its 3 vertices</summary>
 		public void UpdatePositionFromVertices () {
 			Int3 a, b, c;
 
@@ -67,7 +67,7 @@ namespace Pathfinding {
 			position = (a + b + c) * 0.333333f;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Return a number identifying a vertex.
 		/// This number does not necessarily need to be a index in an array but two different vertices (in the same graph) should
 		/// not have the same vertex numbers.
@@ -76,7 +76,7 @@ namespace Pathfinding {
 			return i == 0 ? v0 : (i == 1 ? v1 : v2);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Return a number specifying an index in the source vertex array.
 		/// The vertex array can for example be contained in a recast tile, or be a navmesh graph, that is graph dependant.
 		/// This is slower than GetVertexIndex, if you only need to compare vertices, use GetVertexIndex.
@@ -85,7 +85,7 @@ namespace Pathfinding {
 			return GetNavmeshHolder(GraphIndex).GetVertexArrayIndex(i == 0 ? v0 : (i == 1 ? v1 : v2));
 		}
 
-		/// <summary>Returns all 3 vertices of this node in world space</summary>
+        /// <summary>Returns all 3 vertices of this node in world space</summary>
 		public void GetVertices (out Int3 v0, out Int3 v1, out Int3 v2) {
 			// Get the object holding the vertex data for this node
 			// This is usually a graph or a recast graph tile
@@ -96,7 +96,7 @@ namespace Pathfinding {
 			v2 = holder.GetVertex(this.v2);
 		}
 
-		/// <summary>Returns all 3 vertices of this node in graph space</summary>
+        /// <summary>Returns all 3 vertices of this node in graph space</summary>
 		public void GetVerticesInGraphSpace (out Int3 v0, out Int3 v1, out Int3 v2) {
 			// Get the object holding the vertex data for this node
 			// This is usually a graph or a recast graph tile
@@ -107,27 +107,27 @@ namespace Pathfinding {
 			v2 = holder.GetVertexInGraphSpace(this.v2);
 		}
 
-		public override Int3 GetVertex (int i) {
+        public override Int3 GetVertex (int i) {
 			return GetNavmeshHolder(GraphIndex).GetVertex(GetVertexIndex(i));
 		}
 
-		public Int3 GetVertexInGraphSpace (int i) {
+        public Int3 GetVertexInGraphSpace (int i) {
 			return GetNavmeshHolder(GraphIndex).GetVertexInGraphSpace(GetVertexIndex(i));
 		}
 
-		public override int GetVertexCount () {
+        public override int GetVertexCount () {
 			// A triangle has 3 vertices
 			return 3;
 		}
 
-		public override Vector3 ClosestPointOnNode (Vector3 p) {
+        public override Vector3 ClosestPointOnNode (Vector3 p) {
 			Int3 a, b, c;
 
 			GetVertices(out a, out b, out c);
 			return Pathfinding.Polygon.ClosestPointOnTriangle((Vector3)a, (Vector3)b, (Vector3)c, p);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Closest point on the node when seen from above.
 		/// This method is mostly for internal use as the <see cref="Pathfinding.NavmeshBase.Linecast"/> methods use it.
 		///
@@ -184,7 +184,7 @@ namespace Pathfinding {
 			}
 		}
 
-		public override Vector3 ClosestPointOnNodeXZ (Vector3 p) {
+        public override Vector3 ClosestPointOnNodeXZ (Vector3 p) {
 			// Get all 3 vertices for this node
 			Int3 tp1, tp2, tp3;
 
@@ -192,11 +192,11 @@ namespace Pathfinding {
 			return Polygon.ClosestPointOnTriangleXZ((Vector3)tp1, (Vector3)tp2, (Vector3)tp3, p);
 		}
 
-		public override bool ContainsPoint (Vector3 p) {
+        public override bool ContainsPoint (Vector3 p) {
 			return ContainsPointInGraphSpace((Int3)GetNavmeshHolder(GraphIndex).transform.InverseTransform(p));
 		}
 
-		public override bool ContainsPointInGraphSpace (Int3 p) {
+        public override bool ContainsPointInGraphSpace (Int3 p) {
 			// Get all 3 vertices for this node
 			Int3 a, b, c;
 
@@ -215,7 +215,7 @@ namespace Pathfinding {
 			//return Polygon.ContainsPoint(g.GetVertex(v0),g.GetVertex(v1),g.GetVertex(v2),p);
 		}
 
-		public override void UpdateRecursiveG (Path path, PathNode pathNode, PathHandler handler) {
+        public override void UpdateRecursiveG (Path path, PathNode pathNode, PathHandler handler) {
 			pathNode.UpdateG(path);
 
 			handler.heap.Add(pathNode);
@@ -229,7 +229,7 @@ namespace Pathfinding {
 			}
 		}
 
-		public override void Open (Path path, PathNode pathNode, PathHandler handler) {
+        public override void Open (Path path, PathNode pathNode, PathHandler handler) {
 			if (connections == null) return;
 
 			// Flag2 indicates if this node needs special treatment
@@ -289,7 +289,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the edge which is shared with other.
 		/// If no edge is shared, -1 is returned.
 		/// If there is a connection with the other node, but the connection is not marked as using a particular edge of the shape of the node
@@ -315,13 +315,13 @@ namespace Pathfinding {
 			return edge;
 		}
 
-		public override bool GetPortal (GraphNode toNode, System.Collections.Generic.List<Vector3> left, System.Collections.Generic.List<Vector3> right, bool backwards) {
+        public override bool GetPortal (GraphNode toNode, System.Collections.Generic.List<Vector3> left, System.Collections.Generic.List<Vector3> right, bool backwards) {
 			int aIndex, bIndex;
 
 			return GetPortal(toNode, left, right, backwards, out aIndex, out bIndex);
 		}
 
-		public bool GetPortal (GraphNode toNode, System.Collections.Generic.List<Vector3> left, System.Collections.Generic.List<Vector3> right, bool backwards, out int aIndex, out int bIndex) {
+        public bool GetPortal (GraphNode toNode, System.Collections.Generic.List<Vector3> left, System.Collections.Generic.List<Vector3> right, bool backwards, out int aIndex, out int bIndex) {
 			aIndex = -1;
 			bIndex = -1;
 
@@ -419,14 +419,14 @@ namespace Pathfinding {
 			return true;
 		}
 
-		/// <summary>TODO: This is the area in XZ space, use full 3D space for higher correctness maybe?</summary>
+        /// <summary>TODO: This is the area in XZ space, use full 3D space for higher correctness maybe?</summary>
 		public override float SurfaceArea () {
 			var holder = GetNavmeshHolder(GraphIndex);
 
 			return System.Math.Abs(VectorMath.SignedTriangleAreaTimes2XZ(holder.GetVertex(v0), holder.GetVertex(v1), holder.GetVertex(v2))) * 0.5f;
 		}
 
-		public override Vector3 RandomPointOnSurface () {
+        public override Vector3 RandomPointOnSurface () {
 			// Find a random point inside the triangle
 			// This generates uniformly distributed trilinear coordinates
 			// See http://mathworld.wolfram.com/TrianglePointPicking.html
@@ -443,18 +443,18 @@ namespace Pathfinding {
 			return ((Vector3)(holder.GetVertex(v1)-holder.GetVertex(v0)))*r1 + ((Vector3)(holder.GetVertex(v2)-holder.GetVertex(v0)))*r2 + (Vector3)holder.GetVertex(v0);
 		}
 
-		public override void SerializeNode (GraphSerializationContext ctx) {
+        public override void SerializeNode (GraphSerializationContext ctx) {
 			base.SerializeNode(ctx);
 			ctx.writer.Write(v0);
 			ctx.writer.Write(v1);
 			ctx.writer.Write(v2);
 		}
 
-		public override void DeserializeNode (GraphSerializationContext ctx) {
+        public override void DeserializeNode (GraphSerializationContext ctx) {
 			base.DeserializeNode(ctx);
 			v0 = ctx.reader.ReadInt32();
 			v1 = ctx.reader.ReadInt32();
 			v2 = ctx.reader.ReadInt32();
 		}
-	}
+    }
 }

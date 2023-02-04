@@ -14,50 +14,7 @@ namespace Pathfinding {
 #endif
 
 	public class PathProcessor {
-		public event System.Action<Path> OnPathPreSearch;
-		public event System.Action<Path> OnPathPostSearch;
-		public event System.Action OnQueueUnblocked;
-
-		internal readonly ThreadControlQueue queue;
-		readonly AstarPath astar;
-		readonly PathReturnQueue returnQueue;
-
-		readonly PathHandler[] pathHandlers;
-
-		/// <summary>References to each of the pathfinding threads</summary>
-		readonly Thread[] threads;
-
-		/// <summary>
-		/// When no multithreading is used, the IEnumerator is stored here.
-		/// When no multithreading is used, a coroutine is used instead. It is not directly called with StartCoroutine
-		/// but a separate function has just a while loop which increments the main IEnumerator.
-		/// This is done so other functions can step the thread forward at any time, without having to wait for Unity to update it.
-		/// See: CalculatePaths
-		/// See: CalculatePathsHandler
-		/// </summary>
-		IEnumerator threadCoroutine;
-
-		/// <summary>
-		/// Holds the next node index which has not been used by any previous node.
-		/// See: nodeIndexPool
-		/// </summary>
-		int nextNodeIndex = 1;
-
-		/// <summary>
-		/// Holds indices for nodes that have been destroyed.
-		/// To avoid trashing a lot of memory structures when nodes are
-		/// frequently deleted and created, node indices are reused.
-		/// </summary>
-		readonly Stack<int> nodeIndexPool = new Stack<int>();
-
-		readonly List<int> locks = new List<int>();
-		int nextLockID = 0;
-
-#if UNITY_2017_3_OR_NEWER
-		CustomSampler profilingSampler;
-#endif
-
-		/// <summary>
+        /// <summary>
 		/// Number of parallel pathfinders.
 		/// Returns the number of concurrent processes which can calculate paths at once.
 		/// When using multithreading, this will be the number of threads, if not using multithreading it is always 1 (since only 1 coroutine is used).
@@ -70,14 +27,53 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Returns whether or not multithreading is used</summary>
+        /// <summary>Returns whether or not multithreading is used</summary>
 		public bool IsUsingMultithreading {
 			get {
 				return threads != null;
 			}
 		}
 
-		internal PathProcessor (AstarPath astar, PathReturnQueue returnQueue, int processors, bool multithreaded) {
+        internal readonly ThreadControlQueue queue;
+        readonly AstarPath astar;
+        readonly PathReturnQueue returnQueue;
+
+        readonly PathHandler[] pathHandlers;
+
+        /// <summary>References to each of the pathfinding threads</summary>
+		readonly Thread[] threads;
+
+        /// <summary>
+		/// When no multithreading is used, the IEnumerator is stored here.
+		/// When no multithreading is used, a coroutine is used instead. It is not directly called with StartCoroutine
+		/// but a separate function has just a while loop which increments the main IEnumerator.
+		/// This is done so other functions can step the thread forward at any time, without having to wait for Unity to update it.
+		/// See: CalculatePaths
+		/// See: CalculatePathsHandler
+		/// </summary>
+		IEnumerator threadCoroutine;
+
+        /// <summary>
+		/// Holds the next node index which has not been used by any previous node.
+		/// See: nodeIndexPool
+		/// </summary>
+		int nextNodeIndex = 1;
+
+        /// <summary>
+		/// Holds indices for nodes that have been destroyed.
+		/// To avoid trashing a lot of memory structures when nodes are
+		/// frequently deleted and created, node indices are reused.
+		/// </summary>
+		readonly Stack<int> nodeIndexPool = new Stack<int>();
+
+        readonly List<int> locks = new List<int>();
+        int nextLockID = 0;
+
+#if UNITY_2017_3_OR_NEWER
+        CustomSampler profilingSampler;
+#endif
+
+        internal PathProcessor (AstarPath astar, PathReturnQueue returnQueue, int processors, bool multithreaded) {
 			this.astar = astar;
 			this.returnQueue = returnQueue;
 
@@ -121,33 +117,11 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Prevents pathfinding from running while held</summary>
-		public struct GraphUpdateLock {
-			PathProcessor pathProcessor;
-			int id;
+        public event System.Action<Path> OnPathPreSearch;
+        public event System.Action<Path> OnPathPostSearch;
+        public event System.Action OnQueueUnblocked;
 
-			public GraphUpdateLock (PathProcessor pathProcessor, bool block) {
-				this.pathProcessor = pathProcessor;
-				id = pathProcessor.Lock(block);
-			}
-
-			/// <summary>
-			/// True while this lock is preventing the pathfinding threads from processing more paths.
-			/// Note that the pathfinding threads may not be paused yet (if this lock was obtained using PausePathfinding(false)).
-			/// </summary>
-			public bool Held {
-				get {
-					return pathProcessor != null && pathProcessor.locks.Contains(id);
-				}
-			}
-
-			/// <summary>Allow pathfinding to start running again if no other locks are still held</summary>
-			public void Release () {
-				pathProcessor.Unlock(id);
-			}
-		}
-
-		int Lock (bool block) {
+        int Lock (bool block) {
 			queue.Block();
 
 			if (block) {
@@ -165,7 +139,7 @@ namespace Pathfinding {
 			return nextLockID;
 		}
 
-		void Unlock (int id) {
+        void Unlock (int id) {
 			if (!locks.Remove(id)) {
 				throw new System.ArgumentException("This lock has already been released");
 			}
@@ -178,7 +152,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Prevents pathfinding threads from starting to calculate any new paths.
 		///
 		/// Returns: A lock object. You need to call Unlock on that object to allow pathfinding to resume.
@@ -191,7 +165,7 @@ namespace Pathfinding {
 			return new GraphUpdateLock(this, block);
 		}
 
-		public void TickNonMultithreaded () {
+        public void TickNonMultithreaded () {
 			// Process paths
 			if (threadCoroutine != null) {
 				try {
@@ -215,7 +189,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Calls 'Join' on each of the threads to block until they have completed</summary>
+        /// <summary>Calls 'Join' on each of the threads to block until they have completed</summary>
 		public void JoinThreads () {
 			if (threads != null) {
 				for (int i = 0; i < threads.Length; i++) {
@@ -227,7 +201,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Calls 'Abort' on each of the threads</summary>
+        /// <summary>Calls 'Abort' on each of the threads</summary>
 		public void AbortThreads () {
 			if (threads == null) return;
 			for (int i = 0; i < threads.Length; i++) {
@@ -235,7 +209,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns a new global node index.
 		/// Warning: This method should not be called directly. It is used by the GraphNode constructor.
 		/// </summary>
@@ -243,7 +217,7 @@ namespace Pathfinding {
 			return nodeIndexPool.Count > 0 ? nodeIndexPool.Pop() : nextNodeIndex++;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Initializes temporary path data for a node.
 		/// Warning: This method should not be called directly. It is used by the GraphNode constructor.
 		/// </summary>
@@ -259,7 +233,7 @@ namespace Pathfinding {
 			astar.hierarchicalGraph.OnCreatedNode(node);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Destroyes the given node.
 		/// This is to be called after the node has been disconnected from the graph so that it cannot be reached from any other nodes.
 		/// It should only be called during graph updates, that is when the pathfinding threads are either not running or paused.
@@ -278,7 +252,7 @@ namespace Pathfinding {
 			astar.hierarchicalGraph.AddDirtyNode(node);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Main pathfinding method (multithreaded).
 		/// This method will calculate the paths in the pathfinding queue when multithreading is enabled.
 		///
@@ -423,7 +397,7 @@ namespace Pathfinding {
 			queue.ReceiverTerminated();
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Main pathfinding method.
 		/// This method will calculate the paths in the pathfinding queue.
 		///
@@ -583,5 +557,31 @@ namespace Pathfinding {
 				}
 			}
 		}
-	}
+
+        /// <summary>Prevents pathfinding from running while held</summary>
+		public struct GraphUpdateLock {
+			PathProcessor pathProcessor;
+			int id;
+
+			public GraphUpdateLock (PathProcessor pathProcessor, bool block) {
+				this.pathProcessor = pathProcessor;
+				id = pathProcessor.Lock(block);
+			}
+
+			/// <summary>
+			/// True while this lock is preventing the pathfinding threads from processing more paths.
+			/// Note that the pathfinding threads may not be paused yet (if this lock was obtained using PausePathfinding(false)).
+			/// </summary>
+			public bool Held {
+				get {
+					return pathProcessor != null && pathProcessor.locks.Contains(id);
+				}
+			}
+
+			/// <summary>Allow pathfinding to start running again if no other locks are still held</summary>
+			public void Release () {
+				pathProcessor.Unlock(id);
+			}
+		}
+    }
 }

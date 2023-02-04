@@ -23,56 +23,122 @@ namespace Pathfinding {
 	[AddComponentMenu("Pathfinding/Link2")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_node_link2.php")]
 	public class NodeLink2 : GraphModifier {
-		protected static Dictionary<GraphNode, NodeLink2> reference = new Dictionary<GraphNode, NodeLink2>();
-		public static NodeLink2 GetNodeLink (GraphNode node) {
-			NodeLink2 v;
+        protected static Dictionary<GraphNode, NodeLink2> reference = new Dictionary<GraphNode, NodeLink2>();
 
-			reference.TryGetValue(node, out v);
-			return v;
-		}
+        private readonly static Color GizmosColor = new Color(206.0f/255.0f, 136.0f/255.0f, 48.0f/255.0f, 0.5f);
+        private readonly static Color GizmosColorSelected = new Color(235.0f/255.0f, 123.0f/255.0f, 32.0f/255.0f, 1.0f);
 
-		/// <summary>End position of the link</summary>
+        /// <summary>End position of the link</summary>
 		public Transform end;
 
-		/// <summary>
+        /// <summary>
 		/// The connection will be this times harder/slower to traverse.
 		/// Note that values lower than 1 will not always make the pathfinder choose this path instead of another path even though this one should
 		/// lead to a lower total cost unless you also adjust the Heuristic Scale in A* Inspector -> Settings -> Pathfinding or disable the heuristic altogether.
 		/// </summary>
 		public float costFactor = 1.0f;
 
-		/// <summary>Make a one-way connection</summary>
+        /// <summary>Make a one-way connection</summary>
 		public bool oneWay = false;
 
-		public Transform StartTransform {
+        Vector3 clamped1, clamped2;
+        GraphNode connectedNode1, connectedNode2;
+        bool postScanCalled = false;
+
+        public Transform StartTransform {
 			get { return transform; }
 		}
 
-		public Transform EndTransform {
+        public Transform EndTransform {
 			get { return end; }
 		}
 
-		public PointNode startNode { get; private set; }
-		public PointNode endNode { get; private set; }
-		GraphNode connectedNode1, connectedNode2;
-		Vector3 clamped1, clamped2;
-		bool postScanCalled = false;
+        public PointNode startNode { get; private set; }
+        public PointNode endNode { get; private set; }
 
-		[System.Obsolete("Use startNode instead (lowercase s)")]
+        [System.Obsolete("Use startNode instead (lowercase s)")]
 		public GraphNode StartNode {
 			get { return startNode; }
 		}
 
-		[System.Obsolete("Use endNode instead (lowercase e)")]
+        [System.Obsolete("Use endNode instead (lowercase e)")]
 		public GraphNode EndNode {
 			get { return endNode; }
 		}
 
-		public override void OnPostScan () {
+        protected override void OnEnable () {
+			base.OnEnable();
+
+#if !ASTAR_NO_POINT_GRAPH
+			if (Application.isPlaying && AstarPath.active != null && AstarPath.active.data != null && AstarPath.active.data.pointGraph != null && !AstarPath.active.isScanning) {
+				// Call OnGraphsPostUpdate as soon as possible when it is safe to update the graphs
+				AstarPath.active.AddWorkItem(OnGraphsPostUpdate);
+			}
+#endif
+		}
+
+        protected override void OnDisable () {
+			base.OnDisable();
+
+			postScanCalled = false;
+
+			if (startNode != null) reference.Remove(startNode);
+			if (endNode != null) reference.Remove(endNode);
+
+			if (startNode != null && endNode != null) {
+				startNode.RemoveConnection(endNode);
+				endNode.RemoveConnection(startNode);
+
+				if (connectedNode1 != null && connectedNode2 != null) {
+					startNode.RemoveConnection(connectedNode1);
+					connectedNode1.RemoveConnection(startNode);
+
+					endNode.RemoveConnection(connectedNode2);
+					connectedNode2.RemoveConnection(endNode);
+				}
+			}
+		}
+
+        public void OnDrawGizmos () {
+			OnDrawGizmos(false);
+		}
+
+        public void OnDrawGizmos (bool selected) {
+			Color color = selected ? GizmosColorSelected : GizmosColor;
+
+			if (StartTransform != null) {
+				Draw.Gizmos.CircleXZ(StartTransform.position, 0.4f, color);
+			}
+			if (EndTransform != null) {
+				Draw.Gizmos.CircleXZ(EndTransform.position, 0.4f, color);
+			}
+
+			if (StartTransform != null && EndTransform != null) {
+				Draw.Gizmos.Bezier(StartTransform.position, EndTransform.position, color);
+				if (selected) {
+					Vector3 cross = Vector3.Cross(Vector3.up, (EndTransform.position-StartTransform.position)).normalized;
+					Draw.Gizmos.Bezier(StartTransform.position+cross*0.1f, EndTransform.position+cross*0.1f, color);
+					Draw.Gizmos.Bezier(StartTransform.position-cross*0.1f, EndTransform.position-cross*0.1f, color);
+				}
+			}
+		}
+
+        public virtual void OnDrawGizmosSelected () {
+			OnDrawGizmos(true);
+		}
+
+        public static NodeLink2 GetNodeLink (GraphNode node) {
+			NodeLink2 v;
+
+			reference.TryGetValue(node, out v);
+			return v;
+		}
+
+        public override void OnPostScan () {
 			InternalOnPostScan();
 		}
 
-		public void InternalOnPostScan () {
+        public void InternalOnPostScan () {
 			if (EndTransform == null || StartTransform == null) return;
 
 #if ASTAR_NO_POINT_GRAPH
@@ -113,7 +179,7 @@ namespace Pathfinding {
 #endif
 		}
 
-		public override void OnGraphsPostUpdate () {
+        public override void OnGraphsPostUpdate () {
 			// Don't bother running it now since OnPostScan will be called later anyway
 			if (AstarPath.active.isScanning)
 				return;
@@ -132,52 +198,19 @@ namespace Pathfinding {
 			}
 		}
 
-		protected override void OnEnable () {
-			base.OnEnable();
-
-#if !ASTAR_NO_POINT_GRAPH
-			if (Application.isPlaying && AstarPath.active != null && AstarPath.active.data != null && AstarPath.active.data.pointGraph != null && !AstarPath.active.isScanning) {
-				// Call OnGraphsPostUpdate as soon as possible when it is safe to update the graphs
-				AstarPath.active.AddWorkItem(OnGraphsPostUpdate);
-			}
-#endif
-		}
-
-		protected override void OnDisable () {
-			base.OnDisable();
-
-			postScanCalled = false;
-
-			if (startNode != null) reference.Remove(startNode);
-			if (endNode != null) reference.Remove(endNode);
-
-			if (startNode != null && endNode != null) {
-				startNode.RemoveConnection(endNode);
-				endNode.RemoveConnection(startNode);
-
-				if (connectedNode1 != null && connectedNode2 != null) {
-					startNode.RemoveConnection(connectedNode1);
-					connectedNode1.RemoveConnection(startNode);
-
-					endNode.RemoveConnection(connectedNode2);
-					connectedNode2.RemoveConnection(endNode);
-				}
-			}
-		}
-
-		void RemoveConnections (GraphNode node) {
+        void RemoveConnections (GraphNode node) {
 			//TODO, might be better to replace connection
 			node.ClearConnections(true);
 		}
 
-		[ContextMenu("Recalculate neighbours")]
+        [ContextMenu("Recalculate neighbours")]
 		void ContextApplyForce () {
 			if (Application.isPlaying) {
 				Apply(true);
 			}
 		}
 
-		public void Apply (bool forceNewCheck) {
+        public void Apply (bool forceNewCheck) {
 			//TODO
 			//This function assumes that connections from the n1,n2 nodes never need to be removed in the future (e.g because the nodes move or something)
 			NNConstraint nn = NNConstraint.None;
@@ -218,38 +251,7 @@ namespace Pathfinding {
 			endNode.AddConnection(connectedNode2, (uint)Mathf.RoundToInt(((Int3)(clamped2 - EndTransform.position)).costMagnitude*costFactor));
 		}
 
-		private readonly static Color GizmosColor = new Color(206.0f/255.0f, 136.0f/255.0f, 48.0f/255.0f, 0.5f);
-		private readonly static Color GizmosColorSelected = new Color(235.0f/255.0f, 123.0f/255.0f, 32.0f/255.0f, 1.0f);
-
-		public virtual void OnDrawGizmosSelected () {
-			OnDrawGizmos(true);
-		}
-
-		public void OnDrawGizmos () {
-			OnDrawGizmos(false);
-		}
-
-		public void OnDrawGizmos (bool selected) {
-			Color color = selected ? GizmosColorSelected : GizmosColor;
-
-			if (StartTransform != null) {
-				Draw.Gizmos.CircleXZ(StartTransform.position, 0.4f, color);
-			}
-			if (EndTransform != null) {
-				Draw.Gizmos.CircleXZ(EndTransform.position, 0.4f, color);
-			}
-
-			if (StartTransform != null && EndTransform != null) {
-				Draw.Gizmos.Bezier(StartTransform.position, EndTransform.position, color);
-				if (selected) {
-					Vector3 cross = Vector3.Cross(Vector3.up, (EndTransform.position-StartTransform.position)).normalized;
-					Draw.Gizmos.Bezier(StartTransform.position+cross*0.1f, EndTransform.position+cross*0.1f, color);
-					Draw.Gizmos.Bezier(StartTransform.position-cross*0.1f, EndTransform.position-cross*0.1f, color);
-				}
-			}
-		}
-
-		internal static void SerializeReferences (Pathfinding.Serialization.GraphSerializationContext ctx) {
+        internal static void SerializeReferences (Pathfinding.Serialization.GraphSerializationContext ctx) {
 			var links = GetModifiersOfType<NodeLink2>();
 
 			ctx.writer.Write(links.Count);
@@ -265,7 +267,7 @@ namespace Pathfinding {
 			}
 		}
 
-		internal static void DeserializeReferences (Pathfinding.Serialization.GraphSerializationContext ctx) {
+        internal static void DeserializeReferences (Pathfinding.Serialization.GraphSerializationContext ctx) {
 			int count = ctx.reader.ReadInt32();
 
 			for (int i = 0; i < count; i++) {
@@ -304,5 +306,5 @@ namespace Pathfinding {
 				}
 			}
 		}
-	}
+    }
 }

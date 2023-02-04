@@ -25,19 +25,10 @@ namespace Pathfinding {
 	/// </summary>
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_dynamic_grid_obstacle.php")]
 	public class DynamicGridObstacle : GraphModifier {
-		/// <summary>Collider to get bounds information from</summary>
-		Collider coll;
-
-		/// <summary>2D Collider to get bounds information from</summary>
-		Collider2D coll2D;
-
-		/// <summary>Cached transform component</summary>
-		Transform tr;
-
-		/// <summary>The minimum change in world units along one of the axis of the bounding box of the collider to trigger a graph update</summary>
+        /// <summary>The minimum change in world units along one of the axis of the bounding box of the collider to trigger a graph update</summary>
 		public float updateError = 1;
 
-		/// <summary>
+        /// <summary>
 		/// Time in seconds between bounding box checks.
 		/// If AstarPath.batchGraphUpdates is enabled, it is not beneficial to have a checkTime much lower
 		/// than AstarPath.graphUpdateBatchingInterval because that will just add extra unnecessary graph updates.
@@ -46,19 +37,28 @@ namespace Pathfinding {
 		/// </summary>
 		public float checkTime = 0.2F;
 
-		/// <summary>Bounds of the collider the last time the graphs were updated</summary>
+        /// <summary>Collider to get bounds information from</summary>
+		Collider coll;
+
+        /// <summary>2D Collider to get bounds information from</summary>
+		Collider2D coll2D;
+
+        float lastCheckTime = -9999;
+        Queue<GraphUpdateObject> pendingGraphUpdates = new Queue<GraphUpdateObject>();
+
+        /// <summary>Bounds of the collider the last time the graphs were updated</summary>
 		Bounds prevBounds;
 
-		/// <summary>Rotation of the collider the last time the graphs were updated</summary>
-		Quaternion prevRotation;
-
-		/// <summary>True if the collider was enabled last time the graphs were updated</summary>
+        /// <summary>True if the collider was enabled last time the graphs were updated</summary>
 		bool prevEnabled;
 
-		float lastCheckTime = -9999;
-		Queue<GraphUpdateObject> pendingGraphUpdates = new Queue<GraphUpdateObject>();
+        /// <summary>Rotation of the collider the last time the graphs were updated</summary>
+		Quaternion prevRotation;
 
-		Bounds bounds {
+        /// <summary>Cached transform component</summary>
+		Transform tr;
+
+        Bounds bounds {
 			get {
 				if (coll != null) {
 					return coll.bounds;
@@ -72,13 +72,13 @@ namespace Pathfinding {
 			}
 		}
 
-		bool colliderEnabled {
+        bool colliderEnabled {
 			get {
 				return coll != null ? coll.enabled : coll2D.enabled;
 			}
 		}
 
-		protected override void Awake () {
+        protected override void Awake () {
 			base.Awake();
 
 			coll = GetComponent<Collider>();
@@ -94,17 +94,7 @@ namespace Pathfinding {
 			prevEnabled = false;
 		}
 
-		public override void OnPostScan () {
-			// Make sure we find the collider
-			// AstarPath.Awake may run before Awake on this component
-			if (coll == null) Awake();
-
-			// In case the object was in the scene from the start and the graphs
-			// were scanned then we ignore the first update since it is unnecessary.
-			if (coll != null) prevEnabled = colliderEnabled;
-		}
-
-		void Update () {
+        void Update () {
 			if (!Application.isPlaying) return;
 
 			if (coll == null && coll2D == null) {
@@ -152,7 +142,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Revert graphs when disabled.
 		/// When the DynamicObstacle is disabled or destroyed, a last graph update should be done to revert nodes to their original state
 		/// </summary>
@@ -171,7 +161,17 @@ namespace Pathfinding {
 			pendingGraphUpdates.Clear();
 		}
 
-		/// <summary>
+        public override void OnPostScan () {
+			// Make sure we find the collider
+			// AstarPath.Awake may run before Awake on this component
+			if (coll == null) Awake();
+
+			// In case the object was in the scene from the start and the graphs
+			// were scanned then we ignore the first update since it is unnecessary.
+			if (coll != null) prevEnabled = colliderEnabled;
+		}
+
+        /// <summary>
 		/// Update the graphs around this object.
 		/// Note: The graphs will not be updated immediately since the pathfinding threads need to be paused first.
 		/// If you want to guarantee that the graphs have been updated then call AstarPath.active.FlushGraphUpdates()
@@ -227,9 +227,9 @@ namespace Pathfinding {
 			lastCheckTime = Time.realtimeSinceStartup;
 		}
 
-		/// <summary>Volume of a Bounds object. X*Y*Z</summary>
+        /// <summary>Volume of a Bounds object. X*Y*Z</summary>
 		static float BoundsVolume (Bounds b) {
 			return System.Math.Abs(b.size.x * b.size.y * b.size.z);
 		}
-	}
+    }
 }

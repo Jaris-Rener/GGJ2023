@@ -24,23 +24,19 @@ namespace Pathfinding.Util {
 	/// See: Pathfinding.Util.StackPool
 	/// </summary>
 	public static class ListPool<T> {
-		/// <summary>Internal pool</summary>
+        /// <summary>Internal pool</summary>
 		static readonly List<List<T> > pool = new List<List<T> >();
 
-#if !ASTAR_NO_POOLING
-		static readonly List<List<T> > largePool = new List<List<T> >();
-		static readonly HashSet<List<T> > inPool = new HashSet<List<T> >();
-#endif
-
-		/// <summary>
+        /// <summary>
 		/// When requesting a list with a specified capacity, search max this many lists in the pool before giving up.
 		/// Must be greater or equal to one.
 		/// </summary>
 		const int MaxCapacitySearchLength = 8;
-		const int LargeThreshold = 5000;
-		const int MaxLargePoolSize = 8;
 
-		/// <summary>
+        const int LargeThreshold = 5000;
+        const int MaxLargePoolSize = 8;
+
+        /// <summary>
 		/// Claim a list.
 		/// Returns a pooled list if any are in the pool.
 		/// Otherwise it creates a new one.
@@ -63,7 +59,7 @@ namespace Pathfinding.Util {
 #endif
 		}
 
-		static int FindCandidate (List<List<T> > pool, int capacity) {
+        static int FindCandidate (List<List<T> > pool, int capacity) {
 			// Loop through the last MaxCapacitySearchLength items
 			// and check if any item has a capacity greater or equal to the one that
 			// is desired. If so return it.
@@ -90,7 +86,7 @@ namespace Pathfinding.Util {
 			return listIndex;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Claim a list with minimum capacity
 		/// Returns a pooled list if any are in the pool.
 		/// Otherwise it creates a new one.
@@ -128,7 +124,7 @@ namespace Pathfinding.Util {
 #endif
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Makes sure the pool contains at least count pooled items with capacity size.
 		/// This is good if you want to do all allocations at start.
 		/// </summary>
@@ -141,7 +137,7 @@ namespace Pathfinding.Util {
 		}
 
 
-		/// <summary>
+        /// <summary>
 		/// Releases a list and sets the variable to null.
 		/// After the list has been released it should not be used anymore.
 		///
@@ -155,7 +151,7 @@ namespace Pathfinding.Util {
 			list = null;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Releases a list.
 		/// After the list has been released it should not be used anymore.
 		///
@@ -189,7 +185,7 @@ namespace Pathfinding.Util {
 #endif
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Clears the pool for lists of this type.
 		/// This is an O(n) operation, where n is the number of pooled lists.
 		/// </summary>
@@ -202,10 +198,15 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>Number of lists of this type in the pool</summary>
+        /// <summary>Number of lists of this type in the pool</summary>
 		public static int GetSize () {
 			// No lock required since int writes are atomic
 			return pool.Count;
 		}
-	}
+
+#if !ASTAR_NO_POOLING
+        static readonly List<List<T> > largePool = new List<List<T> >();
+        static readonly HashSet<List<T> > inPool = new HashSet<List<T> >();
+#endif
+    }
 }

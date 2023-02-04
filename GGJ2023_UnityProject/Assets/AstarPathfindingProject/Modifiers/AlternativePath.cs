@@ -17,48 +17,47 @@ namespace Pathfinding {
 	/// </summary>
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_alternative_path.php")]
 	public class AlternativePath : MonoModifier {
+        /// <summary>How much penalty (weight) to apply to nodes</summary>
+		public int penalty = 1000;
+
+        /// <summary>Max number of nodes to skip in a row</summary>
+		public int randomStep = 10;
+
+        /// <summary>A random object</summary>
+		readonly System.Random rnd = new System.Random();
+
+        bool destroyed;
+
+        /// <summary>The previous path</summary>
+		List<GraphNode> prevNodes = new List<GraphNode>();
+
+        /// <summary>The previous penalty used. Stored just in case it changes during operation</summary>
+		int prevPenalty;
+
+        public override int Order { get { return 10; } }
+
+        protected void OnDestroy () {
+			destroyed = true;
+			ClearOnDestroy();
+		}
 #if UNITY_EDITOR
-		[UnityEditor.MenuItem("CONTEXT/Seeker/Add Alternative Path Modifier")]
+        [UnityEditor.MenuItem("CONTEXT/Seeker/Add Alternative Path Modifier")]
 		public static void AddComp (UnityEditor.MenuCommand command) {
 			(command.context as Component).gameObject.AddComponent(typeof(AlternativePath));
 		}
 #endif
 
-		public override int Order { get { return 10; } }
-
-		/// <summary>How much penalty (weight) to apply to nodes</summary>
-		public int penalty = 1000;
-
-		/// <summary>Max number of nodes to skip in a row</summary>
-		public int randomStep = 10;
-
-		/// <summary>The previous path</summary>
-		List<GraphNode> prevNodes = new List<GraphNode>();
-
-		/// <summary>The previous penalty used. Stored just in case it changes during operation</summary>
-		int prevPenalty;
-
-		/// <summary>A random object</summary>
-		readonly System.Random rnd = new System.Random();
-
-		bool destroyed;
-
-		public override void Apply (Path p) {
+        public override void Apply (Path p) {
 			if (this == null) return;
 
 			ApplyNow(p.path);
 		}
 
-		protected void OnDestroy () {
-			destroyed = true;
-			ClearOnDestroy();
-		}
-
-		void ClearOnDestroy () {
+        void ClearOnDestroy () {
 			InversePrevious();
 		}
 
-		void InversePrevious () {
+        void InversePrevious () {
 			// Remove previous penalty
 			if (prevNodes != null) {
 				bool warnPenalties = false;
@@ -76,7 +75,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void ApplyNow (List<GraphNode> nodes) {
+        void ApplyNow (List<GraphNode> nodes) {
 			InversePrevious();
 			prevNodes.Clear();
 
@@ -92,5 +91,5 @@ namespace Pathfinding {
 
 			prevPenalty = penalty;
 		}
-	}
+    }
 }

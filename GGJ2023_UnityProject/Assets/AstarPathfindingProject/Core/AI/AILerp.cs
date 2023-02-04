@@ -38,7 +38,138 @@ namespace Pathfinding {
 	[AddComponentMenu("Pathfinding/AI/AILerp (2D,3D)")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_a_i_lerp.php")]
 	public class AILerp : VersionedMonoBehaviour, IAstarAI {
-		/// <summary>
+        /// <summary>
+		/// Determines how the agent recalculates its path automatically.
+		/// This corresponds to the settings under the "Recalculate Paths Automatically" field in the inspector.
+		/// </summary>
+		public AutoRepathPolicy autoRepath = new AutoRepathPolicy();
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::canMove</summary>
+		public bool canMove = true;
+
+        /// <summary>Speed in world units</summary>
+		public float speed = 3;
+
+        /// <summary>
+		/// Determines which direction the agent moves in.
+		/// For 3D games you most likely want the ZAxisIsForward option as that is the convention for 3D games.
+		/// For 2D games you most likely want the YAxisIsForward option as that is the convention for 2D games.
+		///
+		/// Using the YAxisForward option will also allow the agent to assume that the movement will happen in the 2D (XY) plane instead of the XZ plane
+		/// if it does not know. This is important only for the point graph which does not have a well defined up direction. The other built-in graphs (e.g the grid graph)
+		/// will all tell the agent which movement plane it is supposed to use.
+		///
+		/// [Open online documentation to see images]
+		/// </summary>
+		[UnityEngine.Serialization.FormerlySerializedAs("rotationIn2D")]
+		public OrientationMode orientation = OrientationMode.ZAxisForward;
+
+        /// <summary>
+		/// If true, the AI will rotate to face the movement direction.
+		/// See: <see cref="orientation"/>
+		/// </summary>
+		public bool enableRotation = true;
+
+        /// <summary>How quickly to rotate</summary>
+		public float rotationSpeed = 10;
+
+        /// <summary>
+		/// If true, some interpolation will be done when a new path has been calculated.
+		/// This is used to avoid short distance teleportation.
+		/// See: <see cref="switchPathInterpolationSpeed"/>
+		/// </summary>
+		public bool interpolatePathSwitches = true;
+
+        /// <summary>
+		/// How quickly to interpolate to the new path.
+		/// See: <see cref="interpolatePathSwitches"/>
+		/// </summary>
+		public float switchPathInterpolationSpeed = 5;
+
+        /// <summary>Required for serialization backward compatibility</summary>
+		[UnityEngine.Serialization.FormerlySerializedAs("target")][SerializeField][HideInInspector]
+		Transform targetCompatibility;
+
+        [SerializeField]
+		[HideInInspector]
+		[UnityEngine.Serialization.FormerlySerializedAs("repathRate")]
+		float repathRateCompatibility = float.NaN;
+
+        [SerializeField]
+		[HideInInspector]
+		[UnityEngine.Serialization.FormerlySerializedAs("canSearch")]
+		bool canSearchCompability = false;
+
+        /// <summary>Only when the previous path has been returned should a search for a new path be done</summary>
+		protected bool canSearchAgain = true;
+
+        protected PathInterpolator interpolator = new PathInterpolator();
+
+        /// <summary>Current path which is followed</summary>
+		protected ABPath path;
+
+        /// <summary>
+		/// Time since the path was replaced by a new path.
+		/// See: <see cref="interpolatePathSwitches"/>
+		/// </summary>
+		protected float pathSwitchInterpolationTime = 0;
+
+        protected Vector3 previousMovementDirection;
+
+        /// <summary>
+		/// When a new path was returned, the AI was moving along this ray.
+		/// Used to smoothly interpolate between the previous movement and the movement along the new path.
+		/// The speed is equal to movement direction.
+		/// </summary>
+		protected Vector3 previousMovementOrigin;
+
+        Vector3 previousPosition1, previousPosition2, simulatedPosition;
+
+        /// <summary>Cached Seeker component</summary>
+		protected Seeker seeker;
+
+        Quaternion simulatedRotation;
+
+
+        /// <summary>
+		/// Holds if the Start function has been run.
+		/// Used to test if coroutines should be started in OnEnable to prevent calculating paths
+		/// in the awake stage (or rather before start on frame 0).
+		/// </summary>
+		bool startHasRun = false;
+
+        /// <summary>Cached Transform component</summary>
+		protected Transform tr;
+
+        /// <summary>
+		/// Determines if the character's position should be coupled to the Transform's position.
+		/// If false then all movement calculations will happen as usual, but the object that this component is attached to will not move
+		/// instead only the <see cref="position"/> property will change.
+		///
+		/// See: <see cref="canMove"/> which in contrast to this field will disable all movement calculations.
+		/// See: <see cref="updateRotation"/>
+		/// </summary>
+		[System.NonSerialized]
+		public bool updatePosition = true;
+
+        /// <summary>
+		/// Determines if the character's rotation should be coupled to the Transform's rotation.
+		/// If false then all movement calculations will happen as usual, but the object that this component is attached to will not rotate
+		/// instead only the <see cref="rotation"/> property will change.
+		///
+		/// See: <see cref="updatePosition"/>
+		/// </summary>
+		[System.NonSerialized]
+		public bool updateRotation = true;
+
+        protected AILerp () {
+			// Note that this needs to be set here in the constructor and not in e.g Awake
+			// because it is possible that other code runs and sets the destination property
+			// before the Awake method on this script runs.
+			destination = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+		}
+
+        /// <summary>
 		/// Determines how often it will search for new paths.
 		/// If you have fast moving targets or AIs, you might want to set it to a lower value.
 		/// The value is in seconds between path requests.
@@ -55,7 +186,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// \copydoc Pathfinding::IAstarAI::canSearch
 		/// Deprecated: This has been superseded by \reflink{autoRepath.mode}.
 		/// </summary>
@@ -68,33 +199,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
-		/// Determines how the agent recalculates its path automatically.
-		/// This corresponds to the settings under the "Recalculate Paths Automatically" field in the inspector.
-		/// </summary>
-		public AutoRepathPolicy autoRepath = new AutoRepathPolicy();
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::canMove</summary>
-		public bool canMove = true;
-
-		/// <summary>Speed in world units</summary>
-		public float speed = 3;
-
-		/// <summary>
-		/// Determines which direction the agent moves in.
-		/// For 3D games you most likely want the ZAxisIsForward option as that is the convention for 3D games.
-		/// For 2D games you most likely want the YAxisIsForward option as that is the convention for 2D games.
-		///
-		/// Using the YAxisForward option will also allow the agent to assume that the movement will happen in the 2D (XY) plane instead of the XZ plane
-		/// if it does not know. This is important only for the point graph which does not have a well defined up direction. The other built-in graphs (e.g the grid graph)
-		/// will all tell the agent which movement plane it is supposed to use.
-		///
-		/// [Open online documentation to see images]
-		/// </summary>
-		[UnityEngine.Serialization.FormerlySerializedAs("rotationIn2D")]
-		public OrientationMode orientation = OrientationMode.ZAxisForward;
-
-		/// <summary>
+        /// <summary>
 		/// If true, the forward axis of the character will be along the Y axis instead of the Z axis.
 		///
 		/// Deprecated: Use <see cref="orientation"/> instead
@@ -105,73 +210,7 @@ namespace Pathfinding {
 			set { orientation = value ? OrientationMode.YAxisForward : OrientationMode.ZAxisForward; }
 		}
 
-		/// <summary>
-		/// If true, the AI will rotate to face the movement direction.
-		/// See: <see cref="orientation"/>
-		/// </summary>
-		public bool enableRotation = true;
-
-		/// <summary>How quickly to rotate</summary>
-		public float rotationSpeed = 10;
-
-		/// <summary>
-		/// If true, some interpolation will be done when a new path has been calculated.
-		/// This is used to avoid short distance teleportation.
-		/// See: <see cref="switchPathInterpolationSpeed"/>
-		/// </summary>
-		public bool interpolatePathSwitches = true;
-
-		/// <summary>
-		/// How quickly to interpolate to the new path.
-		/// See: <see cref="interpolatePathSwitches"/>
-		/// </summary>
-		public float switchPathInterpolationSpeed = 5;
-
-		/// <summary>True if the end of the current path has been reached</summary>
-		public bool reachedEndOfPath { get; private set; }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::reachedDestination</summary>
-		public bool reachedDestination {
-			get {
-				if (!reachedEndOfPath || !interpolator.valid) return false;
-				// Note: distanceToSteeringTarget is the distance to the end of the path when approachingPathEndpoint is true
-				var dir = destination - interpolator.endPoint;
-				// Ignore either the y or z coordinate depending on if we are using 2D mode or not
-				if (orientation == OrientationMode.YAxisForward) dir.z = 0;
-				else dir.y = 0;
-
-				// Check against using a very small margin
-				// In theory a check against 0 should be done, but this will be a bit more resilient against targets that move slowly or maybe jitter around due to floating point errors.
-				if (remainingDistance + dir.magnitude >= 0.05f) return false;
-
-				return true;
-			}
-		}
-
-		public Vector3 destination { get; set; }
-
-		/// <summary>
-		/// Determines if the character's position should be coupled to the Transform's position.
-		/// If false then all movement calculations will happen as usual, but the object that this component is attached to will not move
-		/// instead only the <see cref="position"/> property will change.
-		///
-		/// See: <see cref="canMove"/> which in contrast to this field will disable all movement calculations.
-		/// See: <see cref="updateRotation"/>
-		/// </summary>
-		[System.NonSerialized]
-		public bool updatePosition = true;
-
-		/// <summary>
-		/// Determines if the character's rotation should be coupled to the Transform's rotation.
-		/// If false then all movement calculations will happen as usual, but the object that this component is attached to will not rotate
-		/// instead only the <see cref="rotation"/> property will change.
-		///
-		/// See: <see cref="updatePosition"/>
-		/// </summary>
-		[System.NonSerialized]
-		public bool updateRotation = true;
-
-		/// <summary>
+        /// <summary>
 		/// Target to move towards.
 		/// The AI will try to follow/move towards this target.
 		/// It can be a point on the ground where the player has clicked in an RTS for example, or it can be the player object in a zombie game.
@@ -195,159 +234,14 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::position</summary>
-		public Vector3 position { get { return updatePosition ? tr.position : simulatedPosition; } }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::rotation</summary>
-		public Quaternion rotation {
-			get { return updateRotation ? tr.rotation : simulatedRotation; }
-			set {
-				if (updateRotation) {
-					tr.rotation = value;
-				} else {
-					simulatedRotation = value;
-				}
-			}
-		}
-
-		#region IAstarAI implementation
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::Move</summary>
-		void IAstarAI.Move (Vector3 deltaPosition) {
-			// This script does not know the concept of being away from the path that it is following
-			// so this call will be ignored (as is also mentioned in the documentation).
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::radius</summary>
-		float IAstarAI.radius { get { return 0; } set {} }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::height</summary>
-		float IAstarAI.height { get { return 0; } set {} }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::maxSpeed</summary>
-		float IAstarAI.maxSpeed { get { return speed; } set { speed = value; } }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::canSearch</summary>
-		bool IAstarAI.canSearch { get { return canSearch; } set { canSearch = value; } }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::canMove</summary>
-		bool IAstarAI.canMove { get { return canMove; } set { canMove = value; } }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::velocity</summary>
-		public Vector3 velocity {
+        /// <summary>True if the path should be automatically recalculated as soon as possible</summary>
+		protected virtual bool shouldRecalculatePath {
 			get {
-				return Time.deltaTime > 0.00001f ? (previousPosition1 - previousPosition2) / Time.deltaTime : Vector3.zero;
+				return canSearchAgain && autoRepath.ShouldRecalculatePath((IAstarAI)this);
 			}
 		}
 
-		Vector3 IAstarAI.desiredVelocity {
-			get {
-				// The AILerp script sets the position every frame. It does not take into account physics
-				// or other things. So the velocity should always be the same as the desired velocity.
-				return (this as IAstarAI).velocity;
-			}
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::steeringTarget</summary>
-		Vector3 IAstarAI.steeringTarget {
-			get {
-				// AILerp doesn't use steering at all, so we will just return a point ahead of the agent in the direction it is moving.
-				return interpolator.valid ? interpolator.position + interpolator.tangent : simulatedPosition;
-			}
-		}
-		#endregion
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::remainingDistance</summary>
-		public float remainingDistance {
-			get {
-				return Mathf.Max(interpolator.remainingDistance, 0);
-			}
-			set {
-				interpolator.remainingDistance = Mathf.Max(value, 0);
-			}
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::hasPath</summary>
-		public bool hasPath {
-			get {
-				return interpolator.valid;
-			}
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::pathPending</summary>
-		public bool pathPending {
-			get {
-				return !canSearchAgain;
-			}
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::isStopped</summary>
-		public bool isStopped { get; set; }
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::onSearchPath</summary>
-		public System.Action onSearchPath { get; set; }
-
-		/// <summary>Cached Seeker component</summary>
-		protected Seeker seeker;
-
-		/// <summary>Cached Transform component</summary>
-		protected Transform tr;
-
-		/// <summary>Current path which is followed</summary>
-		protected ABPath path;
-
-		/// <summary>Only when the previous path has been returned should a search for a new path be done</summary>
-		protected bool canSearchAgain = true;
-
-		/// <summary>
-		/// When a new path was returned, the AI was moving along this ray.
-		/// Used to smoothly interpolate between the previous movement and the movement along the new path.
-		/// The speed is equal to movement direction.
-		/// </summary>
-		protected Vector3 previousMovementOrigin;
-		protected Vector3 previousMovementDirection;
-
-		/// <summary>
-		/// Time since the path was replaced by a new path.
-		/// See: <see cref="interpolatePathSwitches"/>
-		/// </summary>
-		protected float pathSwitchInterpolationTime = 0;
-
-		protected PathInterpolator interpolator = new PathInterpolator();
-
-
-		/// <summary>
-		/// Holds if the Start function has been run.
-		/// Used to test if coroutines should be started in OnEnable to prevent calculating paths
-		/// in the awake stage (or rather before start on frame 0).
-		/// </summary>
-		bool startHasRun = false;
-
-		Vector3 previousPosition1, previousPosition2, simulatedPosition;
-		Quaternion simulatedRotation;
-
-		/// <summary>Required for serialization backward compatibility</summary>
-		[UnityEngine.Serialization.FormerlySerializedAs("target")][SerializeField][HideInInspector]
-		Transform targetCompatibility;
-
-		[SerializeField]
-		[HideInInspector]
-		[UnityEngine.Serialization.FormerlySerializedAs("repathRate")]
-		float repathRateCompatibility = float.NaN;
-
-		[SerializeField]
-		[HideInInspector]
-		[UnityEngine.Serialization.FormerlySerializedAs("canSearch")]
-		bool canSearchCompability = false;
-
-		protected AILerp () {
-			// Note that this needs to be set here in the constructor and not in e.g Awake
-			// because it is possible that other code runs and sets the destination property
-			// before the Awake method on this script runs.
-			destination = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
-		}
-
-		/// <summary>
+        /// <summary>
 		/// Initializes reference variables.
 		/// If you override this function you should in most cases call base.Awake () at the start of it.
 		/// </summary>
@@ -366,7 +260,7 @@ namespace Pathfinding {
 			seeker.startEndModifier.adjustStartPoint = () => simulatedPosition;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Starts searching for paths.
 		/// If you override this function you should in most cases call base.Start () at the start of it.
 		/// See: <see cref="Init"/>
@@ -377,29 +271,103 @@ namespace Pathfinding {
 			Init();
 		}
 
-		/// <summary>Called when the component is enabled</summary>
+        protected virtual void Update () {
+			if (shouldRecalculatePath) SearchPath();
+			if (canMove) {
+				Vector3 nextPosition;
+				Quaternion nextRotation;
+				MovementUpdate(Time.deltaTime, out nextPosition, out nextRotation);
+				FinalizeMovement(nextPosition, nextRotation);
+			}
+		}
+
+        /// <summary>Called when the component is enabled</summary>
 		protected virtual void OnEnable () {
 			// Make sure we receive callbacks when paths complete
 			seeker.pathCallback += OnPathComplete;
 			Init();
 		}
 
-		void Init () {
-			if (startHasRun) {
-				// The Teleport call will make sure some variables are properly initialized (like #prevPosition1 and #prevPosition2)
-				Teleport(position, false);
-				autoRepath.Reset();
-				if (shouldRecalculatePath) SearchPath();
-			}
-		}
-
-		public void OnDisable () {
+        public void OnDisable () {
 			ClearPath();
 			// Make sure we no longer receive callbacks when paths complete
 			seeker.pathCallback -= OnPathComplete;
 		}
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::GetRemainingPath</summary>
+        public virtual void OnDrawGizmos () {
+			tr = transform;
+			autoRepath.DrawGizmos((IAstarAI)this);
+		}
+
+        /// <summary>True if the end of the current path has been reached</summary>
+		public bool reachedEndOfPath { get; private set; }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::reachedDestination</summary>
+		public bool reachedDestination {
+			get {
+				if (!reachedEndOfPath || !interpolator.valid) return false;
+				// Note: distanceToSteeringTarget is the distance to the end of the path when approachingPathEndpoint is true
+				var dir = destination - interpolator.endPoint;
+				// Ignore either the y or z coordinate depending on if we are using 2D mode or not
+				if (orientation == OrientationMode.YAxisForward) dir.z = 0;
+				else dir.y = 0;
+
+				// Check against using a very small margin
+				// In theory a check against 0 should be done, but this will be a bit more resilient against targets that move slowly or maybe jitter around due to floating point errors.
+				if (remainingDistance + dir.magnitude >= 0.05f) return false;
+
+				return true;
+			}
+		}
+
+        public Vector3 destination { get; set; }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::position</summary>
+		public Vector3 position { get { return updatePosition ? tr.position : simulatedPosition; } }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::rotation</summary>
+		public Quaternion rotation {
+			get { return updateRotation ? tr.rotation : simulatedRotation; }
+			set {
+				if (updateRotation) {
+					tr.rotation = value;
+				} else {
+					simulatedRotation = value;
+				}
+			}
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::remainingDistance</summary>
+		public float remainingDistance {
+			get {
+				return Mathf.Max(interpolator.remainingDistance, 0);
+			}
+			set {
+				interpolator.remainingDistance = Mathf.Max(value, 0);
+			}
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::hasPath</summary>
+		public bool hasPath {
+			get {
+				return interpolator.valid;
+			}
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::pathPending</summary>
+		public bool pathPending {
+			get {
+				return !canSearchAgain;
+			}
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::isStopped</summary>
+		public bool isStopped { get; set; }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::onSearchPath</summary>
+		public System.Action onSearchPath { get; set; }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::GetRemainingPath</summary>
 		public void GetRemainingPath (List<Vector3> buffer, out bool stale) {
 			buffer.Clear();
 			if (!interpolator.valid) {
@@ -416,7 +384,7 @@ namespace Pathfinding {
 			buffer[0] = position;
 		}
 
-		public void Teleport (Vector3 position, bool clearPath = true) {
+        public void Teleport (Vector3 position, bool clearPath = true) {
 			if (clearPath) ClearPath();
 			simulatedPosition = previousPosition1 = previousPosition2 = position;
 			if (updatePosition) tr.position = position;
@@ -424,23 +392,7 @@ namespace Pathfinding {
 			if (clearPath) SearchPath();
 		}
 
-		/// <summary>True if the path should be automatically recalculated as soon as possible</summary>
-		protected virtual bool shouldRecalculatePath {
-			get {
-				return canSearchAgain && autoRepath.ShouldRecalculatePath((IAstarAI)this);
-			}
-		}
-
-		/// <summary>
-		/// Requests a path to the target.
-		/// Deprecated: Use <see cref="SearchPath"/> instead.
-		/// </summary>
-		[System.Obsolete("Use SearchPath instead")]
-		public virtual void ForceSearchPath () {
-			SearchPath();
-		}
-
-		/// <summary>Requests a path to the target.</summary>
+        /// <summary>Requests a path to the target.</summary>
 		public virtual void SearchPath () {
 			if (float.IsPositiveInfinity(destination.x)) return;
 			if (onSearchPath != null) onSearchPath();
@@ -466,7 +418,71 @@ namespace Pathfinding {
 			SetPath(ABPath.Construct(currentPosition, destination, null));
 		}
 
-		/// <summary>
+        /// <summary>\copydoc Pathfinding::IAstarAI::SetPath</summary>
+		public void SetPath (Path path) {
+			if (path == null) {
+				ClearPath();
+			} else if (path.PipelineState == PathState.Created) {
+				// Path has not started calculation yet
+				canSearchAgain = false;
+				seeker.CancelCurrentPathRequest();
+				seeker.StartPath(path);
+				autoRepath.DidRecalculatePath(destination);
+			} else if (path.PipelineState == PathState.Returned) {
+				// Path has already been calculated
+
+				// We might be calculating another path at the same time, and we don't want that path to override this one. So cancel it.
+				if (seeker.GetCurrentPath() != path) seeker.CancelCurrentPathRequest();
+				else throw new System.ArgumentException("If you calculate the path using seeker.StartPath then this script will pick up the calculated path anyway as it listens for all paths the Seeker finishes calculating. You should not call SetPath in that case.");
+
+				OnPathComplete(path);
+			} else {
+				// Path calculation has been started, but it is not yet complete. Cannot really handle this.
+				throw new System.ArgumentException("You must call the SetPath method with a path that either has been completely calculated or one whose path calculation has not been started at all. It looks like the path calculation for the path you tried to use has been started, but is not yet finished.");
+			}
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::MovementUpdate</summary>
+		public void MovementUpdate (float deltaTime, out Vector3 nextPosition, out Quaternion nextRotation) {
+			if (updatePosition) simulatedPosition = tr.position;
+			if (updateRotation) simulatedRotation = tr.rotation;
+
+			Vector3 direction;
+
+			nextPosition = CalculateNextPosition(out direction, isStopped ? 0f : deltaTime);
+
+			if (enableRotation) nextRotation = SimulateRotationTowards(direction, deltaTime);
+			else nextRotation = simulatedRotation;
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::FinalizeMovement</summary>
+		public void FinalizeMovement (Vector3 nextPosition, Quaternion nextRotation) {
+			previousPosition2 = previousPosition1;
+			previousPosition1 = simulatedPosition = nextPosition;
+			simulatedRotation = nextRotation;
+			if (updatePosition) tr.position = nextPosition;
+			if (updateRotation) tr.rotation = nextRotation;
+		}
+
+        void Init () {
+			if (startHasRun) {
+				// The Teleport call will make sure some variables are properly initialized (like #prevPosition1 and #prevPosition2)
+				Teleport(position, false);
+				autoRepath.Reset();
+				if (shouldRecalculatePath) SearchPath();
+			}
+		}
+
+        /// <summary>
+		/// Requests a path to the target.
+		/// Deprecated: Use <see cref="SearchPath"/> instead.
+		/// </summary>
+		[System.Obsolete("Use SearchPath instead")]
+		public virtual void ForceSearchPath () {
+			SearchPath();
+		}
+
+        /// <summary>
 		/// The end of the path has been reached.
 		/// If you want custom logic for when the AI has reached it's destination
 		/// add it here.
@@ -476,7 +492,7 @@ namespace Pathfinding {
 		public virtual void OnTargetReached () {
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Called when a requested path has finished calculation.
 		/// A path is first requested by <see cref="SearchPath"/>, it is then calculated, probably in the same or the next frame.
 		/// Finally it is returned to the seeker which forwards it to this function.
@@ -531,7 +547,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Clears the current path of the agent.
 		///
 		/// Usually invoked using <see cref="SetPath(null)"/>
@@ -551,31 +567,7 @@ namespace Pathfinding {
 			interpolator.SetPath(null);
 		}
 
-		/// <summary>\copydoc Pathfinding::IAstarAI::SetPath</summary>
-		public void SetPath (Path path) {
-			if (path == null) {
-				ClearPath();
-			} else if (path.PipelineState == PathState.Created) {
-				// Path has not started calculation yet
-				canSearchAgain = false;
-				seeker.CancelCurrentPathRequest();
-				seeker.StartPath(path);
-				autoRepath.DidRecalculatePath(destination);
-			} else if (path.PipelineState == PathState.Returned) {
-				// Path has already been calculated
-
-				// We might be calculating another path at the same time, and we don't want that path to override this one. So cancel it.
-				if (seeker.GetCurrentPath() != path) seeker.CancelCurrentPathRequest();
-				else throw new System.ArgumentException("If you calculate the path using seeker.StartPath then this script will pick up the calculated path anyway as it listens for all paths the Seeker finishes calculating. You should not call SetPath in that case.");
-
-				OnPathComplete(path);
-			} else {
-				// Path calculation has been started, but it is not yet complete. Cannot really handle this.
-				throw new System.ArgumentException("You must call the SetPath method with a path that either has been completely calculated or one whose path calculation has not been started at all. It looks like the path calculation for the path you tried to use has been started, but is not yet finished.");
-			}
-		}
-
-		protected virtual void ConfigurePathSwitchInterpolation () {
+        protected virtual void ConfigurePathSwitchInterpolation () {
 			bool reachedEndOfPreviousPath = interpolator.valid && interpolator.remainingDistance < 0.0001f;
 
 			if (interpolator.valid && !reachedEndOfPreviousPath) {
@@ -589,11 +581,11 @@ namespace Pathfinding {
 			}
 		}
 
-		public virtual Vector3 GetFeetPosition () {
+        public virtual Vector3 GetFeetPosition () {
 			return position;
 		}
 
-		/// <summary>Finds the closest point on the current path and configures the <see cref="interpolator"/></summary>
+        /// <summary>Finds the closest point on the current path and configures the <see cref="interpolator"/></summary>
 		protected virtual void ConfigureNewPath () {
 			var hadValidPath = interpolator.valid;
 			var prevTangent = hadValidPath ? interpolator.tangent : Vector3.zero;
@@ -607,39 +599,7 @@ namespace Pathfinding {
 			}
 		}
 
-		protected virtual void Update () {
-			if (shouldRecalculatePath) SearchPath();
-			if (canMove) {
-				Vector3 nextPosition;
-				Quaternion nextRotation;
-				MovementUpdate(Time.deltaTime, out nextPosition, out nextRotation);
-				FinalizeMovement(nextPosition, nextRotation);
-			}
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::MovementUpdate</summary>
-		public void MovementUpdate (float deltaTime, out Vector3 nextPosition, out Quaternion nextRotation) {
-			if (updatePosition) simulatedPosition = tr.position;
-			if (updateRotation) simulatedRotation = tr.rotation;
-
-			Vector3 direction;
-
-			nextPosition = CalculateNextPosition(out direction, isStopped ? 0f : deltaTime);
-
-			if (enableRotation) nextRotation = SimulateRotationTowards(direction, deltaTime);
-			else nextRotation = simulatedRotation;
-		}
-
-		/// <summary>\copydoc Pathfinding::IAstarAI::FinalizeMovement</summary>
-		public void FinalizeMovement (Vector3 nextPosition, Quaternion nextRotation) {
-			previousPosition2 = previousPosition1;
-			previousPosition1 = simulatedPosition = nextPosition;
-			simulatedRotation = nextRotation;
-			if (updatePosition) tr.position = nextPosition;
-			if (updateRotation) tr.rotation = nextRotation;
-		}
-
-		Quaternion SimulateRotationTowards (Vector3 direction, float deltaTime) {
+        Quaternion SimulateRotationTowards (Vector3 direction, float deltaTime) {
 			// Rotate unless we are really close to the target
 			if (direction != Vector3.zero) {
 				Quaternion targetRotation = Quaternion.LookRotation(direction, orientation == OrientationMode.YAxisForward ? Vector3.back : Vector3.up);
@@ -650,7 +610,7 @@ namespace Pathfinding {
 			return simulatedRotation;
 		}
 
-		/// <summary>Calculate the AI's next position (one frame in the future).</summary>
+        /// <summary>Calculate the AI's next position (one frame in the future).</summary>
 		/// <param name="direction">The tangent of the segment the AI is currently traversing. Not normalized.</param>
 		protected virtual Vector3 CalculateNextPosition (out Vector3 direction, float deltaTime) {
 			if (!interpolator.valid) {
@@ -681,7 +641,7 @@ namespace Pathfinding {
 			}
 		}
 
-		protected override int OnUpgradeSerializedData (int version, bool unityThread) {
+        protected override int OnUpgradeSerializedData (int version, bool unityThread) {
 			#pragma warning disable 618
 			if (unityThread && targetCompatibility != null) target = targetCompatibility;
 			#pragma warning restore 618
@@ -693,9 +653,52 @@ namespace Pathfinding {
 			return 4;
 		}
 
-		public virtual void OnDrawGizmos () {
-			tr = transform;
-			autoRepath.DrawGizmos((IAstarAI)this);
+        #region IAstarAI implementation
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::Move</summary>
+		void IAstarAI.Move (Vector3 deltaPosition) {
+			// This script does not know the concept of being away from the path that it is following
+			// so this call will be ignored (as is also mentioned in the documentation).
 		}
-	}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::radius</summary>
+		float IAstarAI.radius { get { return 0; } set {} }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::height</summary>
+		float IAstarAI.height { get { return 0; } set {} }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::maxSpeed</summary>
+		float IAstarAI.maxSpeed { get { return speed; } set { speed = value; } }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::canSearch</summary>
+		bool IAstarAI.canSearch { get { return canSearch; } set { canSearch = value; } }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::canMove</summary>
+		bool IAstarAI.canMove { get { return canMove; } set { canMove = value; } }
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::velocity</summary>
+		public Vector3 velocity {
+			get {
+				return Time.deltaTime > 0.00001f ? (previousPosition1 - previousPosition2) / Time.deltaTime : Vector3.zero;
+			}
+		}
+
+        Vector3 IAstarAI.desiredVelocity {
+			get {
+				// The AILerp script sets the position every frame. It does not take into account physics
+				// or other things. So the velocity should always be the same as the desired velocity.
+				return (this as IAstarAI).velocity;
+			}
+		}
+
+        /// <summary>\copydoc Pathfinding::IAstarAI::steeringTarget</summary>
+		Vector3 IAstarAI.steeringTarget {
+			get {
+				// AILerp doesn't use steering at all, so we will just return a point ahead of the agent in the direction it is moving.
+				return interpolator.valid ? interpolator.position + interpolator.tangent : simulatedPosition;
+			}
+		}
+
+        #endregion
+    }
 }

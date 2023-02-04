@@ -7,180 +7,14 @@ namespace Pathfinding {
 	[CustomEditor(typeof(GraphUpdateScene))]
 	[CanEditMultipleObjects]
 	public class GraphUpdateSceneEditor : EditorBase {
-		int selectedPoint = -1;
+        const float pointGizmosRadius = 0.09F;
+        static Color PointColor = new Color(1, 0.36F, 0, 0.6F);
+        static Color PointSelectedColor = new Color(1, 0.24F, 0, 1.0F);
 
-		const float pointGizmosRadius = 0.09F;
-		static Color PointColor = new Color(1, 0.36F, 0, 0.6F);
-		static Color PointSelectedColor = new Color(1, 0.24F, 0, 1.0F);
+        GraphUpdateScene[] scripts;
+        int selectedPoint = -1;
 
-		GraphUpdateScene[] scripts;
-
-		protected override void Inspector () {
-			// Find all properties
-			var points = FindProperty("points");
-			var legacyMode = FindProperty("legacyMode");
-
-			// Get a list of inspected components
-			scripts = new GraphUpdateScene[targets.Length];
-			targets.CopyTo(scripts, 0);
-
-			EditorGUI.BeginChangeCheck();
-
-			// Make sure no point arrays are null
-			for (int i = 0; i < scripts.Length; i++) {
-				scripts[i].points = scripts[i].points ?? new Vector3[0];
-			}
-
-			if (!points.hasMultipleDifferentValues && points.arraySize == 0) {
-				if (scripts[0].GetComponent<PolygonCollider2D>() != null) {
-					EditorGUILayout.HelpBox("Using polygon collider shape", MessageType.Info);
-				} else if (scripts[0].GetComponent<Collider>() != null || scripts[0].GetComponent<Collider2D>() != null) {
-					EditorGUILayout.HelpBox("No points, using collider.bounds", MessageType.Info);
-				} else if (scripts[0].GetComponent<Renderer>() != null) {
-					EditorGUILayout.HelpBox("No points, using renderer.bounds", MessageType.Info);
-				} else {
-					EditorGUILayout.HelpBox("No points and no collider or renderer attached, will not affect anything\nPoints can be added using the transform tool and holding shift", MessageType.Warning);
-				}
-			}
-
-			DrawPointsField();
-
-			EditorGUI.indentLevel = 0;
-
-			DrawPhysicsField();
-
-			PropertyField("updateErosion", null, "Recalculate erosion for grid graphs.\nSee online documentation for more info");
-
-			DrawConvexField();
-
-			// Minimum bounds height is not applied when using the bounds from a collider or renderer
-			if (points.hasMultipleDifferentValues || points.arraySize > 0) {
-				FloatField("minBoundsHeight", min: 0.1f);
-			}
-			PropertyField("applyOnStart");
-			PropertyField("applyOnScan");
-
-			DrawWalkableField();
-			DrawPenaltyField();
-			DrawTagField();
-
-			EditorGUILayout.Separator();
-
-			if (legacyMode.hasMultipleDifferentValues || legacyMode.boolValue) {
-				EditorGUILayout.HelpBox("Legacy mode is enabled because you have upgraded from an earlier version of the A* Pathfinding Project. " +
-					"Disabling legacy mode is recommended but you may have to tweak the point locations or object rotation in some cases", MessageType.Warning);
-				if (GUILayout.Button("Disable Legacy Mode")) {
-					for (int i = 0; i < scripts.Length; i++) {
-						Undo.RecordObject(scripts[i], "Disable Legacy Mode");
-						scripts[i].DisableLegacyMode();
-					}
-				}
-			}
-
-			if (scripts.Length == 1 && scripts[0].points.Length >= 3) {
-				var size = scripts[0].GetBounds().size;
-				if (Mathf.Min(Mathf.Min(Mathf.Abs(size.x), Mathf.Abs(size.y)), Mathf.Abs(size.z)) < 0.05f) {
-					EditorGUILayout.HelpBox("The bounding box is very thin. Your shape might be oriented incorrectly. The shape will be projected down on the XZ plane in local space. Rotate this object " +
-						"so that the local XZ plane corresponds to the plane in which you want to create your shape. For example if you want to create your shape in the XY plane then " +
-						"this object should have the rotation (-90,0,0). You will need to recreate your shape after rotating this object.", MessageType.Warning);
-				}
-			}
-
-			if (GUILayout.Button("Clear all points")) {
-				for (int i = 0; i < scripts.Length; i++) {
-					Undo.RecordObject(scripts[i], "Clear points");
-					scripts[i].points = new Vector3[0];
-					scripts[i].RecalcConvex();
-				}
-			}
-
-			if (EditorGUI.EndChangeCheck()) {
-				for (int i = 0; i < scripts.Length; i++) {
-					EditorUtility.SetDirty(scripts[i]);
-				}
-
-				// Repaint the scene view if necessary
-				if (!Application.isPlaying || EditorApplication.isPaused) SceneView.RepaintAll();
-			}
-		}
-
-		void DrawPointsField () {
-			EditorGUI.BeginChangeCheck();
-			PropertyField("points");
-			if (EditorGUI.EndChangeCheck()) {
-				serializedObject.ApplyModifiedProperties();
-				for (int i = 0; i < scripts.Length; i++) {
-					scripts[i].RecalcConvex();
-				}
-				HandleUtility.Repaint();
-			}
-		}
-
-		void DrawPhysicsField () {
-			if (PropertyField("updatePhysics", "Update Physics", "Perform similar calculations on the nodes as during scan.\n" +
-				"Grid Graphs will update the position of the nodes and also check walkability using collision.\nSee online documentation for more info.")) {
-				EditorGUI.indentLevel++;
-				PropertyField("resetPenaltyOnPhysics");
-				EditorGUI.indentLevel--;
-			}
-		}
-
-		void DrawConvexField () {
-			EditorGUI.BeginChangeCheck();
-			PropertyField("convex");
-			if (EditorGUI.EndChangeCheck()) {
-				serializedObject.ApplyModifiedProperties();
-				for (int i = 0; i < scripts.Length; i++) {
-					scripts[i].RecalcConvex();
-				}
-				HandleUtility.Repaint();
-			}
-		}
-
-		void DrawWalkableField () {
-			if (PropertyField("modifyWalkability")) {
-				EditorGUI.indentLevel++;
-				PropertyField("setWalkability", "Walkability Value");
-				EditorGUI.indentLevel--;
-			}
-		}
-
-		void DrawPenaltyField () {
-			PropertyField("penaltyDelta", "Penalty Delta");
-
-			if (!FindProperty("penaltyDelta").hasMultipleDifferentValues && FindProperty("penaltyDelta").intValue < 0) {
-				EditorGUILayout.HelpBox("Be careful when lowering the penalty. Negative penalties are not supported and will instead underflow and get really high.\n" +
-					"You can set an initial penalty on graphs (see their settings) and then lower them like this to get regions which are easier to traverse.", MessageType.Warning);
-			}
-		}
-
-		void DrawTagField () {
-			if (PropertyField("modifyTag")) {
-				var tagValue = FindProperty("setTag");
-				EditorGUI.indentLevel++;
-				EditorGUI.showMixedValue = tagValue.hasMultipleDifferentValues;
-				EditorGUI.BeginChangeCheck();
-				var newTag = EditorGUILayoutx.TagField("Tag Value", tagValue.intValue, () => AstarPathEditor.EditTags());
-				if (EditorGUI.EndChangeCheck()) {
-					tagValue.intValue = newTag;
-				}
-
-				if (GUILayout.Button("Tags can be used to restrict which units can walk on what ground. Click here for more info", "HelpBox")) {
-					Application.OpenURL(AstarUpdateChecker.GetURL("tags"));
-				}
-				EditorGUI.indentLevel--;
-			}
-		}
-
-		static void SphereCap (int controlID, Vector3 position, Quaternion rotation, float size) {
-#if UNITY_5_5_OR_NEWER
-			Handles.SphereHandleCap(controlID, position, rotation, size, Event.current.type);
-#else
-			Handles.SphereCap(controlID, position, rotation, size);
-#endif
-		}
-
-		public void OnSceneGUI () {
+        public void OnSceneGUI () {
 			var script = target as GraphUpdateScene;
 
 			// Don't allow editing unless it is the active object
@@ -314,5 +148,170 @@ namespace Pathfinding {
 
 			if (GUI.changed) HandleUtility.Repaint();
 		}
-	}
+
+        protected override void Inspector () {
+			// Find all properties
+			var points = FindProperty("points");
+			var legacyMode = FindProperty("legacyMode");
+
+			// Get a list of inspected components
+			scripts = new GraphUpdateScene[targets.Length];
+			targets.CopyTo(scripts, 0);
+
+			EditorGUI.BeginChangeCheck();
+
+			// Make sure no point arrays are null
+			for (int i = 0; i < scripts.Length; i++) {
+				scripts[i].points = scripts[i].points ?? new Vector3[0];
+			}
+
+			if (!points.hasMultipleDifferentValues && points.arraySize == 0) {
+				if (scripts[0].GetComponent<PolygonCollider2D>() != null) {
+					EditorGUILayout.HelpBox("Using polygon collider shape", MessageType.Info);
+				} else if (scripts[0].GetComponent<Collider>() != null || scripts[0].GetComponent<Collider2D>() != null) {
+					EditorGUILayout.HelpBox("No points, using collider.bounds", MessageType.Info);
+				} else if (scripts[0].GetComponent<Renderer>() != null) {
+					EditorGUILayout.HelpBox("No points, using renderer.bounds", MessageType.Info);
+				} else {
+					EditorGUILayout.HelpBox("No points and no collider or renderer attached, will not affect anything\nPoints can be added using the transform tool and holding shift", MessageType.Warning);
+				}
+			}
+
+			DrawPointsField();
+
+			EditorGUI.indentLevel = 0;
+
+			DrawPhysicsField();
+
+			PropertyField("updateErosion", null, "Recalculate erosion for grid graphs.\nSee online documentation for more info");
+
+			DrawConvexField();
+
+			// Minimum bounds height is not applied when using the bounds from a collider or renderer
+			if (points.hasMultipleDifferentValues || points.arraySize > 0) {
+				FloatField("minBoundsHeight", min: 0.1f);
+			}
+			PropertyField("applyOnStart");
+			PropertyField("applyOnScan");
+
+			DrawWalkableField();
+			DrawPenaltyField();
+			DrawTagField();
+
+			EditorGUILayout.Separator();
+
+			if (legacyMode.hasMultipleDifferentValues || legacyMode.boolValue) {
+				EditorGUILayout.HelpBox("Legacy mode is enabled because you have upgraded from an earlier version of the A* Pathfinding Project. " +
+					"Disabling legacy mode is recommended but you may have to tweak the point locations or object rotation in some cases", MessageType.Warning);
+				if (GUILayout.Button("Disable Legacy Mode")) {
+					for (int i = 0; i < scripts.Length; i++) {
+						Undo.RecordObject(scripts[i], "Disable Legacy Mode");
+						scripts[i].DisableLegacyMode();
+					}
+				}
+			}
+
+			if (scripts.Length == 1 && scripts[0].points.Length >= 3) {
+				var size = scripts[0].GetBounds().size;
+				if (Mathf.Min(Mathf.Min(Mathf.Abs(size.x), Mathf.Abs(size.y)), Mathf.Abs(size.z)) < 0.05f) {
+					EditorGUILayout.HelpBox("The bounding box is very thin. Your shape might be oriented incorrectly. The shape will be projected down on the XZ plane in local space. Rotate this object " +
+						"so that the local XZ plane corresponds to the plane in which you want to create your shape. For example if you want to create your shape in the XY plane then " +
+						"this object should have the rotation (-90,0,0). You will need to recreate your shape after rotating this object.", MessageType.Warning);
+				}
+			}
+
+			if (GUILayout.Button("Clear all points")) {
+				for (int i = 0; i < scripts.Length; i++) {
+					Undo.RecordObject(scripts[i], "Clear points");
+					scripts[i].points = new Vector3[0];
+					scripts[i].RecalcConvex();
+				}
+			}
+
+			if (EditorGUI.EndChangeCheck()) {
+				for (int i = 0; i < scripts.Length; i++) {
+					EditorUtility.SetDirty(scripts[i]);
+				}
+
+				// Repaint the scene view if necessary
+				if (!Application.isPlaying || EditorApplication.isPaused) SceneView.RepaintAll();
+			}
+		}
+
+        void DrawPointsField () {
+			EditorGUI.BeginChangeCheck();
+			PropertyField("points");
+			if (EditorGUI.EndChangeCheck()) {
+				serializedObject.ApplyModifiedProperties();
+				for (int i = 0; i < scripts.Length; i++) {
+					scripts[i].RecalcConvex();
+				}
+				HandleUtility.Repaint();
+			}
+		}
+
+        void DrawPhysicsField () {
+			if (PropertyField("updatePhysics", "Update Physics", "Perform similar calculations on the nodes as during scan.\n" +
+				"Grid Graphs will update the position of the nodes and also check walkability using collision.\nSee online documentation for more info.")) {
+				EditorGUI.indentLevel++;
+				PropertyField("resetPenaltyOnPhysics");
+				EditorGUI.indentLevel--;
+			}
+		}
+
+        void DrawConvexField () {
+			EditorGUI.BeginChangeCheck();
+			PropertyField("convex");
+			if (EditorGUI.EndChangeCheck()) {
+				serializedObject.ApplyModifiedProperties();
+				for (int i = 0; i < scripts.Length; i++) {
+					scripts[i].RecalcConvex();
+				}
+				HandleUtility.Repaint();
+			}
+		}
+
+        void DrawWalkableField () {
+			if (PropertyField("modifyWalkability")) {
+				EditorGUI.indentLevel++;
+				PropertyField("setWalkability", "Walkability Value");
+				EditorGUI.indentLevel--;
+			}
+		}
+
+        void DrawPenaltyField () {
+			PropertyField("penaltyDelta", "Penalty Delta");
+
+			if (!FindProperty("penaltyDelta").hasMultipleDifferentValues && FindProperty("penaltyDelta").intValue < 0) {
+				EditorGUILayout.HelpBox("Be careful when lowering the penalty. Negative penalties are not supported and will instead underflow and get really high.\n" +
+					"You can set an initial penalty on graphs (see their settings) and then lower them like this to get regions which are easier to traverse.", MessageType.Warning);
+			}
+		}
+
+        void DrawTagField () {
+			if (PropertyField("modifyTag")) {
+				var tagValue = FindProperty("setTag");
+				EditorGUI.indentLevel++;
+				EditorGUI.showMixedValue = tagValue.hasMultipleDifferentValues;
+				EditorGUI.BeginChangeCheck();
+				var newTag = EditorGUILayoutx.TagField("Tag Value", tagValue.intValue, () => AstarPathEditor.EditTags());
+				if (EditorGUI.EndChangeCheck()) {
+					tagValue.intValue = newTag;
+				}
+
+				if (GUILayout.Button("Tags can be used to restrict which units can walk on what ground. Click here for more info", "HelpBox")) {
+					Application.OpenURL(AstarUpdateChecker.GetURL("tags"));
+				}
+				EditorGUI.indentLevel--;
+			}
+		}
+
+        static void SphereCap (int controlID, Vector3 position, Quaternion rotation, float size) {
+#if UNITY_5_5_OR_NEWER
+			Handles.SphereHandleCap(controlID, position, rotation, size, Event.current.type);
+#else
+			Handles.SphereCap(controlID, position, rotation, size);
+#endif
+		}
+    }
 }

@@ -8,17 +8,21 @@ namespace Pathfinding {
 	[CustomEditor(typeof(VersionedMonoBehaviour), true)]
 	[CanEditMultipleObjects]
 	public class EditorBase : Editor {
-		static System.Collections.Generic.Dictionary<string, string> cachedTooltips;
-		static System.Collections.Generic.Dictionary<string, string> cachedURLs;
-		Dictionary<string, SerializedProperty> props = new Dictionary<string, SerializedProperty>();
-		Dictionary<string, string> localTooltips = new Dictionary<string, string>();
+        static System.Collections.Generic.Dictionary<string, string> cachedTooltips;
+        static System.Collections.Generic.Dictionary<string, string> cachedURLs;
 
-		static GUIContent content = new GUIContent();
-		static GUIContent showInDocContent = new GUIContent("Show in online documentation", "");
-		static GUILayoutOption[] noOptions = new GUILayoutOption[0];
-		public static System.Func<string> getDocumentationURL;
+        static GUIContent content = new GUIContent();
+        static GUIContent showInDocContent = new GUIContent("Show in online documentation", "");
+        static GUILayoutOption[] noOptions = new GUILayoutOption[0];
+        public static System.Func<string> getDocumentationURL;
+        Dictionary<string, string> localTooltips = new Dictionary<string, string>();
+        Dictionary<string, SerializedProperty> props = new Dictionary<string, SerializedProperty>();
 
-		static void LoadMeta () {
+        protected virtual void OnEnable () {
+			foreach (var target in targets) if (target != null) (target as IVersionedMonoBehaviourInternal).UpgradeFromUnityThread();
+		}
+
+        static void LoadMeta () {
 			if (cachedTooltips == null) {
 				var filePath = EditorResourceHelper.editorAssets + "/tooltips.tsv";
 
@@ -32,7 +36,7 @@ namespace Pathfinding {
 			}
 		}
 
-		static string FindURL (System.Type type, string path) {
+        static string FindURL (System.Type type, string path) {
 			// Find the correct type if the path was not an immediate member of #type
 			while (true) {
 				var index = path.IndexOf('.');
@@ -58,14 +62,14 @@ namespace Pathfinding {
 			return null;
 		}
 
-		static string FindURL (string path) {
+        static string FindURL (string path) {
 			LoadMeta();
 			string url;
 			cachedURLs.TryGetValue(path, out url);
 			return url;
 		}
 
-		static string FindTooltip (string path) {
+        static string FindTooltip (string path) {
 			LoadMeta();
 
 			string tooltip;
@@ -73,7 +77,7 @@ namespace Pathfinding {
 			return tooltip;
 		}
 
-		string FindLocalTooltip (string path) {
+        string FindLocalTooltip (string path) {
 			string result;
 
 			if (!localTooltips.TryGetValue(path, out result)) {
@@ -83,11 +87,7 @@ namespace Pathfinding {
 			return result;
 		}
 
-		protected virtual void OnEnable () {
-			foreach (var target in targets) if (target != null) (target as IVersionedMonoBehaviourInternal).UpgradeFromUnityThread();
-		}
-
-		public sealed override void OnInspectorGUI () {
+        public sealed override void OnInspectorGUI () {
 			EditorGUI.indentLevel = 0;
 			serializedObject.Update();
 			try {
@@ -110,7 +110,7 @@ namespace Pathfinding {
 			}
 		}
 
-		protected virtual void Inspector () {
+        protected virtual void Inspector () {
 			// Basically the same as DrawDefaultInspector, but with tooltips
 			bool enterChildren = true;
 
@@ -119,36 +119,36 @@ namespace Pathfinding {
 			}
 		}
 
-		protected SerializedProperty FindProperty (string name) {
+        protected SerializedProperty FindProperty (string name) {
 			if (!props.TryGetValue(name, out SerializedProperty res)) res = props[name] = serializedObject.FindProperty(name);
 			if (res == null) throw new System.ArgumentException(name);
 			return res;
 		}
 
-		protected void Section (string label) {
+        protected void Section (string label) {
 			EditorGUILayout.Separator();
 			EditorGUILayout.LabelField(label, EditorStyles.boldLabel);
 		}
 
-		protected void FloatField (string propertyPath, string label = null, string tooltip = null, float min = float.NegativeInfinity, float max = float.PositiveInfinity) {
+        protected void FloatField (string propertyPath, string label = null, string tooltip = null, float min = float.NegativeInfinity, float max = float.PositiveInfinity) {
 			PropertyField(propertyPath, label, tooltip);
 			Clamp(propertyPath, min, max);
 		}
 
-		protected void FloatField (SerializedProperty prop, string label = null, string tooltip = null, float min = float.NegativeInfinity, float max = float.PositiveInfinity) {
+        protected void FloatField (SerializedProperty prop, string label = null, string tooltip = null, float min = float.NegativeInfinity, float max = float.PositiveInfinity) {
 			PropertyField(prop, label, tooltip);
 			Clamp(prop, min, max);
 		}
 
-		protected bool PropertyField (string propertyPath, string label = null, string tooltip = null) {
+        protected bool PropertyField (string propertyPath, string label = null, string tooltip = null) {
 			return PropertyField(FindProperty(propertyPath), label, tooltip, propertyPath);
 		}
 
-		protected bool PropertyField (SerializedProperty prop, string label = null, string tooltip = null) {
+        protected bool PropertyField (SerializedProperty prop, string label = null, string tooltip = null) {
 			return PropertyField(prop, label, tooltip, prop.propertyPath);
 		}
 
-		bool PropertyField (SerializedProperty prop, string label, string tooltip, string propertyPath) {
+        bool PropertyField (SerializedProperty prop, string label, string tooltip, string propertyPath) {
 			content.text = label ?? prop.displayName;
 			content.tooltip = tooltip ?? FindTooltip(propertyPath);
 			var contextClick = IsContextClick();
@@ -158,14 +158,14 @@ namespace Pathfinding {
 			return prop.propertyType == SerializedPropertyType.Boolean ? !prop.hasMultipleDifferentValues && prop.boolValue : true;
 		}
 
-		bool IsContextClick () {
+        bool IsContextClick () {
 			// Capturing context clicks turned out to be a bad idea.
 			// It prevents things like reverting to prefab values and other nice things.
 			return false;
 			// return Event.current.type == EventType.ContextClick;
 		}
 
-		void CaptureContextClick (string propertyPath) {
+        void CaptureContextClick (string propertyPath) {
 			var url = FindURL(target.GetType(), propertyPath);
 
 			if (url != null && getDocumentationURL != null) {
@@ -176,7 +176,7 @@ namespace Pathfinding {
 			}
 		}
 
-		protected void Popup (string propertyPath, GUIContent[] options, string label = null) {
+        protected void Popup (string propertyPath, GUIContent[] options, string label = null) {
 			var prop = FindProperty(propertyPath);
 
 			content.text = label ?? prop.displayName;
@@ -193,7 +193,7 @@ namespace Pathfinding {
 			if (contextClick && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition)) CaptureContextClick(propertyPath);
 		}
 
-		protected void Mask (string propertyPath, string[] options, string label = null) {
+        protected void Mask (string propertyPath, string[] options, string label = null) {
 			var prop = FindProperty(propertyPath);
 
 			content.text = label ?? prop.displayName;
@@ -209,7 +209,7 @@ namespace Pathfinding {
 			if (contextClick && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition)) CaptureContextClick(propertyPath);
 		}
 
-		protected void IntSlider (string propertyPath, int left, int right) {
+        protected void IntSlider (string propertyPath, int left, int right) {
 			var contextClick = IsContextClick();
 			var prop = FindProperty(propertyPath);
 
@@ -219,7 +219,7 @@ namespace Pathfinding {
 			if (contextClick && Event.current.type == EventType.Used) CaptureContextClick(propertyPath);
 		}
 
-		protected void Slider (string propertyPath, float left, float right) {
+        protected void Slider (string propertyPath, float left, float right) {
 			var contextClick = IsContextClick();
 			var prop = FindProperty(propertyPath);
 
@@ -229,18 +229,18 @@ namespace Pathfinding {
 			if (contextClick && Event.current.type == EventType.Used) CaptureContextClick(propertyPath);
 		}
 
-		protected void Clamp (SerializedProperty prop, float min, float max = float.PositiveInfinity) {
+        protected void Clamp (SerializedProperty prop, float min, float max = float.PositiveInfinity) {
 			if (!prop.hasMultipleDifferentValues) prop.floatValue = Mathf.Clamp(prop.floatValue, min, max);
 		}
 
-		protected void Clamp (string name, float min, float max = float.PositiveInfinity) {
+        protected void Clamp (string name, float min, float max = float.PositiveInfinity) {
 			Clamp(FindProperty(name), min, max);
 		}
 
-		protected void ClampInt (string name, int min, int max = int.MaxValue) {
+        protected void ClampInt (string name, int min, int max = int.MaxValue) {
 			var prop = FindProperty(name);
 
 			if (!prop.hasMultipleDifferentValues) prop.intValue = Mathf.Clamp(prop.intValue, min, max);
 		}
-	}
+    }
 }

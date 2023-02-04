@@ -4,14 +4,7 @@ using System.Collections.Generic;
 namespace Pathfinding.Util {
 	/// <summary>Interpolates along a sequence of points</summary>
 	public class PathInterpolator {
-		List<Vector3> path;
-
-		float distanceToSegmentStart;
-		float currentDistance;
-		float currentSegmentLength = float.PositiveInfinity;
-		float totalDistance = float.PositiveInfinity;
-
-		/// <summary>Current position</summary>
+        /// <summary>Current position</summary>
 		public virtual Vector3 position {
 			get {
 				float t = currentSegmentLength > 0.0001f ? (currentDistance - distanceToSegmentStart) / currentSegmentLength : 0f;
@@ -19,21 +12,21 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>Last point in the path</summary>
+        /// <summary>Last point in the path</summary>
 		public Vector3 endPoint {
 			get {
 				return path[path.Count-1];
 			}
 		}
 
-		/// <summary>Tangent of the curve at the current position</summary>
+        /// <summary>Tangent of the curve at the current position</summary>
 		public Vector3 tangent {
 			get {
 				return path[segmentIndex+1] - path[segmentIndex];
 			}
 		}
 
-		/// <summary>Remaining distance until the end of the path</summary>
+        /// <summary>Remaining distance until the end of the path</summary>
 		public float remainingDistance {
 			get {
 				return totalDistance - distance;
@@ -43,7 +36,7 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>Traversed distance from the start of the path</summary>
+        /// <summary>Traversed distance from the start of the path</summary>
 		public float distance {
 			get {
 				return currentDistance;
@@ -56,13 +49,13 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Current segment.
 		/// The start and end points of the segment are path[value] and path[value+1].
 		/// </summary>
 		public int segmentIndex { get; private set; }
 
-		/// <summary>
+        /// <summary>
 		/// True if this instance has a path set.
 		/// See: SetPath
 		/// </summary>
@@ -72,7 +65,14 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>Appends the remaining path between <see cref="position"/> and <see cref="endPoint"/> to buffer</summary>
+        List<Vector3> path;
+
+        float distanceToSegmentStart;
+        float currentDistance;
+        float currentSegmentLength = float.PositiveInfinity;
+        float totalDistance = float.PositiveInfinity;
+
+        /// <summary>Appends the remaining path between <see cref="position"/> and <see cref="endPoint"/> to buffer</summary>
 		public void GetRemainingPath (List<Vector3> buffer) {
 			if (!valid) throw new System.Exception("PathInterpolator is not valid");
 			buffer.Add(position);
@@ -81,7 +81,7 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Set the path to interpolate along.
 		/// This will reset all interpolation variables.
 		/// </summary>
@@ -110,7 +110,7 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>Move to the specified segment and move a fraction of the way to the next segment</summary>
+        /// <summary>Move to the specified segment and move a fraction of the way to the next segment</summary>
 		public void MoveToSegment (int index, float fractionAlongSegment) {
 			if (path == null) return;
 			if (index < 0 || index >= path.Count - 1) throw new System.ArgumentOutOfRangeException("index");
@@ -119,7 +119,7 @@ namespace Pathfinding.Util {
 			distance = distanceToSegmentStart + Mathf.Clamp01(fractionAlongSegment) * currentSegmentLength;
 		}
 
-		/// <summary>Move as close as possible to the specified point</summary>
+        /// <summary>Move as close as possible to the specified point</summary>
 		public void MoveToClosestPoint (Vector3 point) {
 			if (path == null) return;
 
@@ -142,7 +142,7 @@ namespace Pathfinding.Util {
 			MoveToSegment(bestIndex, bestFactor);
 		}
 
-		public void MoveToLocallyClosestPoint (Vector3 point, bool allowForwards = true, bool allowBackwards = true) {
+        public void MoveToLocallyClosestPoint (Vector3 point, bool allowForwards = true, bool allowBackwards = true) {
 			if (path == null) return;
 
 			while (allowForwards && segmentIndex < path.Count - 2 && (path[segmentIndex+1] - point).sqrMagnitude <= (path[segmentIndex] - point).sqrMagnitude) {
@@ -170,7 +170,7 @@ namespace Pathfinding.Util {
 			else MoveToSegment(segmentIndex, factor2);
 		}
 
-		public void MoveToCircleIntersection2D (Vector3 circleCenter3D, float radius, IMovementPlane transform) {
+        public void MoveToCircleIntersection2D (Vector3 circleCenter3D, float radius, IMovementPlane transform) {
 			if (path == null) return;
 
 			// Move forwards as long as we are getting closer to circleCenter3D
@@ -191,16 +191,16 @@ namespace Pathfinding.Util {
 			MoveToSegment(segmentIndex, factor);
 		}
 
-		protected virtual void PrevSegment () {
+        protected virtual void PrevSegment () {
 			segmentIndex--;
 			currentSegmentLength = (path[segmentIndex+1] - path[segmentIndex]).magnitude;
 			distanceToSegmentStart -= currentSegmentLength;
 		}
 
-		protected virtual void NextSegment () {
+        protected virtual void NextSegment () {
 			segmentIndex++;
 			distanceToSegmentStart += currentSegmentLength;
 			currentSegmentLength = (path[segmentIndex+1] - path[segmentIndex]).magnitude;
 		}
-	}
+    }
 }

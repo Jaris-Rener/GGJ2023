@@ -10,53 +10,29 @@ namespace Pathfinding {
 	/// See: https://en.wikipedia.org/wiki/K-d_tree
 	/// </summary>
 	public class PointKDTree {
-		// TODO: Make constant
-		public const int LeafSize = 10;
-		public const int LeafArraySize = LeafSize*2 + 1;
+        // TODO: Make constant
+        public const int LeafSize = 10;
+        public const int LeafArraySize = LeafSize*2 + 1;
 
-		Node[] tree = new Node[16];
+        Node[] tree = new Node[16];
 
-		int numNodes = 0;
+        int numNodes = 0;
 
-		readonly List<GraphNode> largeList = new List<GraphNode>();
-		readonly Stack<GraphNode[]> arrayCache = new Stack<GraphNode[]>();
-		static readonly IComparer<GraphNode>[] comparers = new IComparer<GraphNode>[] { new CompareX(), new CompareY(), new CompareZ() };
+        readonly List<GraphNode> largeList = new List<GraphNode>();
+        readonly Stack<GraphNode[]> arrayCache = new Stack<GraphNode[]>();
+        static readonly IComparer<GraphNode>[] comparers = new IComparer<GraphNode>[] { new CompareX(), new CompareY(), new CompareZ() };
 
-		struct Node {
-			/// <summary>Nodes in this leaf node (null if not a leaf node)</summary>
-			public GraphNode[] data;
-			/// <summary>Split point along the <see cref="splitAxis"/> if not a leaf node</summary>
-			public int split;
-			/// <summary>Number of non-null entries in <see cref="data"/></summary>
-			public ushort count;
-			/// <summary>Axis to split along if not a leaf node (x=0, y=1, z=2)</summary>
-			public byte splitAxis;
-		}
-
-		// Pretty ugly with one class for each axis, but it has been verified to make the tree around 5% faster
-		class CompareX : IComparer<GraphNode> {
-			public int Compare (GraphNode lhs, GraphNode rhs) { return lhs.position.x.CompareTo(rhs.position.x); }
-		}
-
-		class CompareY : IComparer<GraphNode> {
-			public int Compare (GraphNode lhs, GraphNode rhs) { return lhs.position.y.CompareTo(rhs.position.y); }
-		}
-
-		class CompareZ : IComparer<GraphNode> {
-			public int Compare (GraphNode lhs, GraphNode rhs) { return lhs.position.z.CompareTo(rhs.position.z); }
-		}
-
-		public PointKDTree() {
+        public PointKDTree() {
 			tree[1] = new Node { data = GetOrCreateList() };
 		}
 
-		/// <summary>Add the node to the tree</summary>
+        /// <summary>Add the node to the tree</summary>
 		public void Add (GraphNode node) {
 			numNodes++;
 			Add(node, 1);
 		}
 
-		/// <summary>Rebuild the tree starting with all nodes in the array between index start (inclusive) and end (exclusive)</summary>
+        /// <summary>Rebuild the tree starting with all nodes in the array between index start (inclusive) and end (exclusive)</summary>
 		public void Rebuild (GraphNode[] nodes, int start, int end) {
 			if (start < 0 || end < start || end > nodes.Length)
 				throw new System.ArgumentException();
@@ -74,16 +50,16 @@ namespace Pathfinding {
 			Build(1, new List<GraphNode>(nodes), start, end);
 		}
 
-		GraphNode[] GetOrCreateList () {
+        GraphNode[] GetOrCreateList () {
 			// Note, the lists will never become larger than this initial capacity, so possibly they should be replaced by arrays
 			return arrayCache.Count > 0 ? arrayCache.Pop() : new GraphNode[LeafArraySize];
 		}
 
-		int Size (int index) {
+        int Size (int index) {
 			return tree[index].data != null ? tree[index].count : Size(2 * index) + Size(2 * index + 1);
 		}
 
-		void CollectAndClear (int index, List<GraphNode> buffer) {
+        void CollectAndClear (int index, List<GraphNode> buffer) {
 			var nodes = tree[index].data;
 			var count = tree[index].count;
 
@@ -100,7 +76,7 @@ namespace Pathfinding {
 			}
 		}
 
-		static int MaxAllowedSize (int numNodes, int depth) {
+        static int MaxAllowedSize (int numNodes, int depth) {
 			// Allow a node to be 2.5 times as full as it should ideally be
 			// but do not allow it to contain more than 3/4ths of the total number of nodes
 			// (important to make sure nodes near the top of the tree also get rebalanced).
@@ -108,13 +84,13 @@ namespace Pathfinding {
 			return System.Math.Min(((5 * numNodes) / 2) >> depth, (3 * numNodes) / 4);
 		}
 
-		void Rebalance (int index) {
+        void Rebalance (int index) {
 			CollectAndClear(index, largeList);
 			Build(index, largeList, 0, largeList.Count);
 			largeList.ClearFast();
 		}
 
-		void EnsureSize (int index) {
+        void EnsureSize (int index) {
 			if (index >= tree.Length) {
 				var newLeaves = new Node[System.Math.Max(index + 1, tree.Length*2)];
 				tree.CopyTo(newLeaves, 0);
@@ -122,7 +98,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void Build (int index, List<GraphNode> nodes, int start, int end) {
+        void Build (int index, List<GraphNode> nodes, int start, int end) {
 			EnsureSize(index);
 			if (end - start <= LeafSize) {
 				var leafData = tree[index].data = GetOrCreateList();
@@ -149,7 +125,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void Add (GraphNode point, int index, int depth = 0) {
+        void Add (GraphNode point, int index, int depth = 0) {
 			// Move down in the tree until the leaf node is found that this point is inside of
 			while (tree[index].data == null) {
 				index = 2 * index + (point.position[tree[index].splitAxis] < tree[index].split ? 0 : 1);
@@ -174,7 +150,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Closest node to the point which satisfies the constraint</summary>
+        /// <summary>Closest node to the point which satisfies the constraint</summary>
 		public GraphNode GetNearest (Int3 point, NNConstraint constraint) {
 			GraphNode best = null;
 			long bestSqrDist = long.MaxValue;
@@ -183,7 +159,7 @@ namespace Pathfinding {
 			return best;
 		}
 
-		void GetNearestInternal (int index, Int3 point, NNConstraint constraint, ref GraphNode best, ref long bestSqrDist) {
+        void GetNearestInternal (int index, Int3 point, NNConstraint constraint, ref GraphNode best, ref long bestSqrDist) {
 			var data = tree[index].data;
 
 			if (data != null) {
@@ -207,7 +183,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Closest node to the point which satisfies the constraint</summary>
+        /// <summary>Closest node to the point which satisfies the constraint</summary>
 		public GraphNode GetNearestConnection (Int3 point, NNConstraint constraint, long maximumSqrConnectionLength) {
 			GraphNode best = null;
 			long bestSqrDist = long.MaxValue;
@@ -223,7 +199,7 @@ namespace Pathfinding {
 			return best;
 		}
 
-		void GetNearestConnectionInternal (int index, Int3 point, NNConstraint constraint, ref GraphNode best, ref long bestSqrDist, long distanceThresholdOffset) {
+        void GetNearestConnectionInternal (int index, Int3 point, NNConstraint constraint, ref GraphNode best, ref long bestSqrDist, long distanceThresholdOffset) {
 			var data = tree[index].data;
 
 			if (data != null) {
@@ -273,7 +249,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Add all nodes within a squared distance of the point to the buffer.</summary>
+        /// <summary>Add all nodes within a squared distance of the point to the buffer.</summary>
 		/// <param name="point">Nodes around this point will be added to the buffer.</param>
 		/// <param name="sqrRadius">squared maximum distance in Int3 space. If you are converting from world space you will need to multiply by Int3.Precision:
 		/// <code> var sqrRadius = (worldSpaceRadius * Int3.Precision) * (worldSpaceRadius * Int3.Precision); </code></param>
@@ -282,7 +258,7 @@ namespace Pathfinding {
 			GetInRangeInternal(1, point, sqrRadius, buffer);
 		}
 
-		void GetInRangeInternal (int index, Int3 point, long sqrRadius, List<GraphNode> buffer) {
+        void GetInRangeInternal (int index, Int3 point, long sqrRadius, List<GraphNode> buffer) {
 			var data = tree[index].data;
 
 			if (data != null) {
@@ -305,5 +281,29 @@ namespace Pathfinding {
 				}
 			}
 		}
-	}
+
+        struct Node {
+			/// <summary>Nodes in this leaf node (null if not a leaf node)</summary>
+			public GraphNode[] data;
+			/// <summary>Split point along the <see cref="splitAxis"/> if not a leaf node</summary>
+			public int split;
+			/// <summary>Number of non-null entries in <see cref="data"/></summary>
+			public ushort count;
+			/// <summary>Axis to split along if not a leaf node (x=0, y=1, z=2)</summary>
+			public byte splitAxis;
+		}
+
+        // Pretty ugly with one class for each axis, but it has been verified to make the tree around 5% faster
+        class CompareX : IComparer<GraphNode> {
+            public int Compare (GraphNode lhs, GraphNode rhs) { return lhs.position.x.CompareTo(rhs.position.x); }
+        }
+
+        class CompareY : IComparer<GraphNode> {
+            public int Compare (GraphNode lhs, GraphNode rhs) { return lhs.position.y.CompareTo(rhs.position.y); }
+        }
+
+        class CompareZ : IComparer<GraphNode> {
+            public int Compare (GraphNode lhs, GraphNode rhs) { return lhs.position.z.CompareTo(rhs.position.z); }
+        }
+    }
 }

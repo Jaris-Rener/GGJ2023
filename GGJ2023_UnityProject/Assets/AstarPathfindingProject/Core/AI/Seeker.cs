@@ -19,7 +19,13 @@ namespace Pathfinding {
 	[AddComponentMenu("Pathfinding/Seeker")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_seeker.php")]
 	public class Seeker : VersionedMonoBehaviour {
-		/// <summary>
+        public enum ModifierPass {
+			PreProcess,
+			// An obsolete item occupied index 1 previously
+			PostProcess = 2,
+		}
+
+        /// <summary>
 		/// Enables drawing of the last calculated path using Gizmos.
 		/// The path will show up in green.
 		///
@@ -27,7 +33,7 @@ namespace Pathfinding {
 		/// </summary>
 		public bool drawGizmos = true;
 
-		/// <summary>
+        /// <summary>
 		/// Enables drawing of the non-postprocessed path using Gizmos.
 		/// The path will show up in orange.
 		///
@@ -40,11 +46,11 @@ namespace Pathfinding {
 		/// </summary>
 		public bool detailedGizmos;
 
-		/// <summary>Path modifier which tweaks the start and end points of a path</summary>
+        /// <summary>Path modifier which tweaks the start and end points of a path</summary>
 		[HideInInspector]
 		public StartEndModifier startEndModifier = new StartEndModifier();
 
-		/// <summary>
+        /// <summary>
 		/// The tags which the Seeker can traverse.
 		///
 		/// Note: This field is a bitmask.
@@ -53,7 +59,7 @@ namespace Pathfinding {
 		[HideInInspector]
 		public int traversableTags = -1;
 
-		/// <summary>
+        /// <summary>
 		/// Penalties for each tag.
 		/// Tag 0 which is the default tag, will have added a penalty of tagPenalties[0].
 		/// These should only be positive values since the A* algorithm cannot handle negative penalties.
@@ -65,7 +71,7 @@ namespace Pathfinding {
 		[HideInInspector]
 		public int[] tagPenalties = new int[32];
 
-		/// <summary>
+        /// <summary>
 		/// Graphs that this Seeker can use.
 		/// This field determines which graphs will be considered when searching for the start and end nodes of a path.
 		/// It is useful in numerous situations, for example if you want to make one graph for small units and one graph for large units.
@@ -101,68 +107,101 @@ namespace Pathfinding {
 		[HideInInspector]
 		public GraphMask graphMask = GraphMask.everything;
 
-		/// <summary>Used for serialization backwards compatibility</summary>
+        /// <summary>Internal list of all modifiers</summary>
+		readonly List<IPathModifier> modifiers = new List<IPathModifier>();
+
+        /// <summary>Cached delegate to avoid allocating one every time a path is started</summary>
+		private readonly OnPathDelegate onPathDelegate;
+
+        /// <summary>Used for serialization backwards compatibility</summary>
 		[UnityEngine.Serialization.FormerlySerializedAs("graphMask")]
 		int graphMaskCompatibility = -1;
 
-		/// <summary>
+        /// <summary>Used for drawing gizmos</summary>
+		[System.NonSerialized]
+		List<GraphNode> lastCompletedNodePath;
+
+        /// <summary>Used for drawing gizmos</summary>
+		[System.NonSerialized]
+		List<Vector3> lastCompletedVectorPath;
+
+        /// <summary>The path ID of the last path queried</summary>
+		protected uint lastPathID;
+
+        /// <summary>The current path</summary>
+		[System.NonSerialized]
+		protected Path path;
+
+        /// <summary>
 		/// Callback for when a path is completed.
 		/// Movement scripts should register to this delegate.\n
 		/// A temporary callback can also be set when calling StartPath, but that delegate will only be called for that path
 		/// </summary>
 		public OnPathDelegate pathCallback;
 
-		/// <summary>Called before pathfinding is started</summary>
-		public OnPathDelegate preProcessPath;
-
-		/// <summary>Called after a path has been calculated, right before modifiers are executed.</summary>
+        /// <summary>Called after a path has been calculated, right before modifiers are executed.</summary>
 		public OnPathDelegate postProcessPath;
 
-		/// <summary>Used for drawing gizmos</summary>
-		[System.NonSerialized]
-		List<Vector3> lastCompletedVectorPath;
+        /// <summary>Called before pathfinding is started</summary>
+		public OnPathDelegate preProcessPath;
 
-		/// <summary>Used for drawing gizmos</summary>
-		[System.NonSerialized]
-		List<GraphNode> lastCompletedNodePath;
-
-		/// <summary>The current path</summary>
-		[System.NonSerialized]
-		protected Path path;
-
-		/// <summary>Previous path. Used to draw gizmos</summary>
+        /// <summary>Previous path. Used to draw gizmos</summary>
 		[System.NonSerialized]
 		private Path prevPath;
 
-		/// <summary>Cached delegate to avoid allocating one every time a path is started</summary>
-		private readonly OnPathDelegate onPathDelegate;
-
-		/// <summary>Temporary callback only called for the current path. This value is set by the StartPath functions</summary>
+        /// <summary>Temporary callback only called for the current path. This value is set by the StartPath functions</summary>
 		private OnPathDelegate tmpPathCallback;
 
-		/// <summary>The path ID of the last path queried</summary>
-		protected uint lastPathID;
-
-		/// <summary>Internal list of all modifiers</summary>
-		readonly List<IPathModifier> modifiers = new List<IPathModifier>();
-
-		public enum ModifierPass {
-			PreProcess,
-			// An obsolete item occupied index 1 previously
-			PostProcess = 2,
-		}
-
-		public Seeker () {
+        public Seeker () {
 			onPathDelegate = OnPathComplete;
 		}
 
-		/// <summary>Initializes a few variables</summary>
+        /// <summary>Initializes a few variables</summary>
 		protected override void Awake () {
 			base.Awake();
 			startEndModifier.Awake(this);
 		}
 
-		/// <summary>
+        /// <summary>
+		/// Cleans up some variables.
+		/// Releases any eventually claimed paths.
+		/// Calls OnDestroy on the <see cref="startEndModifier"/>.
+		///
+		/// See: <see cref="ReleaseClaimedPath"/>
+		/// See: <see cref="startEndModifier"/>
+		/// </summary>
+		public void OnDestroy () {
+			ReleaseClaimedPath();
+			startEndModifier.OnDestroy(this);
+		}
+
+
+        /// <summary>Draws gizmos for the Seeker</summary>
+		public void OnDrawGizmos () {
+			if (lastCompletedNodePath == null || !drawGizmos) {
+				return;
+			}
+
+			if (detailedGizmos) {
+				Gizmos.color = new Color(0.7F, 0.5F, 0.1F, 0.5F);
+
+				if (lastCompletedNodePath != null) {
+					for (int i = 0; i < lastCompletedNodePath.Count-1; i++) {
+						Gizmos.DrawLine((Vector3)lastCompletedNodePath[i].position, (Vector3)lastCompletedNodePath[i+1].position);
+					}
+				}
+			}
+
+			Gizmos.color = new Color(0, 1F, 0, 1F);
+
+			if (lastCompletedVectorPath != null) {
+				for (int i = 0; i < lastCompletedVectorPath.Count-1; i++) {
+					Gizmos.DrawLine(lastCompletedVectorPath[i], lastCompletedVectorPath[i+1]);
+				}
+			}
+		}
+
+        /// <summary>
 		/// Path that is currently being calculated or was last calculated.
 		/// You should rarely have to use this. Instead get the path when the path callback is called.
 		///
@@ -172,7 +211,7 @@ namespace Pathfinding {
 			return path;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Stop calculating the current path request.
 		/// If this Seeker is currently calculating a path it will be canceled.
 		/// The callback (usually to a method named OnPathComplete) will soon be called
@@ -196,20 +235,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
-		/// Cleans up some variables.
-		/// Releases any eventually claimed paths.
-		/// Calls OnDestroy on the <see cref="startEndModifier"/>.
-		///
-		/// See: <see cref="ReleaseClaimedPath"/>
-		/// See: <see cref="startEndModifier"/>
-		/// </summary>
-		public void OnDestroy () {
-			ReleaseClaimedPath();
-			startEndModifier.OnDestroy(this);
-		}
-
-		/// <summary>
+        /// <summary>
 		/// Releases the path used for gizmos (if any).
 		/// The seeker keeps the latest path claimed so it can draw gizmos.
 		/// In some cases this might not be desireable and you want it released.
@@ -226,7 +252,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Called by modifiers to register themselves</summary>
+        /// <summary>Called by modifiers to register themselves</summary>
 		public void RegisterModifier (IPathModifier modifier) {
 			modifiers.Add(modifier);
 
@@ -234,12 +260,12 @@ namespace Pathfinding {
 			modifiers.Sort((a, b) => a.Order.CompareTo(b.Order));
 		}
 
-		/// <summary>Called by modifiers when they are disabled or destroyed</summary>
+        /// <summary>Called by modifiers when they are disabled or destroyed</summary>
 		public void DeregisterModifier (IPathModifier modifier) {
 			modifiers.Remove(modifier);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Post Processes the path.
 		/// This will run any modifiers attached to this GameObject on the path.
 		/// This is identical to calling RunModifiers(ModifierPass.PostProcess, path)
@@ -250,7 +276,7 @@ namespace Pathfinding {
 			RunModifiers(ModifierPass.PostProcess, path);
 		}
 
-		/// <summary>Runs modifiers on a path</summary>
+        /// <summary>Runs modifiers on a path</summary>
 		public void RunModifiers (ModifierPass pass, Path path) {
 			if (pass == ModifierPass.PreProcess) {
 				if (preProcessPath != null) preProcessPath(path);
@@ -267,7 +293,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Is the current path done calculating.
 		/// Returns true if the current <see cref="path"/> has been returned or if the <see cref="path"/> is null.
 		///
@@ -281,7 +307,7 @@ namespace Pathfinding {
 			return path == null || path.PipelineState >= PathState.Returned;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Called when a path has completed.
 		/// This should have been implemented as optional parameter values, but that didn't seem to work very well with delegates (the values weren't the default ones)
 		/// See: OnPathComplete(Path,bool,bool)
@@ -290,7 +316,7 @@ namespace Pathfinding {
 			OnPathComplete(path, true, true);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Called when a path has completed.
 		/// Will post process it and return it by calling <see cref="tmpPathCallback"/> and <see cref="pathCallback"/>
 		/// </summary>
@@ -340,7 +366,7 @@ namespace Pathfinding {
 		}
 
 
-		/// <summary>
+        /// <summary>
 		/// Returns a new path instance.
 		/// The path will be taken from the path pool if path recycling is turned on.\n
 		/// This path can be sent to <see cref="StartPath(Path,OnPathDelegate,int)"/> with no change, but if no change is required <see cref="StartPath(Vector3,Vector3,OnPathDelegate)"/> does just that.
@@ -359,7 +385,7 @@ namespace Pathfinding {
 			return ABPath.Construct(start, end, null);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Call this function to start calculating a path.
 		/// Since this method does not take a callback parameter, you should set the <see cref="pathCallback"/> field before calling this method.
 		/// </summary>
@@ -369,7 +395,7 @@ namespace Pathfinding {
 			return StartPath(start, end, null);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Call this function to start calculating a path.
 		///
 		/// callback will be called when the path has completed.
@@ -382,7 +408,7 @@ namespace Pathfinding {
 			return StartPath(ABPath.Construct(start, end, null), callback);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Call this function to start calculating a path.
 		///
 		/// callback will be called when the path has completed.
@@ -396,7 +422,7 @@ namespace Pathfinding {
 			return StartPath(ABPath.Construct(start, end, null), callback, graphMask);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Call this function to start calculating a path.
 		///
 		/// The callback will be called when the path has been calculated (which may be several frames into the future).
@@ -420,7 +446,7 @@ namespace Pathfinding {
 			return p;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Call this function to start calculating a path.
 		///
 		/// The callback will be called when the path has been calculated (which may be several frames into the future).
@@ -438,7 +464,7 @@ namespace Pathfinding {
 			return p;
 		}
 
-		/// <summary>Internal method to start a path and mark it as the currently active path</summary>
+        /// <summary>Internal method to start a path and mark it as the currently active path</summary>
 		void StartPathInternal (Path p, OnPathDelegate callback) {
 			p.callback += onPathDelegate;
 
@@ -469,33 +495,7 @@ namespace Pathfinding {
 			AstarPath.StartPath(path);
 		}
 
-
-		/// <summary>Draws gizmos for the Seeker</summary>
-		public void OnDrawGizmos () {
-			if (lastCompletedNodePath == null || !drawGizmos) {
-				return;
-			}
-
-			if (detailedGizmos) {
-				Gizmos.color = new Color(0.7F, 0.5F, 0.1F, 0.5F);
-
-				if (lastCompletedNodePath != null) {
-					for (int i = 0; i < lastCompletedNodePath.Count-1; i++) {
-						Gizmos.DrawLine((Vector3)lastCompletedNodePath[i].position, (Vector3)lastCompletedNodePath[i+1].position);
-					}
-				}
-			}
-
-			Gizmos.color = new Color(0, 1F, 0, 1F);
-
-			if (lastCompletedVectorPath != null) {
-				for (int i = 0; i < lastCompletedVectorPath.Count-1; i++) {
-					Gizmos.DrawLine(lastCompletedVectorPath[i], lastCompletedVectorPath[i+1]);
-				}
-			}
-		}
-
-		protected override int OnUpgradeSerializedData (int version, bool unityThread) {
+        protected override int OnUpgradeSerializedData (int version, bool unityThread) {
 			if (graphMaskCompatibility != -1) {
 				Debug.Log("Loaded " + graphMaskCompatibility + " " + graphMask.value);
 				graphMask = graphMaskCompatibility;
@@ -503,5 +503,5 @@ namespace Pathfinding {
 			}
 			return base.OnUpgradeSerializedData(version, unityThread);
 		}
-	}
+    }
 }

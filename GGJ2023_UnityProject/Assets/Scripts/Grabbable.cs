@@ -5,10 +5,9 @@ namespace LemonBerry
     [RequireComponent(typeof(Rigidbody))]
     public class Grabbable : Interactable
     {
+        protected Rigidbody Rigidbody;
         public bool CanGrab { get; set; } = true;
         public bool IsHeld { get; set; }
-
-        protected Rigidbody Rigidbody;
 
         private void Awake()
         {

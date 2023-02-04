@@ -17,10 +17,10 @@ namespace Pathfinding {
 	/// </summary>
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_single_node_blocker.php")]
 	public class SingleNodeBlocker : VersionedMonoBehaviour {
-		public GraphNode lastBlocked { get; private set; }
-		public BlockManager manager;
+        public BlockManager manager;
+        public GraphNode lastBlocked { get; private set; }
 
-		/// <summary>
+        /// <summary>
 		/// Block node closest to the position of this object.
 		///
 		/// Will unblock the last node that was reserved (if any)
@@ -29,7 +29,7 @@ namespace Pathfinding {
 			BlockAt(transform.position);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Block node closest to the specified position.
 		///
 		/// Will unblock the last node that was reserved (if any)
@@ -42,7 +42,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Block specified node.
 		///
 		/// Will unblock the last node that was reserved (if any)
@@ -55,7 +55,7 @@ namespace Pathfinding {
 			lastBlocked = node;
 		}
 
-		/// <summary>Unblock the last node that was blocked (if any)</summary>
+        /// <summary>Unblock the last node that was blocked (if any)</summary>
 		public void Unblock () {
 			if (lastBlocked == null || lastBlocked.Destroyed) {
 				lastBlocked = null;
@@ -65,5 +65,5 @@ namespace Pathfinding {
 			manager.InternalUnblock(lastBlocked, this);
 			lastBlocked = null;
 		}
-	}
+    }
 }

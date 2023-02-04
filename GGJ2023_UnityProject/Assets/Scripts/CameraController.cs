@@ -5,8 +5,8 @@ namespace LemonBerry
     [RequireComponent(typeof(Camera))]
     public class CameraController : Singleton<CameraController>
     {
-        public Camera Camera => _camera;
         private Camera _camera;
+        public Camera Camera => _camera;
 
         public override void Awake()
         {

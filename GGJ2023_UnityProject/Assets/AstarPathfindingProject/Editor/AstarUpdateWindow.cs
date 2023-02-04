@@ -4,28 +4,13 @@ using UnityEngine;
 
 namespace Pathfinding {
 	public class AstarUpdateWindow : EditorWindow {
-		static GUIStyle largeStyle;
-		static GUIStyle normalStyle;
-		Version version;
-		string summary;
-		bool setReminder;
+        static GUIStyle largeStyle;
+        static GUIStyle normalStyle;
+        bool setReminder;
+        string summary;
+        Version version;
 
-		public static AstarUpdateWindow Init (Version version, string summary) {
-			// Get existing open window or if none, make a new one:
-			AstarUpdateWindow window = EditorWindow.GetWindow<AstarUpdateWindow>(true, "", true);
-
-			window.position = new Rect(Screen.currentResolution.width/2 - 300, Mathf.Max(5, Screen.currentResolution.height/3 - 150), 600, 400);
-			window.version = version;
-			window.summary = summary;
-#if UNITY_4_6 || UNITY_5_0
-			window.title = "New Version of the A* Pathfinding Project";
-#else
-			window.titleContent = new GUIContent("New Version of the A* Pathfinding Project");
-#endif
-			return window;
-		}
-
-		public void OnDestroy () {
+        public void OnDestroy () {
 			if (version != null && !setReminder) {
 				Debug.Log("Closed window, reminding again tomorrow");
 				EditorPrefs.SetString("AstarRemindUpdateDate", DateTime.UtcNow.AddDays(1).ToString(System.Globalization.CultureInfo.InvariantCulture));
@@ -33,7 +18,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void OnGUI () {
+        void OnGUI () {
 			if (largeStyle == null) {
 				largeStyle = new GUIStyle(EditorStyles.largeLabel);
 				largeStyle.fontSize = 32;
@@ -99,5 +84,20 @@ namespace Pathfinding {
 			GUILayout.FlexibleSpace();
 			GUILayout.EndHorizontal();
 		}
-	}
+
+        public static AstarUpdateWindow Init (Version version, string summary) {
+			// Get existing open window or if none, make a new one:
+			AstarUpdateWindow window = EditorWindow.GetWindow<AstarUpdateWindow>(true, "", true);
+
+			window.position = new Rect(Screen.currentResolution.width/2 - 300, Mathf.Max(5, Screen.currentResolution.height/3 - 150), 600, 400);
+			window.version = version;
+			window.summary = summary;
+#if UNITY_4_6 || UNITY_5_0
+			window.title = "New Version of the A* Pathfinding Project";
+#else
+			window.titleContent = new GUIContent("New Version of the A* Pathfinding Project");
+#endif
+			return window;
+		}
+    }
 }

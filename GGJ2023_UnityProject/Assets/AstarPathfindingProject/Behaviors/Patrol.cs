@@ -15,24 +15,25 @@ namespace Pathfinding {
 	[UniqueComponent(tag = "ai.destination")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_patrol.php")]
 	public class Patrol : VersionedMonoBehaviour {
-		/// <summary>Target points to move to in order</summary>
+        /// <summary>Target points to move to in order</summary>
 		public Transform[] targets;
 
-		/// <summary>Time in seconds to wait at each target</summary>
+        /// <summary>Time in seconds to wait at each target</summary>
 		public float delay = 0;
 
-		/// <summary>Current target index</summary>
+        IAstarAI agent;
+
+        /// <summary>Current target index</summary>
 		int index;
 
-		IAstarAI agent;
-		float switchTime = float.PositiveInfinity;
+        float switchTime = float.PositiveInfinity;
 
-		protected override void Awake () {
+        protected override void Awake () {
 			base.Awake();
 			agent = GetComponent<IAstarAI>();
 		}
 
-		/// <summary>Update is called once per frame</summary>
+        /// <summary>Update is called once per frame</summary>
 		void Update () {
 			if (targets.Length == 0) return;
 
@@ -55,5 +56,5 @@ namespace Pathfinding {
 
 			if (search) agent.SearchPath();
 		}
-	}
+    }
 }

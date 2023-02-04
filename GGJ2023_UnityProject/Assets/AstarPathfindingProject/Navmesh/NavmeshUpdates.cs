@@ -17,7 +17,7 @@ namespace Pathfinding {
 	/// </summary>
 	[System.Serializable]
 	public class NavmeshUpdates {
-		/// <summary>
+        /// <summary>
 		/// How often to check if an update needs to be done (real seconds between checks).
 		/// For worlds with a very large number of NavmeshCut objects, it might be bad for performance to do this check every frame.
 		/// If you think this is a performance penalty, increase this number to check less often.
@@ -44,12 +44,13 @@ namespace Pathfinding {
 		/// </summary>
 		public float updateInterval;
 
-		internal class NavmeshUpdateSettings {
-			public NavmeshUpdateSettings(NavmeshBase graph) {}
-			public void OnRecalculatedTiles (NavmeshTile[] tiles) {}
-		}
-		internal void Update () {}
-		internal void OnEnable () {}
-		internal void OnDisable () {}
-	}
+        internal void Update () {}
+        internal void OnEnable () {}
+        internal void OnDisable () {}
+
+        internal class NavmeshUpdateSettings {
+            public NavmeshUpdateSettings(NavmeshBase graph) {}
+            public void OnRecalculatedTiles (NavmeshTile[] tiles) {}
+        }
+    }
 }

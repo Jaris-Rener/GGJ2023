@@ -8,19 +8,15 @@ namespace Pathfinding {
 	/// </summary>
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_unity_reference_helper.php")]
 	public class UnityReferenceHelper : MonoBehaviour {
-		[HideInInspector]
+        [HideInInspector]
 		[SerializeField]
 		private string guid;
 
-		public string GetGUID () {
-			return guid;
-		}
-
-		public void Awake () {
+        public void Awake () {
 			Reset();
 		}
 
-		public void Reset () {
+        public void Reset () {
 			if (string.IsNullOrEmpty(guid)) {
 				guid = Pathfinding.Util.Guid.NewGuid().ToString();
 				Debug.Log("Created new GUID - " + guid, this);
@@ -36,5 +32,9 @@ namespace Pathfinding {
 				}
 			}
 		}
-	}
+
+        public string GetGUID () {
+			return guid;
+		}
+    }
 }

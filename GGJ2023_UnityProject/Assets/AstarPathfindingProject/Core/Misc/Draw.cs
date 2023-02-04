@@ -3,30 +3,30 @@ using UnityEngine;
 namespace Pathfinding.Util {
 	/// <summary>Helper methods for drawing gizmos and debug lines</summary>
 	public class Draw {
-		public static readonly Draw Debug = new Draw { gizmos = false };
-		public static readonly Draw Gizmos = new Draw { gizmos = true };
+        public static readonly Draw Debug = new Draw { gizmos = false };
+        public static readonly Draw Gizmos = new Draw { gizmos = true };
 
-		bool gizmos;
-		Matrix4x4 matrix = Matrix4x4.identity;
+        bool gizmos;
+        Matrix4x4 matrix = Matrix4x4.identity;
 
-		void SetColor (Color color) {
+        void SetColor (Color color) {
 			if (gizmos && UnityEngine.Gizmos.color != color) UnityEngine.Gizmos.color = color;
 		}
 
-		public void Polyline (System.Collections.Generic.List<Vector3> points, Color color, bool cycle = false) {
+        public void Polyline (System.Collections.Generic.List<Vector3> points, Color color, bool cycle = false) {
 			for (int i = 0; i < points.Count - 1; i++) {
 				Line(points[i], points[i+1], color);
 			}
 			if (cycle && points.Count > 1) Line(points[points.Count - 1], points[0], color);
 		}
 
-		public void Line (Vector3 a, Vector3 b, Color color) {
+        public void Line (Vector3 a, Vector3 b, Color color) {
 			SetColor(color);
 			if (gizmos) UnityEngine.Gizmos.DrawLine(matrix.MultiplyPoint3x4(a), matrix.MultiplyPoint3x4(b));
 			else UnityEngine.Debug.DrawLine(matrix.MultiplyPoint3x4(a), matrix.MultiplyPoint3x4(b), color);
 		}
 
-		public void CircleXZ (Vector3 center, float radius, Color color, float startAngle = 0f, float endAngle = 2*Mathf.PI) {
+        public void CircleXZ (Vector3 center, float radius, Color color, float startAngle = 0f, float endAngle = 2*Mathf.PI) {
 			int steps = 40;
 
 #if UNITY_EDITOR
@@ -42,7 +42,7 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		public void Cylinder (Vector3 position, Vector3 up, float height, float radius, Color color) {
+        public void Cylinder (Vector3 position, Vector3 up, float height, float radius, Color color) {
 			var tangent = Vector3.Cross(up, Vector3.one).normalized;
 
 			matrix = Matrix4x4.TRS(position, Quaternion.LookRotation(tangent, up), new Vector3(radius, height, radius));
@@ -59,13 +59,13 @@ namespace Pathfinding.Util {
 			matrix = Matrix4x4.identity;
 		}
 
-		public void CrossXZ (Vector3 position, Color color, float size = 1) {
+        public void CrossXZ (Vector3 position, Color color, float size = 1) {
 			size *= 0.5f;
 			Line(position - Vector3.right*size, position + Vector3.right*size, color);
 			Line(position - Vector3.forward*size, position + Vector3.forward*size, color);
 		}
 
-		public void Bezier (Vector3 a, Vector3 b, Color color) {
+        public void Bezier (Vector3 a, Vector3 b, Color color) {
 			Vector3 dir = b - a;
 
 			if (dir == Vector3.zero) return;
@@ -87,5 +87,5 @@ namespace Pathfinding.Util {
 				prev = p;
 			}
 		}
-	}
+    }
 }

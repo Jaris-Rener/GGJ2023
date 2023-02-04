@@ -17,31 +17,37 @@ namespace Pathfinding {
 	[AddComponentMenu("Pathfinding/Link")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_node_link.php")]
 	public class NodeLink : GraphModifier {
-		/// <summary>End position of the link</summary>
+        /// <summary>End position of the link</summary>
 		public Transform end;
 
-		/// <summary>
+        /// <summary>
 		/// The connection will be this times harder/slower to traverse.
 		/// Note that values lower than one will not always make the pathfinder choose this path instead of another path even though this one should
 		/// lead to a lower total cost unless you also adjust the Heuristic Scale in A* Inspector -> Settings -> Pathfinding or disable the heuristic altogether.
 		/// </summary>
 		public float costFactor = 1.0f;
 
-		/// <summary>Make a one-way connection</summary>
+        /// <summary>Make a one-way connection</summary>
 		public bool oneWay = false;
 
-		/// <summary>Delete existing connection instead of adding one</summary>
+        /// <summary>Delete existing connection instead of adding one</summary>
 		public bool deleteConnection = false;
 
-		public Transform Start {
+        public Transform Start {
 			get { return transform; }
 		}
 
-		public Transform End {
+        public Transform End {
 			get { return end; }
 		}
 
-		public override void OnPostScan () {
+        public void OnDrawGizmos () {
+			if (Start == null || End == null) return;
+
+			Draw.Gizmos.Bezier(Start.position, End.position, deleteConnection ? Color.red : Color.green);
+		}
+
+        public override void OnPostScan () {
 			if (AstarPath.active.isScanning) {
 				InternalOnPostScan();
 			} else {
@@ -52,11 +58,11 @@ namespace Pathfinding {
 			}
 		}
 
-		public void InternalOnPostScan () {
+        public void InternalOnPostScan () {
 			Apply();
 		}
 
-		public override void OnGraphsPostUpdate () {
+        public override void OnGraphsPostUpdate () {
 			if (!AstarPath.active.isScanning) {
 				AstarPath.active.AddWorkItem(new AstarWorkItem(force => {
 					InternalOnPostScan();
@@ -65,7 +71,7 @@ namespace Pathfinding {
 			}
 		}
 
-		public virtual void Apply () {
+        public virtual void Apply () {
 			if (Start == null || End == null || AstarPath.active == null) return;
 
 			GraphNode startNode = AstarPath.active.GetNearest(Start.position).node;
@@ -87,14 +93,8 @@ namespace Pathfinding {
 			}
 		}
 
-		public void OnDrawGizmos () {
-			if (Start == null || End == null) return;
-
-			Draw.Gizmos.Bezier(Start.position, End.position, deleteConnection ? Color.red : Color.green);
-		}
-
 #if UNITY_EDITOR
-		[UnityEditor.MenuItem("Edit/Pathfinding/Link Pair %&l")]
+        [UnityEditor.MenuItem("Edit/Pathfinding/Link Pair %&l")]
 		public static void LinkObjects () {
 			Transform[] tfs = Selection.transforms;
 			if (tfs.Length == 2) {
@@ -103,7 +103,7 @@ namespace Pathfinding {
 			SceneView.RepaintAll();
 		}
 
-		[UnityEditor.MenuItem("Edit/Pathfinding/Unlink Pair %&u")]
+        [UnityEditor.MenuItem("Edit/Pathfinding/Unlink Pair %&u")]
 		public static void UnlinkObjects () {
 			Transform[] tfs = Selection.transforms;
 			if (tfs.Length == 2) {
@@ -112,7 +112,7 @@ namespace Pathfinding {
 			SceneView.RepaintAll();
 		}
 
-		[UnityEditor.MenuItem("Edit/Pathfinding/Delete Links on Selected %&b")]
+        [UnityEditor.MenuItem("Edit/Pathfinding/Delete Links on Selected %&b")]
 		public static void DeleteLinks () {
 			Transform[] tfs = Selection.transforms;
 			for (int i = 0; i < tfs.Length; i++) {
@@ -122,7 +122,7 @@ namespace Pathfinding {
 			SceneView.RepaintAll();
 		}
 
-		public static void LinkObjects (Transform a, Transform b, bool removeConnection) {
+        public static void LinkObjects (Transform a, Transform b, bool removeConnection) {
 			NodeLink connecting = null;
 
 			NodeLink[] conns = a.GetComponents<NodeLink>();
@@ -153,5 +153,5 @@ namespace Pathfinding {
 			}
 		}
 #endif
-	}
+    }
 }

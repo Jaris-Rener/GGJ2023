@@ -27,25 +27,7 @@ namespace Pathfinding.Util {
 	/// See: Pathfinding.Util.ListPool
 	/// </summary>
 	public static class ArrayPool<T> {
-#if !ASTAR_NO_POOLING
-		/// <summary>
-		/// Maximum length of an array pooled using ClaimWithExactLength.
-		/// Arrays with lengths longer than this will silently not be pooled.
-		/// </summary>
-		const int MaximumExactArrayLength = 256;
-
-		/// <summary>
-		/// Internal pool.
-		/// The arrays in each bucket have lengths of 2^i
-		/// </summary>
-		static readonly Stack<T[]>[] pool = new Stack<T[]>[31];
-		static readonly Stack<T[]>[] exactPool = new Stack<T[]>[MaximumExactArrayLength+1];
-#if !ASTAR_OPTIMIZE_POOLING
-		static readonly HashSet<T[]> inPool = new HashSet<T[]>();
-#endif
-#endif
-
-		/// <summary>
+        /// <summary>
 		/// Returns an array with at least the specified length.
 		/// Warning: Returned arrays may contain arbitrary data.
 		/// You cannot rely on it being zeroed out.
@@ -81,7 +63,7 @@ namespace Pathfinding.Util {
 			return new T[1 << bucketIndex];
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns an array with the specified length.
 		/// Use with caution as pooling too many arrays with different lengths that
 		/// are rarely being reused will lead to an effective memory leak.
@@ -115,7 +97,7 @@ namespace Pathfinding.Util {
 			return new T[length];
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Pool an array.
 		/// If the array was got using the <see cref="ClaimWithExactLength"/> method then the allowNonPowerOfTwo parameter must be set to true.
 		/// The parameter exists to make sure that non power of two arrays are not pooled unintentionally which could lead to memory leaks.
@@ -156,11 +138,29 @@ namespace Pathfinding.Util {
 #endif
 			array = null;
 		}
-	}
+#if !ASTAR_NO_POOLING
+        /// <summary>
+		/// Maximum length of an array pooled using ClaimWithExactLength.
+		/// Arrays with lengths longer than this will silently not be pooled.
+		/// </summary>
+		const int MaximumExactArrayLength = 256;
+
+        /// <summary>
+		/// Internal pool.
+		/// The arrays in each bucket have lengths of 2^i
+		/// </summary>
+		static readonly Stack<T[]>[] pool = new Stack<T[]>[31];
+
+        static readonly Stack<T[]>[] exactPool = new Stack<T[]>[MaximumExactArrayLength+1];
+#if !ASTAR_OPTIMIZE_POOLING
+        static readonly HashSet<T[]> inPool = new HashSet<T[]>();
+#endif
+#endif
+    }
 
 	/// <summary>Extension methods for List<T></summary>
 	public static class ListExtensions {
-		/// <summary>
+        /// <summary>
 		/// Identical to ToArray but it uses ArrayPool<T> to avoid allocations if possible.
 		///
 		/// Use with caution as pooling too many arrays with different lengths that
@@ -175,7 +175,7 @@ namespace Pathfinding.Util {
 			return arr;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Clear a list faster than List<T>.Clear.
 		/// It turns out that the List<T>.Clear method will clear all elements in the underlaying array
 		/// not just the ones up to Count. If the list only has a few elements, but the capacity
@@ -194,5 +194,5 @@ namespace Pathfinding.Util {
 				list.Clear();
 			}
 		}
-	}
+    }
 }

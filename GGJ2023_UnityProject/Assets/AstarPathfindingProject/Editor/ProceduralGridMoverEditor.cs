@@ -6,9 +6,9 @@ namespace Pathfinding {
 	[CustomEditor(typeof(ProceduralGridMover))]
 	[CanEditMultipleObjects]
 	public class ProceduralGridMoverEditor : EditorBase {
-		GUIContent[] graphLabels = new GUIContent[32];
+        GUIContent[] graphLabels = new GUIContent[32];
 
-		protected override void Inspector () {
+        protected override void Inspector () {
 			// Make sure the AstarPath object is initialized and the graphs are loaded, this is required to be able to show graph names in the mask popup
 			AstarPath.FindAstarPath();
 
@@ -24,5 +24,5 @@ namespace Pathfinding {
 			PropertyField("target");
 			PropertyField("updateDistance");
 		}
-	}
+    }
 }

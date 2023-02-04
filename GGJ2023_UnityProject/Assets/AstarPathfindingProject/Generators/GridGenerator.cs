@@ -84,33 +84,7 @@ namespace Pathfinding {
 	[JsonOptIn]
 	[Pathfinding.Util.Preserve]
 	public class GridGraph : NavGraph, IUpdatableGraph, ITransformedGraph {
-		/// <summary>This function will be called when this graph is destroyed</summary>
-		protected override void OnDestroy () {
-			base.OnDestroy();
-
-			// Clean up a reference in a static variable which otherwise should point to this graph forever and stop the GC from collecting it
-			RemoveGridGraphFromStatic();
-		}
-
-		protected override void DestroyAllNodes () {
-			GetNodes(node => {
-				// If the grid data happens to be invalid (e.g we had to abort a graph update while it was running) using 'false' as
-				// the parameter will prevent the Destroy method from potentially throwing IndexOutOfRange exceptions due to trying
-				// to access nodes outside the graph. It is safe to do this because we are destroying all nodes in the graph anyway.
-				// We do however need to clear custom connections in both directions
-				(node as GridNodeBase).ClearCustomConnections(true);
-				node.ClearConnections(false);
-				node.Destroy();
-			});
-		}
-
-		void RemoveGridGraphFromStatic () {
-			var graphIndex = active.data.GetGraphIndex(this);
-
-			GridNode.ClearGridGraph(graphIndex, this);
-		}
-
-		/// <summary>
+        /// <summary>
 		/// This is placed here so generators inheriting from this one can override it and set it to false.
 		/// If it is true, it means that the nodes array's length will always be equal to width*depth
 		/// It is used mainly in the editor to do auto-scanning calls, setting it to false for a non-uniform grid will reduce the number of scans
@@ -121,7 +95,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Number of layers in the graph.
 		/// For grid graphs this is always 1, for layered grid graphs it can be higher.
 		/// The nodes array has the size width*depth*layerCount.
@@ -132,16 +106,7 @@ namespace Pathfinding {
 			}
 		}
 
-		public override int CountNodes () {
-			return nodes != null ? nodes.Length : 0;
-		}
-
-		public override void GetNodes (System.Action<GraphNode> action) {
-			if (nodes == null) return;
-			for (int i = 0; i < nodes.Length; i++) action(nodes[i]);
-		}
-
-		/// <summary>
+        /// <summary>
 		/// \name Inspector - Settings
 		/// \{
 		/// </summary>
@@ -155,7 +120,7 @@ namespace Pathfinding {
 		[JsonMember]
 		public InspectorGridMode inspectorGridMode = InspectorGridMode.Grid;
 
-		/// <summary>
+        /// <summary>
 		/// Determines how the size of each hexagon is set in the inspector.
 		/// For hexagons the normal nodeSize field doesn't really correspond to anything specific on the hexagon's geometry, so this enum is used to give the user the opportunity to adjust more concrete dimensions of the hexagons
 		/// without having to pull out a calculator to calculate all the square roots and complicated conversion factors.
@@ -172,20 +137,20 @@ namespace Pathfinding {
 		[JsonMember]
 		public InspectorGridHexagonNodeSize inspectorHexagonSizeMode = InspectorGridHexagonNodeSize.Width;
 
-		/// <summary>Width of the grid in nodes. See: SetDimensions</summary>
+        /// <summary>Width of the grid in nodes. See: SetDimensions</summary>
 		public int width;
 
-		/// <summary>Depth (height) of the grid in nodes. See: SetDimensions</summary>
+        /// <summary>Depth (height) of the grid in nodes. See: SetDimensions</summary>
 		public int depth;
 
-		/// <summary>
+        /// <summary>
 		/// Scaling of the graph along the X axis.
 		/// This should be used if you want different scales on the X and Y axis of the grid
 		/// </summary>
 		[JsonMember]
 		public float aspectRatio = 1F;
 
-		/// <summary>
+        /// <summary>
 		/// Angle to use for the isometric projection.
 		/// If you are making a 2D isometric game, you may want to use this parameter to adjust the layout of the graph to match your game.
 		/// This will essentially scale the graph along one of its diagonals to produce something like this:
@@ -210,13 +175,13 @@ namespace Pathfinding {
 		[JsonMember]
 		public float isometricAngle;
 
-		/// <summary>Commonly used value for <see cref="isometricAngle"/></summary>
+        /// <summary>Commonly used value for <see cref="isometricAngle"/></summary>
 		public static readonly float StandardIsometricAngle = 90-Mathf.Atan(1/Mathf.Sqrt(2))*Mathf.Rad2Deg;
 
-		/// <summary>Commonly used value for <see cref="isometricAngle"/></summary>
+        /// <summary>Commonly used value for <see cref="isometricAngle"/></summary>
 		public static readonly float StandardDimetricAngle = Mathf.Acos(1/2f)*Mathf.Rad2Deg;
 
-		/// <summary>
+        /// <summary>
 		/// If true, all edge costs will be set to the same value.
 		/// If false, diagonals will cost more.
 		/// This is useful for a hexagon graph where the diagonals are actually the same length as the
@@ -225,49 +190,43 @@ namespace Pathfinding {
 		[JsonMember]
 		public bool uniformEdgeCosts;
 
-		/// <summary>Rotation of the grid in degrees</summary>
+        /// <summary>Rotation of the grid in degrees</summary>
 		[JsonMember]
 		public Vector3 rotation;
 
-		/// <summary>Center point of the grid</summary>
+        /// <summary>Center point of the grid</summary>
 		[JsonMember]
 		public Vector3 center;
 
-		/// <summary>Size of the grid. Might be negative or smaller than <see cref="nodeSize"/></summary>
+        /// <summary>Size of the grid. Might be negative or smaller than <see cref="nodeSize"/></summary>
 		[JsonMember]
 		public Vector2 unclampedSize;
 
-		/// <summary>
+        /// <summary>
 		/// Size of one node in world units.
 		/// See: <see cref="SetDimensions"/>
 		/// </summary>
 		[JsonMember]
 		public float nodeSize = 1;
 
-		/* Collision and stuff */
+        /* Collision and stuff */
 
-		/// <summary>Settings on how to check for walkability and height</summary>
+        /// <summary>Settings on how to check for walkability and height</summary>
 		[JsonMember]
 		public GraphCollision collision;
 
-		/// <summary>
+        /// <summary>
 		/// The max position difference between two nodes to enable a connection.
 		/// Set to 0 to ignore the value.
 		/// </summary>
 		[JsonMember]
 		public float maxClimb = 0.4F;
 
-		/// <summary>The max slope in degrees for a node to be walkable.</summary>
+        /// <summary>The max slope in degrees for a node to be walkable.</summary>
 		[JsonMember]
 		public float maxSlope = 90;
 
-		/// <summary>
-		/// Use heigh raycasting normal for max slope calculation.
-		/// True if <see cref="maxSlope"/> is less than 90 degrees.
-		/// </summary>
-		protected bool useRaycastNormal { get { return Math.Abs(90-maxSlope) > float.Epsilon; } }
-
-		/// <summary>
+        /// <summary>
 		/// Erosion of the graph.
 		/// The graph can be eroded after calculation.
 		/// This means a margin is put around unwalkable nodes or other unwalkable connections.
@@ -283,7 +242,7 @@ namespace Pathfinding {
 		[JsonMember]
 		public int erodeIterations;
 
-		/// <summary>
+        /// <summary>
 		/// Use tags instead of walkability for erosion.
 		/// Tags will be used for erosion instead of marking nodes as unwalkable. The nodes will be marked with tags in an increasing order starting with the tag <see cref="erosionFirstTag"/>.
 		/// Debug with the Tags mode to see the effect. With this enabled you can in effect set how close different AIs are allowed to get to walls using the Valid Tags field on the Seeker component.
@@ -294,7 +253,7 @@ namespace Pathfinding {
 		[JsonMember]
 		public bool erosionUseTags;
 
-		/// <summary>
+        /// <summary>
 		/// Tag to start from when using tags for erosion.
 		/// See: <see cref="erosionUseTags"/>
 		/// See: <see cref="erodeIterations"/>
@@ -303,7 +262,7 @@ namespace Pathfinding {
 		public int erosionFirstTag = 1;
 
 
-		/// <summary>
+        /// <summary>
 		/// Number of neighbours for each node.
 		/// Either four, six, eight connections per node.
 		///
@@ -312,7 +271,7 @@ namespace Pathfinding {
 		[JsonMember]
 		public NumNeighbours neighbours = NumNeighbours.Eight;
 
-		/// <summary>
+        /// <summary>
 		/// If disabled, will not cut corners on obstacles.
 		/// If \link <see cref="neighbours"/> connections \endlink is Eight, obstacle corners might be cut by a connection,
 		/// setting this to false disables that. \image html images/cutCorners.png
@@ -320,28 +279,28 @@ namespace Pathfinding {
 		[JsonMember]
 		public bool cutCorners = true;
 
-		/// <summary>
+        /// <summary>
 		/// Offset for the position when calculating penalty.
 		/// See: penaltyPosition
 		/// </summary>
 		[JsonMember]
 		public float penaltyPositionOffset;
 
-		/// <summary>Use position (y-coordinate) to calculate penalty</summary>
+        /// <summary>Use position (y-coordinate) to calculate penalty</summary>
 		[JsonMember]
 		public bool penaltyPosition;
 
-		/// <summary>
+        /// <summary>
 		/// Scale factor for penalty when calculating from position.
 		/// See: penaltyPosition
 		/// </summary>
 		[JsonMember]
 		public float penaltyPositionFactor = 1F;
 
-		[JsonMember]
+        [JsonMember]
 		public bool penaltyAngle;
 
-		/// <summary>
+        /// <summary>
 		/// How much penalty is applied depending on the slope of the terrain.
 		/// At a 90 degree slope (not that exactly 90 degree slopes can occur, but almost 90 degree), this penalty is applied.
 		/// At a 45 degree slope, half of this is applied and so on.
@@ -350,25 +309,25 @@ namespace Pathfinding {
 		[JsonMember]
 		public float penaltyAngleFactor = 100F;
 
-		/// <summary>How much extra to penalize very steep angles</summary>
+        /// <summary>How much extra to penalize very steep angles</summary>
 		[JsonMember]
 		public float penaltyAnglePower = 1;
 
 
-		/// <summary>Show an outline of the grid nodes in the Unity Editor</summary>
+        /// <summary>Show an outline of the grid nodes in the Unity Editor</summary>
 		[JsonMember]
 		public bool showMeshOutline = true;
 
-		/// <summary>Show the connections between the grid nodes in the Unity Editor</summary>
+        /// <summary>Show the connections between the grid nodes in the Unity Editor</summary>
 		[JsonMember]
 		public bool showNodeConnections;
 
-		/// <summary>Show the surface of the graph. Each node will be drawn as a square (unless e.g hexagon graph mode has been enabled).</summary>
+        /// <summary>Show the surface of the graph. Each node will be drawn as a square (unless e.g hexagon graph mode has been enabled).</summary>
 		[JsonMember]
 		public bool showMeshSurface = true;
 
 
-		/// <summary>\}</summary>
+        /// <summary>\}</summary>
 
 		/// <summary>
 		/// Size of the grid. Will always be positive and larger than <see cref="nodeSize"/>.
@@ -376,9 +335,9 @@ namespace Pathfinding {
 		/// </summary>
 		public Vector2 size { get; protected set; }
 
-		/* End collision and stuff */
+        /* End collision and stuff */
 
-		/// <summary>
+        /// <summary>
 		/// Index offset to get neighbour nodes. Added to a node's index to get a neighbour node index.
 		///
 		/// <code>
@@ -399,25 +358,22 @@ namespace Pathfinding {
 		[System.NonSerialized]
 		public readonly int[] neighbourOffsets = new int[8];
 
-		/// <summary>Costs to neighbour nodes</summary>
+        /// <summary>Costs to neighbour nodes</summary>
 		[System.NonSerialized]
 		public readonly uint[] neighbourCosts = new uint[8];
 
-		/// <summary>Offsets in the X direction for neighbour nodes. Only 1, 0 or -1</summary>
+        /// <summary>Offsets in the X direction for neighbour nodes. Only 1, 0 or -1</summary>
 		[System.NonSerialized]
 		public readonly int[] neighbourXOffsets = new int[8];
 
-		/// <summary>Offsets in the Z direction for neighbour nodes. Only 1, 0 or -1</summary>
+        /// <summary>Offsets in the Z direction for neighbour nodes. Only 1, 0 or -1</summary>
 		[System.NonSerialized]
 		public readonly int[] neighbourZOffsets = new int[8];
 
-		/// <summary>Which neighbours are going to be used when <see cref="neighbours"/>=6</summary>
-		internal static readonly int[] hexagonNeighbourIndices = { 0, 1, 5, 2, 3, 7 };
-
-		/// <summary>In GetNearestForce, determines how far to search after a valid node has been found</summary>
+        /// <summary>In GetNearestForce, determines how far to search after a valid node has been found</summary>
 		public const int getNearestForceOverlap = 2;
 
-		/// <summary>
+        /// <summary>
 		/// All nodes in this graph.
 		/// Nodes are laid out row by row.
 		///
@@ -436,13 +392,7 @@ namespace Pathfinding {
 		/// </summary>
 		public GridNode[] nodes;
 
-		/// <summary>
-		/// Determines how the graph transforms graph space to world space.
-		/// See: <see cref="UpdateTransform"/>
-		/// </summary>
-		public GraphTransform transform { get; private set; }
-
-		/// <summary>
+        /// <summary>
 		/// Get or set if the graph should be in 2D mode.
 		///
 		/// Note: This is just a convenience property, this property will actually read/modify the <see cref="rotation"/> of the graph. A rotation aligned with the 2D plane is what determines if the graph is 2D or not.
@@ -460,20 +410,241 @@ namespace Pathfinding {
 			}
 		}
 
+        public int Width {
+			get {
+				return width;
+			}
+			set {
+				width = value;
+			}
+		}
 
-		public GridGraph () {
+        public int Depth {
+			get {
+				return depth;
+			}
+			set {
+				depth = value;
+			}
+		}
+
+        /// <summary>
+		/// Use heigh raycasting normal for max slope calculation.
+		/// True if <see cref="maxSlope"/> is less than 90 degrees.
+		/// </summary>
+		protected bool useRaycastNormal { get { return Math.Abs(90-maxSlope) > float.Epsilon; } }
+
+        /// <summary>Which neighbours are going to be used when <see cref="neighbours"/>=6</summary>
+		internal static readonly int[] hexagonNeighbourIndices = { 0, 1, 5, 2, 3, 7 };
+
+
+        public GridGraph () {
 			unclampedSize = new Vector2(10, 10);
 			nodeSize = 1F;
 			collision = new GraphCollision();
 			transform = new GraphTransform(Matrix4x4.identity);
 		}
 
-		public override void RelocateNodes (Matrix4x4 deltaMatrix) {
+        /// <summary>
+		/// Determines how the graph transforms graph space to world space.
+		/// See: <see cref="UpdateTransform"/>
+		/// </summary>
+		public GraphTransform transform { get; private set; }
+
+        GraphUpdateThreading IUpdatableGraph.CanUpdateAsync (GraphUpdateObject o) {
+			return GraphUpdateThreading.UnityThread;
+		}
+
+        void IUpdatableGraph.UpdateAreaInit (GraphUpdateObject o) {}
+        void IUpdatableGraph.UpdateAreaPost (GraphUpdateObject o) {}
+
+        /// <summary>Internal function to update an area of the graph</summary>
+		void IUpdatableGraph.UpdateArea (GraphUpdateObject o) {
+			if (nodes == null || nodes.Length != width*depth) {
+				Debug.LogWarning("The Grid Graph is not scanned, cannot update area");
+				//Not scanned
+				return;
+			}
+
+			IntRect originalRect, affectRect, physicsRect;
+			bool willChangeWalkability;
+			int erosion;
+			CalculateAffectedRegions(o, out originalRect, out affectRect, out physicsRect, out willChangeWalkability, out erosion);
+
+#if ASTARDEBUG
+			var debugMatrix = transform * Matrix4x4.TRS(new Vector3(0.5f, 0, 0.5f), Quaternion.identity, Vector3.one);
+
+			originalRect.DebugDraw(debugMatrix, Color.red);
+#endif
+
+			// Rect which covers the whole grid
+			var gridRect = new IntRect(0, 0, width-1, depth-1);
+
+			// Clamp the rect to the grid bounds
+			IntRect clampedRect = IntRect.Intersection(affectRect, gridRect);
+
+			// Mark nodes that might be changed
+			for (int z = clampedRect.ymin; z <= clampedRect.ymax; z++) {
+				for (int x = clampedRect.xmin; x <= clampedRect.xmax; x++) {
+					o.WillUpdateNode(nodes[z*width+x]);
+				}
+			}
+
+			// Update Physics
+			if (o.updatePhysics && !o.modifyWalkability) {
+				collision.Initialize(transform, nodeSize);
+
+				clampedRect = IntRect.Intersection(physicsRect, gridRect);
+
+				for (int z = clampedRect.ymin; z <= clampedRect.ymax; z++) {
+					for (int x = clampedRect.xmin; x <= clampedRect.xmax; x++) {
+						RecalculateCell(x, z, o.resetPenaltyOnPhysics, false);
+					}
+				}
+			}
+
+			//Apply GUO
+
+			clampedRect = IntRect.Intersection(originalRect, gridRect);
+			for (int z = clampedRect.ymin; z <= clampedRect.ymax; z++) {
+				for (int x = clampedRect.xmin; x <= clampedRect.xmax; x++) {
+					int index = z*width+x;
+
+					GridNode node = nodes[index];
+
+					if (o.bounds.Contains((Vector3)node.position)) {
+						if (willChangeWalkability) {
+							node.Walkable = node.WalkableErosion;
+							o.Apply(node);
+							node.WalkableErosion = node.Walkable;
+						} else {
+							o.Apply(node);
+						}
+					}
+				}
+			}
+
+#if ASTARDEBUG
+			physicsRect.DebugDraw(debugMatrix, Color.blue);
+			affectRect.DebugDraw(debugMatrix, Color.black);
+#endif
+
+			// Recalculate connections
+			if (willChangeWalkability && erosion == 0) {
+				clampedRect = IntRect.Intersection(affectRect, gridRect);
+				for (int x = clampedRect.xmin; x <= clampedRect.xmax; x++) {
+					for (int z = clampedRect.ymin; z <= clampedRect.ymax; z++) {
+						CalculateConnections(x, z);
+					}
+				}
+			} else if (willChangeWalkability && erosion > 0) {
+				clampedRect = IntRect.Union(originalRect, physicsRect);
+
+				IntRect erosionRect1 = clampedRect.Expand(erosion);
+				IntRect erosionRect2 = erosionRect1.Expand(erosion);
+
+				erosionRect1 = IntRect.Intersection(erosionRect1, gridRect);
+				erosionRect2 = IntRect.Intersection(erosionRect2, gridRect);
+
+#if ASTARDEBUG
+				erosionRect1.DebugDraw(debugMatrix, Color.magenta);
+				erosionRect2.DebugDraw(debugMatrix, Color.cyan);
+#endif
+
+
+				// * all nodes inside clampedRect might have had their walkability changed
+				// * all nodes inside erosionRect1 might get affected by erosion from clampedRect and erosionRect2
+				// * all nodes inside erosionRect2 (but outside erosionRect1) will be reset to previous walkability
+				//     after calculation since their erosion might not be correctly calculated (nodes outside erosionRect2 might have an effect)
+
+				for (int x = erosionRect2.xmin; x <= erosionRect2.xmax; x++) {
+					for (int z = erosionRect2.ymin; z <= erosionRect2.ymax; z++) {
+						int index = z*width+x;
+
+						GridNode node = nodes[index];
+
+						bool tmp = node.Walkable;
+						node.Walkable = node.WalkableErosion;
+
+						if (!erosionRect1.Contains(x, z)) {
+							//Save the border's walkabilty data (will be reset later)
+							node.TmpWalkable = tmp;
+						}
+					}
+				}
+
+				for (int x = erosionRect2.xmin; x <= erosionRect2.xmax; x++) {
+					for (int z = erosionRect2.ymin; z <= erosionRect2.ymax; z++) {
+						CalculateConnections(x, z);
+					}
+				}
+
+				// Erode the walkable area
+				ErodeWalkableArea(erosionRect2.xmin, erosionRect2.ymin, erosionRect2.xmax+1, erosionRect2.ymax+1);
+
+				for (int x = erosionRect2.xmin; x <= erosionRect2.xmax; x++) {
+					for (int z = erosionRect2.ymin; z <= erosionRect2.ymax; z++) {
+						if (erosionRect1.Contains(x, z)) continue;
+
+						int index = z*width+x;
+
+						GridNode node = nodes[index];
+
+						//Restore temporarily stored data
+						node.Walkable = node.TmpWalkable;
+					}
+				}
+
+				// Recalculate connections of all affected nodes
+				for (int x = erosionRect2.xmin; x <= erosionRect2.xmax; x++) {
+					for (int z = erosionRect2.ymin; z <= erosionRect2.ymax; z++) {
+						CalculateConnections(x, z);
+					}
+				}
+			}
+		}
+
+        /// <summary>This function will be called when this graph is destroyed</summary>
+		protected override void OnDestroy () {
+			base.OnDestroy();
+
+			// Clean up a reference in a static variable which otherwise should point to this graph forever and stop the GC from collecting it
+			RemoveGridGraphFromStatic();
+		}
+
+        protected override void DestroyAllNodes () {
+			GetNodes(node => {
+				// If the grid data happens to be invalid (e.g we had to abort a graph update while it was running) using 'false' as
+				// the parameter will prevent the Destroy method from potentially throwing IndexOutOfRange exceptions due to trying
+				// to access nodes outside the graph. It is safe to do this because we are destroying all nodes in the graph anyway.
+				// We do however need to clear custom connections in both directions
+				(node as GridNodeBase).ClearCustomConnections(true);
+				node.ClearConnections(false);
+				node.Destroy();
+			});
+		}
+
+        void RemoveGridGraphFromStatic () {
+			var graphIndex = active.data.GetGraphIndex(this);
+
+			GridNode.ClearGridGraph(graphIndex, this);
+		}
+
+        public override int CountNodes () {
+			return nodes != null ? nodes.Length : 0;
+		}
+
+        public override void GetNodes (System.Action<GraphNode> action) {
+			if (nodes == null) return;
+			for (int i = 0; i < nodes.Length; i++) action(nodes[i]);
+		}
+
+        public override void RelocateNodes (Matrix4x4 deltaMatrix) {
 			// It just makes a lot more sense to use the other overload and for that case we don't have to serialize the matrix
 			throw new System.Exception("This method cannot be used for Grid Graphs. Please use the other overload of RelocateNodes instead");
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Relocate the grid graph using new settings.
 		/// This will move all nodes in the graph to new positions which matches the new settings.
 		/// </summary>
@@ -494,7 +665,7 @@ namespace Pathfinding {
 			});
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Transform a point in graph space to world space.
 		/// This will give you the node position for the node at the given x and z coordinate
 		/// if it is at the specified height above the base of the graph.
@@ -503,40 +674,23 @@ namespace Pathfinding {
 			return (Int3)transform.Transform(new Vector3(x+0.5f, height, z+0.5f));
 		}
 
-		public static float ConvertHexagonSizeToNodeSize (InspectorGridHexagonNodeSize mode, float value) {
+        public static float ConvertHexagonSizeToNodeSize (InspectorGridHexagonNodeSize mode, float value) {
 			if (mode == InspectorGridHexagonNodeSize.Diameter) value *= 1.5f/(float)System.Math.Sqrt(2.0f);
 			else if (mode == InspectorGridHexagonNodeSize.Width) value *= (float)System.Math.Sqrt(3.0f/2.0f);
 			return value;
 		}
 
-		public static float ConvertNodeSizeToHexagonSize (InspectorGridHexagonNodeSize mode, float value) {
+        public static float ConvertNodeSizeToHexagonSize (InspectorGridHexagonNodeSize mode, float value) {
 			if (mode == InspectorGridHexagonNodeSize.Diameter) value *= (float)System.Math.Sqrt(2.0f)/1.5f;
 			else if (mode == InspectorGridHexagonNodeSize.Width) value *= (float)System.Math.Sqrt(2.0f/3.0f);
 			return value;
 		}
 
-		public int Width {
-			get {
-				return width;
-			}
-			set {
-				width = value;
-			}
-		}
-		public int Depth {
-			get {
-				return depth;
-			}
-			set {
-				depth = value;
-			}
-		}
-
-		public uint GetConnectionCost (int dir) {
+        public uint GetConnectionCost (int dir) {
 			return neighbourCosts[dir];
 		}
 
-		public GridNode GetNodeConnection (GridNode node, int dir) {
+        public GridNode GetNodeConnection (GridNode node, int dir) {
 			if (!node.HasConnectionInDirection(dir)) return null;
 			if (!node.EdgeNode) {
 				return nodes[node.NodeInGridIndex + neighbourOffsets[dir]];
@@ -550,7 +704,7 @@ namespace Pathfinding {
 			}
 		}
 
-		public bool HasNodeConnection (GridNode node, int dir) {
+        public bool HasNodeConnection (GridNode node, int dir) {
 			if (!node.HasConnectionInDirection(dir)) return false;
 			if (!node.EdgeNode) {
 				return true;
@@ -563,7 +717,7 @@ namespace Pathfinding {
 			}
 		}
 
-		public void SetNodeConnection (GridNode node, int dir, bool value) {
+        public void SetNodeConnection (GridNode node, int dir, bool value) {
 			int index = node.NodeInGridIndex;
 			int z = index/Width;
 			int x = index - z*Width;
@@ -571,7 +725,7 @@ namespace Pathfinding {
 			SetNodeConnection(index, x, z, dir, value);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Get the connecting node from the node at (x,z) in the specified direction.
 		/// Returns: A GridNode if the node has a connection to that node. Null if no connection in that direction exists
 		///
@@ -590,7 +744,7 @@ namespace Pathfinding {
 			return nodes[nindex];
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Set if connection in the specified direction should be enabled.
 		/// Note that bounds checking will still be done when getting the connection value again,
 		/// so it is not necessarily true that HasNodeConnection will return true just because you used
@@ -609,7 +763,7 @@ namespace Pathfinding {
 			nodes[index].SetConnectionInternal(dir, value);
 		}
 
-		public bool HasNodeConnection (int index, int x, int z, int dir) {
+        public bool HasNodeConnection (int index, int x, int z, int dir) {
 			if (!nodes[index].HasConnectionInDirection(dir)) return false;
 
 			/// <summary>TODO: Mark edge nodes and only do bounds checking for them</summary>
@@ -621,7 +775,7 @@ namespace Pathfinding {
 			return true;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Changes the grid shape.
 		/// This is equivalent to changing the 'shape' dropdown in the grid graph inspector.
 		///
@@ -657,7 +811,8 @@ namespace Pathfinding {
 			}
 			inspectorGridMode = shape;
 		}
-		/// <summary>
+
+        /// <summary>
 		/// Updates <see cref="unclampedSize"/> from <see cref="width"/>, <see cref="depth"/> and <see cref="nodeSize"/> values.
 		/// Also \link UpdateTransform generates a new matrix \endlink.
 		/// Note: This does not rescan the graph, that must be done with Scan
@@ -684,13 +839,13 @@ namespace Pathfinding {
 			UpdateTransform();
 		}
 
-		/// <summary>Updates <see cref="unclampedSize"/> from <see cref="width"/>, <see cref="depth"/> and <see cref="nodeSize"/> values. Deprecated: Use <see cref="SetDimensions"/> instead</summary>
+        /// <summary>Updates <see cref="unclampedSize"/> from <see cref="width"/>, <see cref="depth"/> and <see cref="nodeSize"/> values. Deprecated: Use <see cref="SetDimensions"/> instead</summary>
 		[System.Obsolete("Use SetDimensions instead")]
 		public void UpdateSizeFromWidthDepth () {
 			SetDimensions(width, depth, nodeSize);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Generates the matrix used for translating nodes from grid coordinates to world coordinates.
 		/// Deprecated: This method has been renamed to <see cref="UpdateTransform"/>
 		/// </summary>
@@ -699,7 +854,7 @@ namespace Pathfinding {
 			UpdateTransform();
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Updates the <see cref="transform"/> field which transforms graph space to world space.
 		/// In graph space all nodes are laid out in the XZ plane with the first node having a corner in the origin.
 		/// One unit in graph space is one node so the first node in the graph is at (0.5,0) the second one at (1.5,0) etc.
@@ -715,7 +870,7 @@ namespace Pathfinding {
 			transform = CalculateTransform();
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns a new transform which transforms graph space to world space.
 		/// Does not update the <see cref="transform"/> field.
 		/// See: <see cref="UpdateTransform"/>
@@ -747,7 +902,7 @@ namespace Pathfinding {
 			return new GraphTransform(m);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Calculates the width/depth of the graph from <see cref="unclampedSize"/> and <see cref="nodeSize"/>.
 		/// The node size may be changed due to constraints that the width/depth is not
 		/// allowed to be larger than 1024 (artificial limit).
@@ -783,7 +938,7 @@ namespace Pathfinding {
 			}
 		}
 
-		public override NNInfoInternal GetNearest (Vector3 position, NNConstraint constraint, GraphNode hint) {
+        public override NNInfoInternal GetNearest (Vector3 position, NNConstraint constraint, GraphNode hint) {
 			if (nodes == null || depth*width != nodes.Length) {
 				return new NNInfoInternal();
 			}
@@ -804,7 +959,7 @@ namespace Pathfinding {
 			return nn;
 		}
 
-		public override NNInfoInternal GetNearestForce (Vector3 position, NNConstraint constraint) {
+        public override NNInfoInternal GetNearestForce (Vector3 position, NNConstraint constraint) {
 			if (nodes == null || depth*width != nodes.Length) {
 				return new NNInfoInternal();
 			}
@@ -955,7 +1110,7 @@ namespace Pathfinding {
 			return nn;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Sets up <see cref="neighbourOffsets"/> with the current settings. <see cref="neighbourOffsets"/>, <see cref="neighbourCosts"/>, <see cref="neighbourXOffsets"/> and <see cref="neighbourZOffsets"/> are set up.\n
 		/// The cost for a non-diagonal movement between two adjacent nodes is RoundToInt (<see cref="nodeSize"/> * Int3.Precision)\n
 		/// The cost for a diagonal movement between two adjacent nodes is RoundToInt (<see cref="nodeSize"/> * Sqrt (2) * Int3.Precision)
@@ -1018,7 +1173,7 @@ namespace Pathfinding {
 			neighbourZOffsets[7] = -1;
 		}
 
-		protected override IEnumerable<Progress> ScanInternal () {
+        protected override IEnumerable<Progress> ScanInternal () {
 			if (nodeSize <= 0) {
 				yield break;
 			}
@@ -1100,7 +1255,7 @@ namespace Pathfinding {
 			ErodeWalkableArea();
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Updates position, walkability and penalty for the node.
 		/// Assumes that collision.Initialize (...) has been called before this function
 		///
@@ -1111,7 +1266,7 @@ namespace Pathfinding {
 			RecalculateCell(x, z, resetPenalty, false);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Recalculates single node in the graph.
 		///
 		/// For a layered grid graph this will recalculate all nodes at a specific (x,z) cell in the grid.
@@ -1187,7 +1342,7 @@ namespace Pathfinding {
 			node.WalkableErosion = node.Walkable;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// True if the node has any blocked connections.
 		/// For 4 and 8 neighbours the 4 axis aligned connections will be checked.
 		/// For 6 neighbours all 6 neighbours will be checked.
@@ -1216,14 +1371,14 @@ namespace Pathfinding {
 			return false;
 		}
 
-		/// <summary>Internal method used for erosion</summary>
+        /// <summary>Internal method used for erosion</summary>
 		void ErodeNode (GraphNode node) {
 			if (node.Walkable && ErosionAnyFalseConnections(node)) {
 				node.Walkable = false;
 			}
 		}
 
-		/// <summary>Internal method used for erosion</summary>
+        /// <summary>Internal method used for erosion</summary>
 		void ErodeNodeWithTagsInit (GraphNode node) {
 			if (node.Walkable && ErosionAnyFalseConnections(node)) {
 				node.Tag = (uint)erosionFirstTag;
@@ -1232,7 +1387,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Internal method used for erosion</summary>
+        /// <summary>Internal method used for erosion</summary>
 		void ErodeNodeWithTags (GraphNode node, int iteration) {
 			var gnode = node as GridNodeBase;
 
@@ -1263,7 +1418,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Erodes the walkable area.
 		/// See: <see cref="erodeIterations"/>
 		/// </summary>
@@ -1271,7 +1426,7 @@ namespace Pathfinding {
 			ErodeWalkableArea(0, 0, Width, Depth);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Erodes the walkable area.
 		///
 		/// xmin, zmin (inclusive)\n
@@ -1325,7 +1480,7 @@ namespace Pathfinding {
 			Pathfinding.Util.ListPool<GraphNode>.Release(ref nodesInRect);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns true if a connection between the adjacent nodes n1 and n2 is valid.
 		/// Also takes into account if the nodes are walkable.
 		///
@@ -1357,7 +1512,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Calculates the grid connections for a cell as well as its neighbours.
 		/// This is a useful utility function if you want to modify the walkability of a single node in the graph.
 		///
@@ -1390,7 +1545,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Calculates the grid connections for a single node.
 		/// Deprecated: Use the instance function instead
 		/// </summary>
@@ -1399,7 +1554,7 @@ namespace Pathfinding {
 			(AstarData.GetGraph(node) as GridGraph).CalculateConnections((GridNodeBase)node);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Calculates the grid connections for a single node.
 		/// Convenience function, it's slightly faster to use CalculateConnections(int,int)
 		/// but that will only show when calculating for a large number of nodes.
@@ -1413,7 +1568,7 @@ namespace Pathfinding {
 			CalculateConnections(x, z);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Calculates the grid connections for a single node.
 		/// Deprecated: Use CalculateConnections(x,z) or CalculateConnections(node) instead
 		/// </summary>
@@ -1422,7 +1577,7 @@ namespace Pathfinding {
 			CalculateConnections(x, z);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Calculates the grid connections for a single node.
 		/// Note that to ensure that connections are completely up to date after updating a node you
 		/// have to calculate the connections for both the changed node and its neighbours.
@@ -1542,7 +1697,7 @@ namespace Pathfinding {
 		}
 
 
-		public override void OnDrawGizmos (RetainedGizmos gizmos, bool drawNodes) {
+        public override void OnDrawGizmos (RetainedGizmos gizmos, bool drawNodes) {
 			using (var helper = gizmos.GetSingleFrameGizmoHelper(active)) {
 				// The width and depth fields might not be up to date, so recalculate
 				// them from the #unclampedSize field
@@ -1613,7 +1768,7 @@ namespace Pathfinding {
 			if (active.showUnwalkableNodes) DrawUnwalkableNodes(nodeSize * 0.3f);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Draw the surface as well as an outline of the grid graph.
 		/// The nodes will be drawn as squares (or hexagons when using <see cref="neighbours"/> = Six).
 		/// </summary>
@@ -1726,7 +1881,7 @@ namespace Pathfinding {
 			ArrayPool<Color>.Release(ref colors);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// A rect that contains all nodes that the bounds could touch.
 		/// This correctly handles rotated graphs and other transformations.
 		/// The returned rect is guaranteed to not extend outside the graph bounds.
@@ -1757,25 +1912,25 @@ namespace Pathfinding {
 			return IntRect.Intersection(originalRect, gridRect);
 		}
 
-		/// <summary>Deprecated: This method has been renamed to GetNodesInRegion</summary>
+        /// <summary>Deprecated: This method has been renamed to GetNodesInRegion</summary>
 		[System.Obsolete("This method has been renamed to GetNodesInRegion", true)]
 		public List<GraphNode> GetNodesInArea (Bounds bounds) {
 			return GetNodesInRegion(bounds);
 		}
 
-		/// <summary>Deprecated: This method has been renamed to GetNodesInRegion</summary>
+        /// <summary>Deprecated: This method has been renamed to GetNodesInRegion</summary>
 		[System.Obsolete("This method has been renamed to GetNodesInRegion", true)]
 		public List<GraphNode> GetNodesInArea (GraphUpdateShape shape) {
 			return GetNodesInRegion(shape);
 		}
 
-		/// <summary>Deprecated: This method has been renamed to GetNodesInRegion</summary>
+        /// <summary>Deprecated: This method has been renamed to GetNodesInRegion</summary>
 		[System.Obsolete("This method has been renamed to GetNodesInRegion", true)]
 		public List<GraphNode> GetNodesInArea (Bounds bounds, GraphUpdateShape shape) {
 			return GetNodesInRegion(bounds, shape);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// All nodes inside the bounding box.
 		/// Note: Be nice to the garbage collector and pool the list when you are done with it (optional)
 		/// See: Pathfinding.Util.ListPool
@@ -1786,7 +1941,7 @@ namespace Pathfinding {
 			return GetNodesInRegion(bounds, null);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// All nodes inside the shape.
 		/// Note: Be nice to the garbage collector and pool the list when you are done with it (optional)
 		/// See: Pathfinding.Util.ListPool
@@ -1797,7 +1952,7 @@ namespace Pathfinding {
 			return GetNodesInRegion(shape.GetBounds(), shape);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// All nodes inside the shape or if null, the bounding box.
 		/// If a shape is supplied, it is assumed to be contained inside the bounding box.
 		/// See: GraphUpdateShape.GetBounds
@@ -1830,7 +1985,7 @@ namespace Pathfinding {
 			return inArea;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Get all nodes in a rectangle.
 		///
 		/// See: <see cref="GetRectFromBounds"/>
@@ -1859,7 +2014,7 @@ namespace Pathfinding {
 			return inArea;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Get all nodes in a rectangle.
 		/// Returns: The number of nodes written to the buffer.
 		///
@@ -1889,7 +2044,7 @@ namespace Pathfinding {
 			return counter;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Node in the specified cell.
 		/// Returns null if the coordinate is outside the grid.
 		///
@@ -1909,14 +2064,7 @@ namespace Pathfinding {
 			return nodes[x + z*width];
 		}
 
-		GraphUpdateThreading IUpdatableGraph.CanUpdateAsync (GraphUpdateObject o) {
-			return GraphUpdateThreading.UnityThread;
-		}
-
-		void IUpdatableGraph.UpdateAreaInit (GraphUpdateObject o) {}
-		void IUpdatableGraph.UpdateAreaPost (GraphUpdateObject o) {}
-
-		protected void CalculateAffectedRegions (GraphUpdateObject o, out IntRect originalRect, out IntRect affectRect, out IntRect physicsRect, out bool willChangeWalkability, out int erosion) {
+        protected void CalculateAffectedRegions (GraphUpdateObject o, out IntRect originalRect, out IntRect affectRect, out IntRect physicsRect, out bool willChangeWalkability, out int erosion) {
 			// Take the bounds and transform it using the matrix
 			// Then convert that to a rectangle which contains
 			// all nodes that might be inside the bounds
@@ -1967,154 +2115,8 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Internal function to update an area of the graph</summary>
-		void IUpdatableGraph.UpdateArea (GraphUpdateObject o) {
-			if (nodes == null || nodes.Length != width*depth) {
-				Debug.LogWarning("The Grid Graph is not scanned, cannot update area");
-				//Not scanned
-				return;
-			}
 
-			IntRect originalRect, affectRect, physicsRect;
-			bool willChangeWalkability;
-			int erosion;
-			CalculateAffectedRegions(o, out originalRect, out affectRect, out physicsRect, out willChangeWalkability, out erosion);
-
-#if ASTARDEBUG
-			var debugMatrix = transform * Matrix4x4.TRS(new Vector3(0.5f, 0, 0.5f), Quaternion.identity, Vector3.one);
-
-			originalRect.DebugDraw(debugMatrix, Color.red);
-#endif
-
-			// Rect which covers the whole grid
-			var gridRect = new IntRect(0, 0, width-1, depth-1);
-
-			// Clamp the rect to the grid bounds
-			IntRect clampedRect = IntRect.Intersection(affectRect, gridRect);
-
-			// Mark nodes that might be changed
-			for (int z = clampedRect.ymin; z <= clampedRect.ymax; z++) {
-				for (int x = clampedRect.xmin; x <= clampedRect.xmax; x++) {
-					o.WillUpdateNode(nodes[z*width+x]);
-				}
-			}
-
-			// Update Physics
-			if (o.updatePhysics && !o.modifyWalkability) {
-				collision.Initialize(transform, nodeSize);
-
-				clampedRect = IntRect.Intersection(physicsRect, gridRect);
-
-				for (int z = clampedRect.ymin; z <= clampedRect.ymax; z++) {
-					for (int x = clampedRect.xmin; x <= clampedRect.xmax; x++) {
-						RecalculateCell(x, z, o.resetPenaltyOnPhysics, false);
-					}
-				}
-			}
-
-			//Apply GUO
-
-			clampedRect = IntRect.Intersection(originalRect, gridRect);
-			for (int z = clampedRect.ymin; z <= clampedRect.ymax; z++) {
-				for (int x = clampedRect.xmin; x <= clampedRect.xmax; x++) {
-					int index = z*width+x;
-
-					GridNode node = nodes[index];
-
-					if (o.bounds.Contains((Vector3)node.position)) {
-						if (willChangeWalkability) {
-							node.Walkable = node.WalkableErosion;
-							o.Apply(node);
-							node.WalkableErosion = node.Walkable;
-						} else {
-							o.Apply(node);
-						}
-					}
-				}
-			}
-
-#if ASTARDEBUG
-			physicsRect.DebugDraw(debugMatrix, Color.blue);
-			affectRect.DebugDraw(debugMatrix, Color.black);
-#endif
-
-			// Recalculate connections
-			if (willChangeWalkability && erosion == 0) {
-				clampedRect = IntRect.Intersection(affectRect, gridRect);
-				for (int x = clampedRect.xmin; x <= clampedRect.xmax; x++) {
-					for (int z = clampedRect.ymin; z <= clampedRect.ymax; z++) {
-						CalculateConnections(x, z);
-					}
-				}
-			} else if (willChangeWalkability && erosion > 0) {
-				clampedRect = IntRect.Union(originalRect, physicsRect);
-
-				IntRect erosionRect1 = clampedRect.Expand(erosion);
-				IntRect erosionRect2 = erosionRect1.Expand(erosion);
-
-				erosionRect1 = IntRect.Intersection(erosionRect1, gridRect);
-				erosionRect2 = IntRect.Intersection(erosionRect2, gridRect);
-
-#if ASTARDEBUG
-				erosionRect1.DebugDraw(debugMatrix, Color.magenta);
-				erosionRect2.DebugDraw(debugMatrix, Color.cyan);
-#endif
-
-
-				// * all nodes inside clampedRect might have had their walkability changed
-				// * all nodes inside erosionRect1 might get affected by erosion from clampedRect and erosionRect2
-				// * all nodes inside erosionRect2 (but outside erosionRect1) will be reset to previous walkability
-				//     after calculation since their erosion might not be correctly calculated (nodes outside erosionRect2 might have an effect)
-
-				for (int x = erosionRect2.xmin; x <= erosionRect2.xmax; x++) {
-					for (int z = erosionRect2.ymin; z <= erosionRect2.ymax; z++) {
-						int index = z*width+x;
-
-						GridNode node = nodes[index];
-
-						bool tmp = node.Walkable;
-						node.Walkable = node.WalkableErosion;
-
-						if (!erosionRect1.Contains(x, z)) {
-							//Save the border's walkabilty data (will be reset later)
-							node.TmpWalkable = tmp;
-						}
-					}
-				}
-
-				for (int x = erosionRect2.xmin; x <= erosionRect2.xmax; x++) {
-					for (int z = erosionRect2.ymin; z <= erosionRect2.ymax; z++) {
-						CalculateConnections(x, z);
-					}
-				}
-
-				// Erode the walkable area
-				ErodeWalkableArea(erosionRect2.xmin, erosionRect2.ymin, erosionRect2.xmax+1, erosionRect2.ymax+1);
-
-				for (int x = erosionRect2.xmin; x <= erosionRect2.xmax; x++) {
-					for (int z = erosionRect2.ymin; z <= erosionRect2.ymax; z++) {
-						if (erosionRect1.Contains(x, z)) continue;
-
-						int index = z*width+x;
-
-						GridNode node = nodes[index];
-
-						//Restore temporarily stored data
-						node.Walkable = node.TmpWalkable;
-					}
-				}
-
-				// Recalculate connections of all affected nodes
-				for (int x = erosionRect2.xmin; x <= erosionRect2.xmax; x++) {
-					for (int z = erosionRect2.ymin; z <= erosionRect2.ymax; z++) {
-						CalculateConnections(x, z);
-					}
-				}
-			}
-		}
-
-
-		/// <summary>
+        /// <summary>
 		/// Returns if node is connected to it's neighbour in the specified direction.
 		/// This will also return true if <see cref="neighbours"/> = NumNeighbours.Four, the direction is diagonal and one can move through one of the adjacent nodes
 		/// to the targeted node.
@@ -2146,7 +2148,7 @@ namespace Pathfinding {
 			}
 		}
 
-		protected override void SerializeExtraInfo (GraphSerializationContext ctx) {
+        protected override void SerializeExtraInfo (GraphSerializationContext ctx) {
 			if (nodes == null) {
 				ctx.writer.Write(-1);
 				return;
@@ -2159,7 +2161,7 @@ namespace Pathfinding {
 			}
 		}
 
-		protected override void DeserializeExtraInfo (GraphSerializationContext ctx) {
+        protected override void DeserializeExtraInfo (GraphSerializationContext ctx) {
 			int count = ctx.reader.ReadInt32();
 
 			if (count == -1) {
@@ -2175,7 +2177,7 @@ namespace Pathfinding {
 			}
 		}
 
-		protected override void DeserializeSettingsCompatibility (GraphSerializationContext ctx) {
+        protected override void DeserializeSettingsCompatibility (GraphSerializationContext ctx) {
 			base.DeserializeSettingsCompatibility(ctx);
 
 			aspectRatio = ctx.reader.ReadSingle();
@@ -2202,7 +2204,7 @@ namespace Pathfinding {
 			uniformEdgeCosts = ctx.reader.ReadBoolean();
 		}
 
-		protected override void PostDeserialization (GraphSerializationContext ctx) {
+        protected override void PostDeserialization (GraphSerializationContext ctx) {
 			UpdateTransform();
 			SetUpOffsetsAndCosts();
 			GridNode.SetGridGraph((int)graphIndex, this);
@@ -2228,7 +2230,7 @@ namespace Pathfinding {
 				}
 			}
 		}
-	}
+    }
 
 	/// <summary>
 	/// Number of neighbours for a single grid node.

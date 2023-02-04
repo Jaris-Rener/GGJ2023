@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Pathfinding.Legacy {
 	public static class LegacyEditorHelper {
-		public static void UpgradeDialog (Object[] targets, System.Type upgradeType) {
+        public static void UpgradeDialog (Object[] targets, System.Type upgradeType) {
 			EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 			var gui = EditorGUIUtility.IconContent("console.warnicon");
 			gui.text = "You are using the compatibility version of this component. It is recommended that you upgrade to the newer version. This may change the component's behavior.";
@@ -25,5 +25,5 @@ namespace Pathfinding.Legacy {
 			}
 			EditorGUILayout.EndVertical();
 		}
-	}
+    }
 }

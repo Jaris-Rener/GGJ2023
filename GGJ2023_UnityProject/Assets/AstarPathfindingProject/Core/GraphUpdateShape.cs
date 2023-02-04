@@ -13,16 +13,9 @@ namespace Pathfinding {
 	/// See: Pathfinding.GraphUpdateObject.shape
 	/// </summary>
 	public class GraphUpdateShape {
-		Vector3[] _points;
-		Vector3[] _convexPoints;
-		bool _convex;
-		Vector3 right = Vector3.right;
-		Vector3 forward = Vector3.forward;
-		Vector3 up = Vector3.up;
-		Vector3 origin;
-		public float minimumHeight;
+        public float minimumHeight;
 
-		/// <summary>
+        /// <summary>
 		/// Gets or sets the points of the polygon in the shape.
 		/// These points should be specified in clockwise order.
 		/// Will automatically calculate the convex hull if <see cref="convex"/> is set to true
@@ -37,7 +30,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Sets if the convex hull of the points should be calculated.
 		/// Convex hulls are faster but non-convex hulls can be used to specify more complicated shapes.
 		/// </summary>
@@ -53,10 +46,18 @@ namespace Pathfinding {
 			}
 		}
 
-		public GraphUpdateShape () {
+        Vector3[] _points;
+        Vector3[] _convexPoints;
+        bool _convex;
+        Vector3 right = Vector3.right;
+        Vector3 forward = Vector3.forward;
+        Vector3 up = Vector3.up;
+        Vector3 origin;
+
+        public GraphUpdateShape () {
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Construct a shape.
 		/// See: <see cref="convex"/>
 		/// </summary>
@@ -76,16 +77,16 @@ namespace Pathfinding {
 			this.minimumHeight = minimumHeight;
 		}
 
-		void CalculateConvexHull () {
+        void CalculateConvexHull () {
 			_convexPoints = points != null? Polygon.ConvexHullXZ(points) : null;
 		}
 
-		/// <summary>World space bounding box of this shape</summary>
+        /// <summary>World space bounding box of this shape</summary>
 		public Bounds GetBounds () {
 			return GetBounds(convex ? _convexPoints : points, right, up, forward, origin, minimumHeight);
 		}
 
-		public static Bounds GetBounds (Vector3[] points, Matrix4x4 matrix, float minimumHeight) {
+        public static Bounds GetBounds (Vector3[] points, Matrix4x4 matrix, float minimumHeight) {
 			var origin = matrix.MultiplyPoint3x4(Vector3.zero);
 			var right = matrix.MultiplyPoint3x4(Vector3.right) - origin;
 			var up = matrix.MultiplyPoint3x4(Vector3.up) - origin;
@@ -94,7 +95,7 @@ namespace Pathfinding {
 			return GetBounds(points, right, up, forward, origin, minimumHeight);
 		}
 
-		static Bounds GetBounds (Vector3[] points, Vector3 right, Vector3 up, Vector3 forward, Vector3 origin, float minimumHeight) {
+        static Bounds GetBounds (Vector3[] points, Vector3 right, Vector3 up, Vector3 forward, Vector3 origin, float minimumHeight) {
 			if (points == null || points.Length == 0) return new Bounds();
 			float miny = points[0].y, maxy = points[0].y;
 			for (int i = 0; i < points.Length; i++) {
@@ -119,11 +120,11 @@ namespace Pathfinding {
 			return new Bounds((min+max)*0.5F + origin, max-min);
 		}
 
-		public bool Contains (GraphNode node) {
+        public bool Contains (GraphNode node) {
 			return Contains((Vector3)node.position);
 		}
 
-		public bool Contains (Vector3 point) {
+        public bool Contains (Vector3 point) {
 			// Transform to local space (shape in the XZ plane)
 			point -= origin;
 			var localSpacePoint = new Vector3(Vector3.Dot(point, right)/right.sqrMagnitude, 0, Vector3.Dot(point, forward)/forward.sqrMagnitude);
@@ -139,5 +140,5 @@ namespace Pathfinding {
 				return _points != null && Polygon.ContainsPointXZ(_points, localSpacePoint);
 			}
 		}
-	}
+    }
 }

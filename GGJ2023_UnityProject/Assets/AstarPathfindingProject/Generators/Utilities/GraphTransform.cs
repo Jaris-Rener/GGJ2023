@@ -11,42 +11,42 @@ namespace Pathfinding.Util {
 	/// See: <see cref="Pathfinding.Util.GraphTransform"/>
 	/// </summary>
 	public interface IMovementPlane {
-		Vector2 ToPlane(Vector3 p);
-		Vector2 ToPlane(Vector3 p, out float elevation);
-		Vector3 ToWorld(Vector2 p, float elevation = 0);
-	}
+        Vector2 ToPlane(Vector3 p);
+        Vector2 ToPlane(Vector3 p, out float elevation);
+        Vector3 ToWorld(Vector2 p, float elevation = 0);
+    }
 
 	/// <summary>Generic 3D coordinate transformation</summary>
 	public interface ITransform {
-		Vector3 Transform(Vector3 position);
-		Vector3 InverseTransform(Vector3 position);
-	}
+        Vector3 Transform(Vector3 position);
+        Vector3 InverseTransform(Vector3 position);
+    }
 
 	/// <summary>
 	/// Defines a transformation from graph space to world space.
 	/// This is essentially just a simple wrapper around a matrix, but it has several utilities that are useful.
 	/// </summary>
 	public class GraphTransform : IMovementPlane, ITransform {
-		/// <summary>True if this transform is the identity transform (i.e it does not do anything)</summary>
+        /// <summary>True if this transform is the identity transform (i.e it does not do anything)</summary>
 		public readonly bool identity;
 
-		/// <summary>True if this transform is a pure translation without any scaling or rotation</summary>
+        /// <summary>True if this transform is a pure translation without any scaling or rotation</summary>
 		public readonly bool onlyTranslational;
 
-		readonly bool isXY;
-		readonly bool isXZ;
+        public static readonly GraphTransform identityTransform = new GraphTransform(Matrix4x4.identity);
 
-		readonly Matrix4x4 matrix;
-		readonly Matrix4x4 inverseMatrix;
-		readonly Vector3 up;
-		readonly Vector3 translation;
-		readonly Int3 i3translation;
-		readonly Quaternion rotation;
-		readonly Quaternion inverseRotation;
+        readonly bool isXY;
+        readonly bool isXZ;
 
-		public static readonly GraphTransform identityTransform = new GraphTransform(Matrix4x4.identity);
+        readonly Matrix4x4 matrix;
+        readonly Matrix4x4 inverseMatrix;
+        readonly Vector3 up;
+        readonly Vector3 translation;
+        readonly Int3 i3translation;
+        readonly Quaternion rotation;
+        readonly Quaternion inverseRotation;
 
-		public GraphTransform (Matrix4x4 matrix) {
+        public GraphTransform (Matrix4x4 matrix) {
 			this.matrix = matrix;
 			inverseMatrix = matrix.inverse;
 			identity = matrix.isIdentity;
@@ -67,25 +67,30 @@ namespace Pathfinding.Util {
 			isXZ = rotation == Quaternion.Euler(0, 0, 0);
 		}
 
-		public Vector3 WorldUpAtGraphPosition (Vector3 point) {
-			return up;
-		}
-
-		static bool MatrixIsTranslational (Matrix4x4 matrix) {
-			return matrix.GetColumn(0) == new Vector4(1, 0, 0, 0) && matrix.GetColumn(1) == new Vector4(0, 1, 0, 0) && matrix.GetColumn(2) == new Vector4(0, 0, 1, 0) && matrix.m33 == 1;
-		}
-
-		public Vector3 Transform (Vector3 point) {
+        public Vector3 Transform (Vector3 point) {
 			if (onlyTranslational) return point + translation;
 			return matrix.MultiplyPoint3x4(point);
 		}
 
-		public Vector3 TransformVector (Vector3 point) {
+        public Vector3 InverseTransform (Vector3 point) {
+			if (onlyTranslational) return point - translation;
+			return inverseMatrix.MultiplyPoint3x4(point);
+		}
+
+        public Vector3 WorldUpAtGraphPosition (Vector3 point) {
+			return up;
+		}
+
+        static bool MatrixIsTranslational (Matrix4x4 matrix) {
+			return matrix.GetColumn(0) == new Vector4(1, 0, 0, 0) && matrix.GetColumn(1) == new Vector4(0, 1, 0, 0) && matrix.GetColumn(2) == new Vector4(0, 0, 1, 0) && matrix.m33 == 1;
+		}
+
+        public Vector3 TransformVector (Vector3 point) {
 			if (onlyTranslational) return point;
 			return matrix.MultiplyVector(point);
 		}
 
-		public void Transform (Int3[] arr) {
+        public void Transform (Int3[] arr) {
 			if (onlyTranslational) {
 				for (int i = arr.Length - 1; i >= 0; i--) arr[i] += i3translation;
 			} else {
@@ -93,7 +98,7 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		public void Transform (Vector3[] arr) {
+        public void Transform (Vector3[] arr) {
 			if (onlyTranslational) {
 				for (int i = arr.Length - 1; i >= 0; i--) arr[i] += translation;
 			} else {
@@ -101,29 +106,24 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		public Vector3 InverseTransform (Vector3 point) {
-			if (onlyTranslational) return point - translation;
-			return inverseMatrix.MultiplyPoint3x4(point);
-		}
-
-		public Int3 InverseTransform (Int3 point) {
+        public Int3 InverseTransform (Int3 point) {
 			if (onlyTranslational) return point - i3translation;
 			return (Int3)inverseMatrix.MultiplyPoint3x4((Vector3)point);
 		}
 
-		public void InverseTransform (Int3[] arr) {
+        public void InverseTransform (Int3[] arr) {
 			for (int i = arr.Length - 1; i >= 0; i--) arr[i] = (Int3)inverseMatrix.MultiplyPoint3x4((Vector3)arr[i]);
 		}
 
-		public static GraphTransform operator * (GraphTransform lhs, Matrix4x4 rhs) {
+        public static GraphTransform operator * (GraphTransform lhs, Matrix4x4 rhs) {
 			return new GraphTransform(lhs.matrix * rhs);
 		}
 
-		public static GraphTransform operator * (Matrix4x4 lhs, GraphTransform rhs) {
+        public static GraphTransform operator * (Matrix4x4 lhs, GraphTransform rhs) {
 			return new GraphTransform(lhs * rhs.matrix);
 		}
 
-		public Bounds Transform (Bounds bounds) {
+        public Bounds Transform (Bounds bounds) {
 			if (onlyTranslational) return new Bounds(bounds.center + translation, bounds.size);
 
 			var corners = ArrayPool<Vector3>.Claim(8);
@@ -147,7 +147,7 @@ namespace Pathfinding.Util {
 			return new Bounds((min+max)*0.5f, max - min);
 		}
 
-		public Bounds InverseTransform (Bounds bounds) {
+        public Bounds InverseTransform (Bounds bounds) {
 			if (onlyTranslational) return new Bounds(bounds.center - translation, bounds.size);
 
 			var corners = ArrayPool<Vector3>.Claim(8);
@@ -171,9 +171,9 @@ namespace Pathfinding.Util {
 			return new Bounds((min+max)*0.5f, max - min);
 		}
 
-		#region IMovementPlane implementation
+        #region IMovementPlane implementation
 
-		/// <summary>
+        /// <summary>
 		/// Transforms from world space to the 'ground' plane of the graph.
 		/// The transformation is purely a rotation so no scale or offset is used.
 		///
@@ -192,7 +192,7 @@ namespace Pathfinding.Util {
 			return new Vector2(point.x, point.z);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Transforms from world space to the 'ground' plane of the graph.
 		/// The transformation is purely a rotation so no scale or offset is used.
 		/// </summary>
@@ -202,7 +202,7 @@ namespace Pathfinding.Util {
 			return new Vector2(point.x, point.z);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Transforms from the 'ground' plane of the graph to world space.
 		/// The transformation is purely a rotation so no scale or offset is used.
 		/// </summary>
@@ -210,6 +210,6 @@ namespace Pathfinding.Util {
 			return rotation * new Vector3(point.x, elevation, point.y);
 		}
 
-		#endregion
-	}
+        #endregion
+    }
 }

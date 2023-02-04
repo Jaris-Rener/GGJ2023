@@ -5,10 +5,10 @@ using System.Collections.Generic;
 namespace Pathfinding {
 	/// <summary>Pools path objects to reduce load on the garbage collector</summary>
 	public static class PathPool {
-		static readonly Dictionary<Type, Stack<Path> > pool = new Dictionary<Type, Stack<Path> >();
-		static readonly Dictionary<Type, int> totalCreated = new Dictionary<Type, int>();
+        static readonly Dictionary<Type, Stack<Path> > pool = new Dictionary<Type, Stack<Path> >();
+        static readonly Dictionary<Type, int> totalCreated = new Dictionary<Type, int>();
 
-		/// <summary>
+        /// <summary>
 		/// Adds a path to the pool.
 		/// This function should not be used directly. Instead use the Path.Claim and Path.Release functions.
 		/// </summary>
@@ -32,7 +32,7 @@ namespace Pathfinding {
 #endif
 		}
 
-		/// <summary>Total created instances of paths of the specified type</summary>
+        /// <summary>Total created instances of paths of the specified type</summary>
 		public static int GetTotalCreated (Type type) {
 			int created;
 
@@ -43,7 +43,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Number of pooled instances of a path of the specified type</summary>
+        /// <summary>Number of pooled instances of a path of the specified type</summary>
 		public static int GetSize (Type type) {
 			Stack<Path> poolStack;
 
@@ -54,7 +54,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Get a path from the pool or create a new one if the pool is empty</summary>
+        /// <summary>Get a path from the pool or create a new one if the pool is empty</summary>
 		public static T GetPath<T>() where T : Path, new() {
 #if ASTAR_NO_POOLING
 			T result = new T();
@@ -84,5 +84,5 @@ namespace Pathfinding {
 			}
 #endif
 		}
-	}
+    }
 }
