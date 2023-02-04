@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 4966324518307511195}
   - component: {fileID: 4966324518307511194}
   - component: {fileID: 4966324518307511193}
-  - component: {fileID: 4966324518307511192}
   - component: {fileID: 4966324518307511188}
   - component: {fileID: 4966324518307511189}
   - component: {fileID: 45166782653108159}
@@ -19,7 +18,7 @@ GameObject:
   m_Layer: 6
   m_Name: SunflowerSeed
   m_TagString: Untagged
-  m_Icon: {fileID: 5721338939258241955, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: 2974397684917235467, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -68,7 +67,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b7a176707302e6841bac13e87e84199a, type: 2}
+  - {fileID: 2100000, guid: cd6503b1e45187a47860780baf400fa6, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -90,19 +89,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!135 &4966324518307511192
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4966324518307511199}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &4966324518307511188
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -150,7 +136,7 @@ MonoBehaviour:
   _audioSource: {fileID: 45166782653108159}
   _faceUpWhenGrown: 1
   _meshRenderer: {fileID: 4966324518307511193}
-  _growCost: 1
+  _growCost: 3
 --- !u!54 &4966324518307511189
 Rigidbody:
   m_ObjectHideFlags: 0

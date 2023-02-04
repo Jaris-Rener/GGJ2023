@@ -2391,25 +2391,21 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 141520944318729191, guid: 302bfec7eea3fb34fb9b72dbadf5d2ce, type: 3}
-      propertyPath: _growCost
-      value: 3
-      objectReference: {fileID: 0}
     - target: {fileID: 141520944318729192, guid: 302bfec7eea3fb34fb9b72dbadf5d2ce, type: 3}
       propertyPath: m_RootOrder
       value: 11
       objectReference: {fileID: 0}
     - target: {fileID: 141520944318729192, guid: 302bfec7eea3fb34fb9b72dbadf5d2ce, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 6.5782223
+      value: 15.568038
       objectReference: {fileID: 0}
     - target: {fileID: 141520944318729192, guid: 302bfec7eea3fb34fb9b72dbadf5d2ce, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.50000054
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 141520944318729192, guid: 302bfec7eea3fb34fb9b72dbadf5d2ce, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -5.96906
+      value: -7.628093
       objectReference: {fileID: 0}
     - target: {fileID: 141520944318729192, guid: 302bfec7eea3fb34fb9b72dbadf5d2ce, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2442,10 +2438,6 @@ PrefabInstance:
     - target: {fileID: 141520944318729196, guid: 302bfec7eea3fb34fb9b72dbadf5d2ce, type: 3}
       propertyPath: m_Name
       value: Seed (3)
-      objectReference: {fileID: 0}
-    - target: {fileID: 253478450291205516, guid: 302bfec7eea3fb34fb9b72dbadf5d2ce, type: 3}
-      propertyPath: uniqueID
-      value: 3643325268501456504
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 302bfec7eea3fb34fb9b72dbadf5d2ce, type: 3}
@@ -3582,7 +3574,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1840878593979280376}
-  m_RootOrder: 5
+  m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2070525705
 PrefabInstance:
@@ -3729,10 +3721,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 249527430187000400, guid: c899aca7b2e0b0240abd819f91d9e319, type: 3}
-      propertyPath: _growCost
-      value: 3
-      objectReference: {fileID: 0}
     - target: {fileID: 249527430187000411, guid: c899aca7b2e0b0240abd819f91d9e319, type: 3}
       propertyPath: m_Name
       value: MushroomSeed
@@ -3743,15 +3731,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 249527430187000415, guid: c899aca7b2e0b0240abd819f91d9e319, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 11.413001
+      value: 16.034739
       objectReference: {fileID: 0}
     - target: {fileID: 249527430187000415, guid: c899aca7b2e0b0240abd819f91d9e319, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 249527430187000415, guid: c899aca7b2e0b0240abd819f91d9e319, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -4.2697277
+      value: -4.8523645
       objectReference: {fileID: 0}
     - target: {fileID: 249527430187000415, guid: c899aca7b2e0b0240abd819f91d9e319, type: 3}
       propertyPath: m_LocalRotation.w
@@ -4085,25 +4073,21 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 4966324518307511188, guid: 83093e026965f8e45bad39a92076fced, type: 3}
-      propertyPath: _growCost
-      value: 3
-      objectReference: {fileID: 0}
     - target: {fileID: 4966324518307511195, guid: 83093e026965f8e45bad39a92076fced, type: 3}
       propertyPath: m_RootOrder
       value: 17
       objectReference: {fileID: 0}
     - target: {fileID: 4966324518307511195, guid: 83093e026965f8e45bad39a92076fced, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 11.413001
+      value: 15.705087
       objectReference: {fileID: 0}
     - target: {fileID: 4966324518307511195, guid: 83093e026965f8e45bad39a92076fced, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.5
+      value: 0.00000047683716
       objectReference: {fileID: 0}
     - target: {fileID: 4966324518307511195, guid: 83093e026965f8e45bad39a92076fced, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -9.019728
+      value: -6.327929
       objectReference: {fileID: 0}
     - target: {fileID: 4966324518307511195, guid: 83093e026965f8e45bad39a92076fced, type: 3}
       propertyPath: m_LocalRotation.w
@@ -4134,15 +4118,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4966324518307511199, guid: 83093e026965f8e45bad39a92076fced, type: 3}
-      propertyPath: m_Icon
-      value: 
-      objectReference: {fileID: 2974397684917235467, guid: 0000000000000000d000000000000000, type: 0}
-    - target: {fileID: 4966324518307511199, guid: 83093e026965f8e45bad39a92076fced, type: 3}
       propertyPath: m_Name
       value: SunflowerSeed
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 4966324518307511192, guid: 83093e026965f8e45bad39a92076fced, type: 3}
+    m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 83093e026965f8e45bad39a92076fced, type: 3}
 --- !u!1001 &4034463868936699315
 PrefabInstance:
