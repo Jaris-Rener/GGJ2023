@@ -185,6 +185,7 @@ namespace LemonBerry
                     GetComponent<Collider>(),
                     ignore: true);
 
+                _animator.SetBool("Holding", true);
                 _audioSource.PlayOneShot(_grabSound);
                 grabbable.transform.SetParent(_grabPoint);
                 grabbable.transform.DOKill();
@@ -199,6 +200,7 @@ namespace LemonBerry
             if (_heldObject == null)
                 return;
 
+            _animator.SetBool("Holding", false);
             _audioSource.PlayOneShot(_dropSound);
             _heldObject.Release();
             _heldObject.transform.SetParent(null);
