@@ -49,6 +49,7 @@ namespace LemonBerry
         private Vector2 _moveInputVec;
         private Rigidbody _rigidbody;
         private Vector3 _startPos;
+        public int Droplets => _followers.Count;
 
         private void Start()
         {
