@@ -10,6 +10,7 @@ namespace LemonBerry
     [RequireComponent(typeof(Rigidbody))]
     public class PlayerController : Singleton<PlayerController>
     {
+        [SerializeField] private Animator _animator;
         [SerializeField] private Transform _grabPoint;
 
         [SerializeField] private Transform _groundCheckPoint;
@@ -149,6 +150,7 @@ namespace LemonBerry
         private void Update()
         {
             _moveInputVec = _moveInput.action.ReadValue<Vector2>();
+            _animator.SetBool("Walking", _moveInputVec != Vector2.zero);
             PlayerLook();
             GroundedCheck();
             CheckInteractionArea();

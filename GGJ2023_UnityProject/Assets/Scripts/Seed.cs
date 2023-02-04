@@ -24,7 +24,6 @@ namespace LemonBerry
         public UnityEvent OnUnGrown;
 
         [SerializeField] private bool _faceUpWhenGrown;
-        [SerializeField] private NavMeshSurface _navSurface;
         [SerializeField] private MeshRenderer _meshRenderer;
         [SerializeField] private int _growCost = 1;
 
@@ -67,11 +66,10 @@ namespace LemonBerry
         {
             _meshRenderer.material.color = Color.green;
             Rigidbody.isKinematic = true;
-            _navSurface.BuildNavMesh();
 
             if (_faceUpWhenGrown)
                 yield return transform
-                    .DORotate(Vector3.zero, 0.1f)
+                    .DORotate(PlayerController.Instance.transform.eulerAngles, 0.1f)
                     .WaitForCompletion();
 
             OnGrown?.Invoke();

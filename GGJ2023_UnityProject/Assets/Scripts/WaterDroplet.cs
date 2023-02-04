@@ -48,7 +48,7 @@ namespace LemonBerry
             while (true)
             {
                 UpdateTarget();
-                yield return new WaitForSeconds(Random.Range(0.5f, 1.5f));
+                yield return new WaitForSeconds(Random.Range(5.5f, 7.5f));
             }
         }
 
