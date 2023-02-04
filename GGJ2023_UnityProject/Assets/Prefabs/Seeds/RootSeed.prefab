@@ -335,6 +335,7 @@ MonoBehaviour:
   _audioSource: {fileID: 2312824443283258241}
   _faceUpWhenGrown: 0
   _meshRenderer: {fileID: 141520944318729194}
+  _collider: {fileID: 5528903853275556218}
   _growCost: 3
 --- !u!54 &141520944318729190
 Rigidbody:
@@ -365,7 +366,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   version: 1
-  uniqueID: 3643325268501456504
+  uniqueID: 9157815765883352084
   updateError: 1
   checkTime: 0.2
 --- !u!82 &2312824443283258241

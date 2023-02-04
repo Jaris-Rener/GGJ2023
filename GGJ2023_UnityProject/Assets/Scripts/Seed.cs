@@ -8,19 +8,6 @@ namespace LemonBerry
     using UnityEngine;
     using UnityEngine.Events;
 
-    public interface IGrowable
-    {
-        public int GrowCost { get; }
-        bool IsGrown { get; set; }
-        int RemainingGrowCost { get; }
-        int PendingWater { get; set; }
-        Transform Transform { get; }
-        void Grow();
-        void UnGrow();
-        void AddWater(WaterDroplet waterDroplet);
-        List<WaterDroplet> RemoveWater();
-    }
-
     public class Seed : Grabbable, IGrowable, IRespawn
     {
         private Color _startColor;
@@ -33,6 +20,7 @@ namespace LemonBerry
         [SerializeField] private AudioSource _audioSource;
         [SerializeField] private bool _faceUpWhenGrown;
         [SerializeField] private MeshRenderer _meshRenderer;
+        [SerializeField] private Collider _collider;
         [SerializeField] private int _growCost = 1;
 
         private readonly List<WaterDroplet> _droplets = new();
@@ -81,6 +69,8 @@ namespace LemonBerry
                 return;
 
             IsGrown = false;
+            _meshRenderer.enabled = true;
+            _collider.enabled = true;
             _meshRenderer.material.color = _startColor;
             Rigidbody.isKinematic = false;
             OnUnGrown?.Invoke();
@@ -119,6 +109,8 @@ namespace LemonBerry
         {
             _meshRenderer.material.color = Color.green;
             Rigidbody.isKinematic = true;
+            // _meshRenderer.enabled = false;
+            // _collider.enabled = false;
 
             if (_faceUpWhenGrown)
                 yield return transform
