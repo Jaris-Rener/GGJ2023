@@ -1,5 +1,6 @@
 namespace LemonBerry
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using DG.Tweening;
@@ -151,6 +152,14 @@ namespace LemonBerry
             PlayerLook();
             GroundedCheck();
             CheckInteractionArea();
+        }
+
+        private void OnGUI()
+        {
+            foreach (var seed in FindObjectsOfType<Seed>())
+            {
+                GUILayout.Label($"{seed.name}: {seed.GrowCost - seed.RemainingGrowCost}/{seed.GrowCost}");
+            }
         }
 
         private void GroundedCheck()
