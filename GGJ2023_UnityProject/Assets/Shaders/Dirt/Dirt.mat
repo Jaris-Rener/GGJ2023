@@ -47,7 +47,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _NoiseScale: 5
+    - _NormalStrength: 0.4
+    - _OffsetAmt: 1
     - _QueueControl: 0
     - _QueueOffset: 0
-    m_Colors: []
+    m_Colors:
+    - _MainColor: {r: 0.40566036, g: 0.24864927, b: 0.18905297, a: 1}
+    - _SecondaryColor: {r: 0.29799998, g: 0.21187367, b: 0.177012, a: 1}
   m_BuildTextureStacks: []
