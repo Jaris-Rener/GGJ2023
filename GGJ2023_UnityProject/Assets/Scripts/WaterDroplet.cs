@@ -37,6 +37,11 @@ namespace LemonBerry
 
         private void Update()
         {
+            if (_target != null && Vector3.Distance(transform.position, _target.Position) > 5)
+            {
+                transform.position = _target.Position;
+            }
+
             transform.rotation = Quaternion.LookRotation(CameraController.Instance.Camera.transform.forward, Vector3.up);
         }
 

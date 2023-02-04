@@ -20,6 +20,8 @@ namespace LemonBerry
 
     public class Seed : Grabbable, IGrowable, IRespawn
     {
+        private Color _startColor;
+
         public UnityEvent OnGrown;
         public UnityEvent OnUnGrown;
 
@@ -52,6 +54,7 @@ namespace LemonBerry
 
         private void Start()
         {
+            _startColor = _meshRenderer.material.color;
             _startPos = transform.position;
         }
 
@@ -70,7 +73,7 @@ namespace LemonBerry
                 return;
 
             IsGrown = false;
-            _meshRenderer.material.color = Color.white;
+            _meshRenderer.material.color = _startColor;
             Rigidbody.isKinematic = false;
             OnUnGrown?.Invoke();
 
@@ -99,7 +102,7 @@ namespace LemonBerry
 
         public override void OnHoveredStop()
         {
-            _meshRenderer.material.color = Color.white;
+            _meshRenderer.material.color = _startColor;
         }
 
         private IEnumerator GrowRoutine()

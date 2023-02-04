@@ -8,5 +8,6 @@ namespace LemonBerry
 
         public virtual void OnHoveredStart(){}
         public virtual void OnHoveredStop(){}
+        public virtual string Prompt { get; set; }
     }
 }

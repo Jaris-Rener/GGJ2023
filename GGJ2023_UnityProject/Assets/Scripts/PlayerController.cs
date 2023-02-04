@@ -1,5 +1,6 @@
 namespace LemonBerry
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using DG.Tweening;
@@ -9,6 +10,8 @@ namespace LemonBerry
     [RequireComponent(typeof(Rigidbody))]
     public class PlayerController : Singleton<PlayerController>, IRespawn
     {
+        public event Action<Interactable> OnHoveredInteractable;
+
         [SerializeField] private AudioClip _jumpSound;
         [SerializeField] private AudioClip _grabSound;
         [SerializeField] private AudioClip _dropSound;
@@ -127,7 +130,7 @@ namespace LemonBerry
             if (_heldObject != null)
                 return;
 
-            var interactable = _hoveredInteractables.FirstOrDefault();
+            var interactable = _hoveredInteractables.LastOrDefault();
             if (interactable == null)
                 return;
 
@@ -148,7 +151,7 @@ namespace LemonBerry
             if (_heldObject != null)
                 return;
 
-            var interactable = _hoveredInteractables.FirstOrDefault();
+            var interactable = _hoveredInteractables.LastOrDefault();
             if (interactable == null)
                 return;
 
@@ -166,7 +169,7 @@ namespace LemonBerry
                 return;
             }
 
-            var interactable = _hoveredInteractables.FirstOrDefault();
+            var interactable = _hoveredInteractables.LastOrDefault();
             if (interactable == null)
                 return;
 
@@ -244,6 +247,7 @@ namespace LemonBerry
                 if (!_hoveredInteractables.Contains(interactable))
                 {
                     _hoveredInteractables.Add(interactable);
+                    OnHoveredInteractable?.Invoke(_hoveredInteractables.LastOrDefault());
                     interactable.OnHoveredStart();
                 }
             }
@@ -255,6 +259,7 @@ namespace LemonBerry
                 if (!colliders.Contains(col))
                 {
                     _hoveredInteractables.Remove(interactable);
+                    OnHoveredInteractable?.Invoke(_hoveredInteractables.LastOrDefault());
                     interactable.OnHoveredStop();
                 }
             }

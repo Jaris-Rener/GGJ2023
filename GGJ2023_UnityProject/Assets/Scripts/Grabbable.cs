@@ -5,6 +5,7 @@ namespace LemonBerry
     [RequireComponent(typeof(Rigidbody))]
     public class Grabbable : Interactable
     {
+        public override string Prompt => IsHeld ? "Drop" : "Pickup";
         protected Rigidbody Rigidbody;
         public bool CanGrab { get; set; } = true;
         public bool IsHeld { get; set; }
