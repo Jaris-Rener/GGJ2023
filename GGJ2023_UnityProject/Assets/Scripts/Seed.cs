@@ -93,6 +93,8 @@ namespace LemonBerry
                 droplet.StartCoroutine(droplet.FollowPlayer());
                 PlayerController.Instance.AddFollower(droplet);
             }
+
+            _droplets.Clear();
         }
 
         private readonly List<WaterDroplet> _droplets = new();

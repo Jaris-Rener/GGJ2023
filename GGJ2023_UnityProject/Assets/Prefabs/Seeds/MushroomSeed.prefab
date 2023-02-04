@@ -305,6 +305,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 249527430187000415}
     m_Modifications:
+    - target: {fileID: 587601229656770364, guid: a223d2c16184269459aede4213f279a1, type: 3}
+      propertyPath: _bounceForce
+      value: 400
+      objectReference: {fileID: 0}
     - target: {fileID: 587601229656770365, guid: a223d2c16184269459aede4213f279a1, type: 3}
       propertyPath: m_RootOrder
       value: 1
