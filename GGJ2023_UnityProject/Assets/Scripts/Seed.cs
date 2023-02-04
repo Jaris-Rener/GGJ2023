@@ -1,6 +1,9 @@
 namespace LemonBerry
 {
+    using System.Collections;
     using System.Collections.Generic;
+    using DG.Tweening;
+    using Unity.AI.Navigation;
     using UnityEngine;
     using UnityEngine.Events;
 
@@ -9,6 +12,7 @@ namespace LemonBerry
         public Vector3 Position { get; }
         public int GrowCost { get; }
         bool IsGrown { get; set; }
+        int RemainingGrowCost { get; }
         void Grow();
         void UnGrow();
         void AddWater(WaterDroplet waterDroplet);
@@ -19,6 +23,8 @@ namespace LemonBerry
         public UnityEvent OnGrown;
         public UnityEvent OnUnGrown;
 
+        [SerializeField] private bool _faceUpWhenGrown;
+        [SerializeField] private NavMeshSurface _navSurface;
         [SerializeField] private MeshRenderer _meshRenderer;
         [SerializeField] private int _growCost = 1;
 
@@ -36,6 +42,8 @@ namespace LemonBerry
             }
         }
 
+        public int RemainingGrowCost => GrowCost - _droplets.Count;
+
         public override void OnHoveredStart()
         {
             _meshRenderer.material.color = Color.red;
@@ -52,8 +60,20 @@ namespace LemonBerry
                 return;
 
             IsGrown = true;
+            StartCoroutine(GrowRoutine());
+        }
+
+        private IEnumerator GrowRoutine()
+        {
             _meshRenderer.material.color = Color.green;
             Rigidbody.isKinematic = true;
+            _navSurface.BuildNavMesh();
+
+            if (_faceUpWhenGrown)
+                yield return transform
+                    .DORotate(Vector3.zero, 0.1f)
+                    .WaitForCompletion();
+
             OnGrown?.Invoke();
         }
 

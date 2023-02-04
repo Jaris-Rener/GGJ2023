@@ -11,9 +11,11 @@ namespace LemonBerry
     {
         [SerializeField] private Transform _grabPoint;
 
+        [SerializeField] private Transform _groundCheckPoint;
         [SerializeField] private Transform _interactionPoint;
         [SerializeField] private float _interactionRadius = 1;
         [SerializeField] private LayerMask _interactionLayers;
+        [SerializeField] private LayerMask _groundLayers;
 
         [SerializeField] private InputActionReference _jumpInput;
         [SerializeField] private InputActionReference _moveInput;
@@ -28,6 +30,7 @@ namespace LemonBerry
         private Rigidbody _rigidbody;
         private Vector2 _moveInputVec;
         private Vector3 _moveDir;
+        private bool _grounded;
 
         [SerializeField] private List<WaterDroplet> _followers;
 
@@ -75,7 +78,7 @@ namespace LemonBerry
                 if (interactable is Grabbable { IsHeld: true })
                     return;
 
-                for (int i = 0; i < Mathf.Min(growable.GrowCost, _followers.Count); i++)
+                for (int i = 0; i < Mathf.Min(growable.RemainingGrowCost, _followers.Count); i++)
                 {
                     _followers[i].CommandTo(growable);
                 }
@@ -146,7 +149,17 @@ namespace LemonBerry
         {
             _moveInputVec = _moveInput.action.ReadValue<Vector2>();
             PlayerLook();
+            GroundedCheck();
             CheckInteractionArea();
+        }
+
+        private void GroundedCheck()
+        {
+            _grounded = Physics.Raycast(
+                _groundCheckPoint.position,
+                Vector3.down,
+                maxDistance: 0.2f,
+                _groundLayers.value);
         }
 
         private void PlayerLook()
@@ -207,6 +220,9 @@ namespace LemonBerry
 
         private void Jump(InputAction.CallbackContext obj)
         {
+            if (!_grounded)
+                return;
+
             _rigidbody.AddForce(Vector3.up*_jumpForce);
         }
 
