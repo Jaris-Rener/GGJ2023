@@ -4069,14 +4069,6 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1840878593656913160, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
-      propertyPath: _dropSound
-      value: 
-      objectReference: {fileID: 8300000, guid: 11de8a52be2592b48ae5b113e6724a36, type: 3}
-    - target: {fileID: 1840878593656913160, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
-      propertyPath: _grabSound
-      value: 
-      objectReference: {fileID: 8300000, guid: 27ed6e8657b212d49b0c1e4f470e5b85, type: 3}
-    - target: {fileID: 1840878593656913160, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
       propertyPath: _followers.Array.data[0]
       value: 
       objectReference: {fileID: 1616675940}
