@@ -13,61 +13,45 @@ namespace Pathfinding.Util {
 	/// (inclusive) and one at <see cref="size"/> (exclusive) that is specified in the constructor.
 	/// </summary>
 	public class GridLookup<T> where T : class {
-		Int2 size;
-		Item[] cells;
-		/// <summary>
-		/// Linked list of all items.
-		/// Note that the first item in the list is a dummy item and does not contain any data.
-		/// </summary>
-		Root all = new Root();
-		Dictionary<T, Root> rootLookup = new Dictionary<T, Root>();
-		Stack<Item> itemPool = new Stack<Item>();
-
-		public GridLookup (Int2 size) {
-			this.size = size;
-			cells = new Item[size.x*size.y];
-			for (int i = 0; i < cells.Length; i++) cells[i] = new Item();
-		}
-
-		internal class Item {
-			public Root root;
-			public Item prev, next;
-		}
-
-		public class Root {
-			/// <summary>Underlying object</summary>
-			public T obj;
-			/// <summary>Next item in the linked list of all roots</summary>
-			public Root next;
-			/// <summary>Previous item in the linked list of all roots</summary>
-			internal Root prev;
-			internal IntRect previousBounds = new IntRect(0, 0, -1, -1);
-			/// <summary>References to an item in each grid cell that this object is contained inside</summary>
-			internal List<Item> items = new List<Item>();
-			internal bool flag;
-		}
-
-		/// <summary>Linked list of all items</summary>
+        /// <summary>Linked list of all items</summary>
 		public Root AllItems {
 			get {
 				return all.next;
 			}
 		}
 
-		public void Clear () {
+        Int2 size;
+        Item[] cells;
+
+        /// <summary>
+		/// Linked list of all items.
+		/// Note that the first item in the list is a dummy item and does not contain any data.
+		/// </summary>
+		Root all = new Root();
+
+        Dictionary<T, Root> rootLookup = new Dictionary<T, Root>();
+        Stack<Item> itemPool = new Stack<Item>();
+
+        public GridLookup (Int2 size) {
+			this.size = size;
+			cells = new Item[size.x*size.y];
+			for (int i = 0; i < cells.Length; i++) cells[i] = new Item();
+		}
+
+        public void Clear () {
 			rootLookup.Clear();
 			all.next = null;
 			foreach (var item in cells) item.next = null;
 		}
 
-		public Root GetRoot (T item) {
+        public Root GetRoot (T item) {
 			Root root;
 
 			rootLookup.TryGetValue(item, out root);
 			return root;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Add an object to the lookup data structure.
 		/// Returns: A handle which can be used for Move operations
 		/// </summary>
@@ -86,7 +70,7 @@ namespace Pathfinding.Util {
 			return root;
 		}
 
-		/// <summary>Removes an item from the lookup data structure</summary>
+        /// <summary>Removes an item from the lookup data structure</summary>
 		public void Remove (T item) {
 			Root root;
 
@@ -101,7 +85,7 @@ namespace Pathfinding.Util {
 			if (root.next != null) root.next.prev = root.prev;
 		}
 
-		/// <summary>Move an object to occupy a new set of cells</summary>
+        /// <summary>Move an object to occupy a new set of cells</summary>
 		public void Move (T item, IntRect bounds) {
 			Root root;
 
@@ -150,7 +134,7 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns all objects of a specific type inside the cells marked by the rectangle.
 		/// Note: For better memory usage, consider pooling the list using Pathfinding.Util.ListPool after you are done with it
 		/// </summary>
@@ -188,5 +172,28 @@ namespace Pathfinding.Util {
 
 			return result;
 		}
-	}
+
+        internal class Item {
+            public Root root;
+            public Item prev, next;
+        }
+
+        public class Root {
+            /// <summary>Underlying object</summary>
+			public T obj;
+
+            /// <summary>Next item in the linked list of all roots</summary>
+			public Root next;
+
+            /// <summary>Previous item in the linked list of all roots</summary>
+			internal Root prev;
+
+            internal IntRect previousBounds = new IntRect(0, 0, -1, -1);
+
+            /// <summary>References to an item in each grid cell that this object is contained inside</summary>
+			internal List<Item> items = new List<Item>();
+
+            internal bool flag;
+        }
+    }
 }

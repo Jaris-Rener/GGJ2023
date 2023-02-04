@@ -16,20 +16,29 @@ namespace Pathfinding {
 	/// See: https://en.wikipedia.org/wiki/D-ary_heap
 	/// </summary>
 	public class BinaryHeap {
-		/// <summary>Number of items in the tree</summary>
+        /// <summary>Number of items in the tree</summary>
 		public int numberOfItems;
 
-		/// <summary>The tree will grow by at least this factor every time it is expanded</summary>
+        /// <summary>The tree will grow by at least this factor every time it is expanded</summary>
 		public float growthFactor = 2;
 
-		/// <summary>
+        public const ushort NotInHeap = 0xFFFF;
+
+        /// <summary>True if the heap does not contain any elements</summary>
+		public bool isEmpty {
+			get {
+				return numberOfItems <= 0;
+			}
+		}
+
+        /// <summary>
 		/// Number of children of each node in the tree.
 		/// Different values have been tested and 4 has been empirically found to perform the best.
 		/// See: https://en.wikipedia.org/wiki/D-ary_heap
 		/// </summary>
 		const int D = 4;
 
-		/// <summary>
+        /// <summary>
 		/// Sort nodes by G score if there is a tie when comparing the F score.
 		/// Disabling this will improve pathfinding performance with around 2.5%
 		/// but may break ties between paths that have the same length in a less
@@ -37,39 +46,10 @@ namespace Pathfinding {
 		/// </summary>
 		const bool SortGScores = true;
 
-		public const ushort NotInHeap = 0xFFFF;
-
-		/// <summary>Internal backing array for the heap</summary>
+        /// <summary>Internal backing array for the heap</summary>
 		private Tuple[] heap;
 
-		/// <summary>True if the heap does not contain any elements</summary>
-		public bool isEmpty {
-			get {
-				return numberOfItems <= 0;
-			}
-		}
-
-		/// <summary>Item in the heap</summary>
-		private struct Tuple {
-			public PathNode node;
-			public uint F;
-
-			public Tuple (uint f, PathNode node) {
-				this.F = f;
-				this.node = node;
-			}
-		}
-
-		/// <summary>
-		/// Rounds up v so that it has remainder 1 when divided by D.
-		/// I.e it is of the form n*D + 1 where n is any non-negative integer.
-		/// </summary>
-		static int RoundUpToNextMultipleMod1 (int v) {
-			// I have a feeling there is a nicer way to do this
-			return v + (4 - ((v-1) % D)) % D;
-		}
-
-		/// <summary>Create a new heap with the specified initial capacity</summary>
+        /// <summary>Create a new heap with the specified initial capacity</summary>
 		public BinaryHeap (int capacity) {
 			// Make sure the size has remainder 1 when divided by D
 			// This allows us to always guarantee that indices used in the Remove method
@@ -80,7 +60,16 @@ namespace Pathfinding {
 			numberOfItems = 0;
 		}
 
-		/// <summary>Removes all elements from the heap</summary>
+        /// <summary>
+		/// Rounds up v so that it has remainder 1 when divided by D.
+		/// I.e it is of the form n*D + 1 where n is any non-negative integer.
+		/// </summary>
+		static int RoundUpToNextMultipleMod1 (int v) {
+			// I have a feeling there is a nicer way to do this
+			return v + (4 - ((v-1) % D)) % D;
+		}
+
+        /// <summary>Removes all elements from the heap</summary>
 		public void Clear () {
 #if DECREASE_KEY
 			// Clear all heap indices
@@ -93,15 +82,15 @@ namespace Pathfinding {
 			numberOfItems = 0;
 		}
 
-		internal PathNode GetNode (int i) {
+        internal PathNode GetNode (int i) {
 			return heap[i].node;
 		}
 
-		internal void SetF (int i, uint f) {
+        internal void SetF (int i, uint f) {
 			heap[i].F = f;
 		}
 
-		/// <summary>Expands to a larger backing array when the current one is too small</summary>
+        /// <summary>Expands to a larger backing array when the current one is too small</summary>
 		void Expand () {
 			// 65533 == 1 mod 4 and slightly smaller than 1<<16 = 65536
 			int newSize = System.Math.Max(heap.Length+4, System.Math.Min(65533, (int)System.Math.Round(heap.Length*growthFactor)));
@@ -127,7 +116,7 @@ namespace Pathfinding {
 			heap = newHeap;
 		}
 
-		/// <summary>Adds a node to the heap</summary>
+        /// <summary>Adds a node to the heap</summary>
 		public void Add (PathNode node) {
 			if (node == null) throw new System.ArgumentNullException("node");
 
@@ -147,7 +136,7 @@ namespace Pathfinding {
 			numberOfItems++;
 		}
 
-		void DecreaseKey (Tuple node, ushort index) {
+        void DecreaseKey (Tuple node, ushort index) {
 			// This is where 'obj' is in the binary heap logically speaking
 			// (for performance reasons we don't actually store it there until
 			// we know the final index, that's just a waste of CPU cycles)
@@ -180,7 +169,7 @@ namespace Pathfinding {
 #endif
 		}
 
-		/// <summary>Returns the node with the lowest F score from the heap</summary>
+        /// <summary>Returns the node with the lowest F score from the heap</summary>
 		public PathNode Remove () {
 			PathNode returnItem = heap[0].node;
 
@@ -265,7 +254,7 @@ namespace Pathfinding {
 			return returnItem;
 		}
 
-		void Validate () {
+        void Validate () {
 			for (int i = 1; i < numberOfItems; i++) {
 				int parentIndex = (i-1)/D;
 				if (heap[parentIndex].F > heap[i].F) {
@@ -279,7 +268,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Rebuilds the heap by trickeling down all items.
 		/// Usually called after the hTarget on a path has been changed
 		/// </summary>
@@ -320,5 +309,16 @@ namespace Pathfinding {
 			UnityEngine.Debug.Log("+++ Rebuilt Heap - "+changes+" changes +++");
 #endif
 		}
-	}
+
+        /// <summary>Item in the heap</summary>
+		private struct Tuple {
+			public PathNode node;
+			public uint F;
+
+			public Tuple (uint f, PathNode node) {
+				this.F = f;
+				this.node = node;
+			}
+		}
+    }
 }

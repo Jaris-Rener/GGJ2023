@@ -15,77 +15,59 @@ namespace Pathfinding {
 #endif
 
 	class GraphUpdateProcessor {
-		public event System.Action OnGraphsUpdated;
+        /// <summary>Returns if any graph updates are waiting to be applied</summary>
+		public bool IsAnyGraphUpdateQueued { get { return graphUpdateQueue.Count > 0; } }
 
-		/// <summary>Holds graphs that can be updated</summary>
+        /// <summary>Returns if any graph updates are in progress</summary>
+		public bool IsAnyGraphUpdateInProgress { get { return anyGraphUpdateInProgress; } }
+
+        /// <summary>Holds graphs that can be updated</summary>
 		readonly AstarPath astar;
 
 #if !UNITY_WEBGL
-		/// <summary>
+        /// <summary>
 		/// Reference to the thread which handles async graph updates.
 		/// See: ProcessGraphUpdatesAsync
 		/// </summary>
 		Thread graphUpdateThread;
 #endif
 
-		/// <summary>Used for IsAnyGraphUpdateInProgress</summary>
+        /// <summary>Used for IsAnyGraphUpdateInProgress</summary>
 		bool anyGraphUpdateInProgress;
 
 #if UNITY_2017_3_OR_NEWER && !UNITY_WEBGL
-		CustomSampler asyncUpdateProfilingSampler;
+        CustomSampler asyncUpdateProfilingSampler;
 #endif
 
-		/// <summary>
+        /// <summary>
 		/// Queue containing all waiting graph update queries. Add to this queue by using \link AddToQueue \endlink.
 		/// See: AddToQueue
 		/// </summary>
 		readonly Queue<GraphUpdateObject> graphUpdateQueue = new Queue<GraphUpdateObject>();
 
-		/// <summary>Queue of all async graph updates waiting to be executed</summary>
+        /// <summary>Queue of all async graph updates waiting to be executed</summary>
 		readonly Queue<GUOSingle> graphUpdateQueueAsync = new Queue<GUOSingle>();
 
-		/// <summary>Queue of all non-async graph update post events waiting to be executed</summary>
+        /// <summary>Queue of all non-async graph update post events waiting to be executed</summary>
 		readonly Queue<GUOSingle> graphUpdateQueuePost = new Queue<GUOSingle>();
 
-		/// <summary>Queue of all non-async graph updates waiting to be executed</summary>
+        /// <summary>Queue of all non-async graph updates waiting to be executed</summary>
 		readonly Queue<GUOSingle> graphUpdateQueueRegular = new Queue<GUOSingle>();
 
-		readonly System.Threading.ManualResetEvent asyncGraphUpdatesComplete = new System.Threading.ManualResetEvent(true);
+        readonly System.Threading.ManualResetEvent asyncGraphUpdatesComplete = new System.Threading.ManualResetEvent(true);
 
-#if !UNITY_WEBGL
-		readonly System.Threading.AutoResetEvent graphUpdateAsyncEvent = new System.Threading.AutoResetEvent(false);
-		readonly System.Threading.AutoResetEvent exitAsyncThread = new System.Threading.AutoResetEvent(false);
-#endif
-
-		/// <summary>Returns if any graph updates are waiting to be applied</summary>
-		public bool IsAnyGraphUpdateQueued { get { return graphUpdateQueue.Count > 0; } }
-
-		/// <summary>Returns if any graph updates are in progress</summary>
-		public bool IsAnyGraphUpdateInProgress { get { return anyGraphUpdateInProgress; } }
-
-		/// <summary>Order type for updating graphs</summary>
-		enum GraphUpdateOrder {
-			GraphUpdate,
-			// FloodFill
-		}
-
-		/// <summary>Holds a single update that needs to be performed on a graph</summary>
-		struct GUOSingle {
-			public GraphUpdateOrder order;
-			public IUpdatableGraph graph;
-			public GraphUpdateObject obj;
-		}
-
-		public GraphUpdateProcessor (AstarPath astar) {
+        public GraphUpdateProcessor (AstarPath astar) {
 			this.astar = astar;
 		}
 
-		/// <summary>Work item which can be used to apply all queued updates</summary>
+        public event System.Action OnGraphsUpdated;
+
+        /// <summary>Work item which can be used to apply all queued updates</summary>
 		public AstarWorkItem GetWorkItem () {
 			return new AstarWorkItem(QueueGraphUpdatesInternal, ProcessGraphUpdates);
 		}
 
-		public void EnableMultithreading () {
+        public void EnableMultithreading () {
 #if !UNITY_WEBGL
 			if (graphUpdateThread == null || !graphUpdateThread.IsAlive) {
 #if UNITY_2017_3_OR_NEWER && !UNITY_WEBGL
@@ -105,7 +87,7 @@ namespace Pathfinding {
 #endif
 		}
 
-		public void DisableMultithreading () {
+        public void DisableMultithreading () {
 #if !UNITY_WEBGL
 			if (graphUpdateThread != null && graphUpdateThread.IsAlive) {
 				// Resume graph update thread, will cause it to terminate
@@ -120,7 +102,7 @@ namespace Pathfinding {
 #endif
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Update all graphs using the GraphUpdateObject.
 		/// This can be used to, e.g make all nodes in an area unwalkable, or set them to a higher penalty.
 		/// The graphs will be updated as soon as possible (with respect to AstarPath.batchGraphUpdates)
@@ -132,7 +114,7 @@ namespace Pathfinding {
 			graphUpdateQueue.Enqueue(ob);
 		}
 
-		/// <summary>Schedules graph updates internally</summary>
+        /// <summary>Schedules graph updates internally</summary>
 		void QueueGraphUpdatesInternal () {
 			while (graphUpdateQueue.Count > 0) {
 				GraphUpdateObject ob = graphUpdateQueue.Dequeue();
@@ -159,7 +141,7 @@ namespace Pathfinding {
 			anyGraphUpdateInProgress = true;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Updates graphs.
 		/// Will do some graph updates, possibly signal another thread to do them.
 		/// Will only process graph updates added by QueueGraphUpdatesInternal
@@ -200,7 +182,7 @@ namespace Pathfinding {
 			return true;
 		}
 
-		bool ProcessRegularUpdates (bool force) {
+        bool ProcessRegularUpdates (bool force) {
 			while (graphUpdateQueueRegular.Count > 0) {
 				GUOSingle s = graphUpdateQueueRegular.Peek();
 
@@ -271,7 +253,7 @@ namespace Pathfinding {
 			return true;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Signal the graph update thread to start processing graph updates if there are any in the <see cref="graphUpdateQueueAsync"/> queue.
 		/// Returns: True if the other thread was signaled.
 		/// </summary>
@@ -288,7 +270,7 @@ namespace Pathfinding {
 			return false;
 		}
 
-		void ProcessPostUpdates () {
+        void ProcessPostUpdates () {
 			while (graphUpdateQueuePost.Count > 0) {
 				GUOSingle s = graphUpdateQueuePost.Dequeue();
 
@@ -308,7 +290,7 @@ namespace Pathfinding {
 		}
 
 #if !UNITY_WEBGL
-		/// <summary>
+        /// <summary>
 		/// Graph update thread.
 		/// Async graph updates will be executed by this method in another thread.
 		/// </summary>
@@ -365,5 +347,23 @@ namespace Pathfinding {
 			}
 		}
 #endif
-	}
+
+        /// <summary>Order type for updating graphs</summary>
+		enum GraphUpdateOrder {
+			GraphUpdate,
+			// FloodFill
+		}
+
+        /// <summary>Holds a single update that needs to be performed on a graph</summary>
+		struct GUOSingle {
+			public GraphUpdateOrder order;
+			public IUpdatableGraph graph;
+			public GraphUpdateObject obj;
+		}
+
+#if !UNITY_WEBGL
+        readonly System.Threading.AutoResetEvent graphUpdateAsyncEvent = new System.Threading.AutoResetEvent(false);
+        readonly System.Threading.AutoResetEvent exitAsyncThread = new System.Threading.AutoResetEvent(false);
+#endif
+    }
 }

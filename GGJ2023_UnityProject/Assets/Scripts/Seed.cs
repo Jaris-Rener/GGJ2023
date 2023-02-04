@@ -1,5 +1,6 @@
 namespace LemonBerry
 {
+    using System;
     using System.Collections;
     using System.Collections.Generic;
     using DG.Tweening;
@@ -17,7 +18,7 @@ namespace LemonBerry
         void AddWater(WaterDroplet waterDroplet);
     }
 
-    public class Seed : Grabbable, IGrowable
+    public class Seed : Grabbable, IGrowable, IRespawn
     {
         public UnityEvent OnGrown;
         public UnityEvent OnUnGrown;
@@ -29,10 +30,14 @@ namespace LemonBerry
         [SerializeField] private MeshRenderer _meshRenderer;
         [SerializeField] private int _growCost = 1;
 
+        private readonly List<WaterDroplet> _droplets = new();
+
         private bool _isGrown;
+        private Vector3 _startPos;
 
         public Vector3 Position => transform.position;
         public int GrowCost => _growCost;
+
         public bool IsGrown
         {
             get => _isGrown;
@@ -45,14 +50,9 @@ namespace LemonBerry
 
         public int RemainingGrowCost => GrowCost - _droplets.Count;
 
-        public override void OnHoveredStart()
+        private void Start()
         {
-            _meshRenderer.material.color = Color.red;
-        }
-
-        public override void OnHoveredStop()
-        {
-            _meshRenderer.material.color = Color.white;
+            _startPos = transform.position;
         }
 
         public void Grow()
@@ -62,20 +62,6 @@ namespace LemonBerry
 
             IsGrown = true;
             StartCoroutine(GrowRoutine());
-        }
-
-        private IEnumerator GrowRoutine()
-        {
-            _meshRenderer.material.color = Color.green;
-            Rigidbody.isKinematic = true;
-
-            if (_faceUpWhenGrown)
-                yield return transform
-                    .DORotate(PlayerController.Instance.transform.eulerAngles, 0.1f)
-                    .WaitForCompletion();
-
-            _audioSource.PlayOneShot(_growSound);
-            OnGrown?.Invoke();
         }
 
         public void UnGrow()
@@ -99,12 +85,43 @@ namespace LemonBerry
             _droplets.Clear();
         }
 
-        private readonly List<WaterDroplet> _droplets = new();
         public void AddWater(WaterDroplet waterDroplet)
         {
             _droplets.Add(waterDroplet);
             if (_droplets.Count >= GrowCost)
                 Grow();
+        }
+
+        public override void OnHoveredStart()
+        {
+            _meshRenderer.material.color = Color.red;
+        }
+
+        public override void OnHoveredStop()
+        {
+            _meshRenderer.material.color = Color.white;
+        }
+
+        private IEnumerator GrowRoutine()
+        {
+            _meshRenderer.material.color = Color.green;
+            Rigidbody.isKinematic = true;
+
+            if (_faceUpWhenGrown)
+                yield return transform
+                    .DORotate(PlayerController.Instance.transform.eulerAngles, 0.1f)
+                    .WaitForCompletion();
+
+            _audioSource.PlayOneShot(_growSound);
+            OnGrown?.Invoke();
+        }
+
+        public void OnRespawn()
+        {
+            transform.position = _startPos;
+            Rigidbody.velocity = Vector3.zero;
+            Rigidbody.angularVelocity = Vector3.zero;
+            Rigidbody.isKinematic = false;
         }
     }
 }

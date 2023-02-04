@@ -39,67 +39,7 @@ namespace Pathfinding {
 	[System.Serializable]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_raycast_modifier.php")]
 	public class RaycastModifier : MonoModifier {
-#if UNITY_EDITOR
-		[UnityEditor.MenuItem("CONTEXT/Seeker/Add Raycast Simplifier Modifier")]
-		public static void AddComp (UnityEditor.MenuCommand command) {
-			(command.context as Component).gameObject.AddComponent(typeof(RaycastModifier));
-		}
-#endif
-
-		public override int Order { get { return 40; } }
-
-		/// <summary>Use Physics.Raycast to simplify the path</summary>
-		public bool useRaycasting = true;
-
-		/// <summary>
-		/// Layer mask used for physics raycasting.
-		/// All objects with layers that are included in this mask will be treated as obstacles.
-		/// If you are using a grid graph you usually want this to be the same as the mask in the grid graph's 'Collision Testing' settings.
-		/// </summary>
-		public LayerMask mask = -1;
-
-		/// <summary>
-		/// Checks around the line between two points, not just the exact line.
-		/// Make sure the ground is either too far below or is not inside the mask since otherwise the raycast might always hit the ground.
-		///
-		/// See: https://docs.unity3d.com/ScriptReference/Physics.SphereCast.html
-		/// </summary>
-		[Tooltip("Checks around the line between two points, not just the exact line.\nMake sure the ground is either too far below or is not inside the mask since otherwise the raycast might always hit the ground.")]
-		public bool thickRaycast;
-
-		/// <summary>Distance from the ray which will be checked for colliders</summary>
-		[Tooltip("Distance from the ray which will be checked for colliders")]
-		public float thickRaycastRadius;
-
-		/// <summary>
-		/// Check for intersections with 2D colliders instead of 3D colliders.
-		/// Useful for 2D games.
-		///
-		/// See: https://docs.unity3d.com/ScriptReference/Physics2D.html
-		/// </summary>
-		[Tooltip("Check for intersections with 2D colliders instead of 3D colliders.")]
-		public bool use2DPhysics;
-
-		/// <summary>
-		/// Offset from the original positions to perform the raycast.
-		/// Can be useful to avoid the raycast intersecting the ground or similar things you do not want to it intersect
-		/// </summary>
-		[Tooltip("Offset from the original positions to perform the raycast.\nCan be useful to avoid the raycast intersecting the ground or similar things you do not want to it intersect")]
-		public Vector3 raycastOffset = Vector3.zero;
-
-		/// <summary>Use raycasting on the graphs. Only currently works with GridGraph and NavmeshGraph and RecastGraph. </summary>
-		[Tooltip("Use raycasting on the graphs. Only currently works with GridGraph and NavmeshGraph and RecastGraph. This is a pro version feature.")]
-		public bool useGraphRaycasting;
-
-		/// <summary>
-		/// Higher quality modes will try harder to find a shorter path.
-		/// Higher qualities may be significantly slower than low quality.
-		/// [Open online documentation to see images]
-		/// </summary>
-		[Tooltip("When using the high quality mode the script will try harder to find a shorter path. This is significantly slower than the greedy low quality approach.")]
-		public Quality quality = Quality.Medium;
-
-		public enum Quality {
+        public enum Quality {
 			/// <summary>One iteration using a greedy algorithm</summary>
 			Low,
 			/// <summary>Two iterations using a greedy algorithm</summary>
@@ -110,29 +50,75 @@ namespace Pathfinding {
 			Highest
 		}
 
-		static readonly int[] iterationsByQuality = new [] { 1, 2, 1, 3 };
-		static List<Vector3> buffer = new List<Vector3>();
-		static float[] DPCosts = new float[16];
-		static int[] DPParents = new int[16];
+        static readonly int[] iterationsByQuality = new [] { 1, 2, 1, 3 };
+        static List<Vector3> buffer = new List<Vector3>();
+        static float[] DPCosts = new float[16];
+        static int[] DPParents = new int[16];
 
-		Filter cachedFilter = new Filter();
+        /// <summary>Use Physics.Raycast to simplify the path</summary>
+		public bool useRaycasting = true;
 
-		NNConstraint cachedNNConstraint = NNConstraint.None;
+        /// <summary>
+		/// Layer mask used for physics raycasting.
+		/// All objects with layers that are included in this mask will be treated as obstacles.
+		/// If you are using a grid graph you usually want this to be the same as the mask in the grid graph's 'Collision Testing' settings.
+		/// </summary>
+		public LayerMask mask = -1;
 
-		class Filter {
-			public Path path;
-			public readonly System.Func<GraphNode, bool> cachedDelegate;
+        /// <summary>
+		/// Checks around the line between two points, not just the exact line.
+		/// Make sure the ground is either too far below or is not inside the mask since otherwise the raycast might always hit the ground.
+		///
+		/// See: https://docs.unity3d.com/ScriptReference/Physics.SphereCast.html
+		/// </summary>
+		[Tooltip("Checks around the line between two points, not just the exact line.\nMake sure the ground is either too far below or is not inside the mask since otherwise the raycast might always hit the ground.")]
+		public bool thickRaycast;
 
-			public Filter() {
-				cachedDelegate = this.CanTraverse;
-			}
+        /// <summary>Distance from the ray which will be checked for colliders</summary>
+		[Tooltip("Distance from the ray which will be checked for colliders")]
+		public float thickRaycastRadius;
 
-			bool CanTraverse (GraphNode node) {
-				return path.CanTraverse(node);
-			}
+        /// <summary>
+		/// Check for intersections with 2D colliders instead of 3D colliders.
+		/// Useful for 2D games.
+		///
+		/// See: https://docs.unity3d.com/ScriptReference/Physics2D.html
+		/// </summary>
+		[Tooltip("Check for intersections with 2D colliders instead of 3D colliders.")]
+		public bool use2DPhysics;
+
+        /// <summary>
+		/// Offset from the original positions to perform the raycast.
+		/// Can be useful to avoid the raycast intersecting the ground or similar things you do not want to it intersect
+		/// </summary>
+		[Tooltip("Offset from the original positions to perform the raycast.\nCan be useful to avoid the raycast intersecting the ground or similar things you do not want to it intersect")]
+		public Vector3 raycastOffset = Vector3.zero;
+
+        /// <summary>Use raycasting on the graphs. Only currently works with GridGraph and NavmeshGraph and RecastGraph. </summary>
+		[Tooltip("Use raycasting on the graphs. Only currently works with GridGraph and NavmeshGraph and RecastGraph. This is a pro version feature.")]
+		public bool useGraphRaycasting;
+
+        /// <summary>
+		/// Higher quality modes will try harder to find a shorter path.
+		/// Higher qualities may be significantly slower than low quality.
+		/// [Open online documentation to see images]
+		/// </summary>
+		[Tooltip("When using the high quality mode the script will try harder to find a shorter path. This is significantly slower than the greedy low quality approach.")]
+		public Quality quality = Quality.Medium;
+
+        Filter cachedFilter = new Filter();
+
+        NNConstraint cachedNNConstraint = NNConstraint.None;
+
+        public override int Order { get { return 40; } }
+#if UNITY_EDITOR
+        [UnityEditor.MenuItem("CONTEXT/Seeker/Add Raycast Simplifier Modifier")]
+		public static void AddComp (UnityEditor.MenuCommand command) {
+			(command.context as Component).gameObject.AddComponent(typeof(RaycastModifier));
 		}
+#endif
 
-		public override void Apply (Path p) {
+        public override void Apply (Path p) {
 			if (!useRaycasting && !useGraphRaycasting) return;
 
 			var points = p.vectorPath;
@@ -167,7 +153,7 @@ namespace Pathfinding {
 			p.vectorPath = points;
 		}
 
-		List<Vector3> ApplyGreedy (Path p, List<Vector3> points, System.Func<GraphNode, bool> filter, NNConstraint nnConstraint) {
+        List<Vector3> ApplyGreedy (Path p, List<Vector3> points, System.Func<GraphNode, bool> filter, NNConstraint nnConstraint) {
 			bool canBeOriginalNodes = points.Count == p.path.Count;
 			int startIndex = 0;
 
@@ -211,7 +197,7 @@ namespace Pathfinding {
 			return points;
 		}
 
-		List<Vector3> ApplyDP (Path p, List<Vector3> points, System.Func<GraphNode, bool> filter, NNConstraint nnConstraint) {
+        List<Vector3> ApplyDP (Path p, List<Vector3> points, System.Func<GraphNode, bool> filter, NNConstraint nnConstraint) {
 			if (DPCosts.Length < points.Count) {
 				DPCosts = new float[points.Count];
 				DPParents = new int[points.Count];
@@ -251,7 +237,7 @@ namespace Pathfinding {
 			return points;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Check if a straight path between v1 and v2 is valid.
 		/// If both n1 and n2 are supplied it is assumed that the line goes from the center of n1 to the center of n2 and a more optimized graph linecast may be done.
 		/// </summary>
@@ -313,5 +299,18 @@ namespace Pathfinding {
 			}
 			return true;
 		}
-	}
+
+        class Filter {
+            public Path path;
+            public readonly System.Func<GraphNode, bool> cachedDelegate;
+
+            public Filter() {
+				cachedDelegate = this.CanTraverse;
+			}
+
+            bool CanTraverse (GraphNode node) {
+				return path.CanTraverse(node);
+			}
+        }
+    }
 }

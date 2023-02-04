@@ -10,7 +10,7 @@ namespace Pathfinding {
 	/// \ingroup utils
 	/// </summary>
 	public static class AstarSplines {
-		public static Vector3 CatmullRom (Vector3 previous, Vector3 start, Vector3 end, Vector3 next, float elapsedTime) {
+        public static Vector3 CatmullRom (Vector3 previous, Vector3 start, Vector3 end, Vector3 next, float elapsedTime) {
 			// References used:
 			// p.266 GemsV1
 			//
@@ -43,27 +43,27 @@ namespace Pathfinding {
 				 0.5F*percentCompleteSquared);
 		}
 
-		/// <summary>Returns a point on a cubic bezier curve. t is clamped between 0 and 1</summary>
+        /// <summary>Returns a point on a cubic bezier curve. t is clamped between 0 and 1</summary>
 		public static Vector3 CubicBezier (Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t) {
 			t = Mathf.Clamp01(t);
 			float t2 = 1-t;
 			return t2*t2*t2 * p0 + 3 * t2*t2 * t * p1 + 3 * t2 * t*t * p2 + t*t*t * p3;
 		}
 
-		/// <summary>Returns the derivative for a point on a cubic bezier curve. t is clamped between 0 and 1</summary>
+        /// <summary>Returns the derivative for a point on a cubic bezier curve. t is clamped between 0 and 1</summary>
 		public static Vector3 CubicBezierDerivative (Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t) {
 			t = Mathf.Clamp01(t);
 			float t2 = 1-t;
 			return 3*t2*t2*(p1-p0) + 6*t2*t*(p2 - p1) + 3*t*t*(p3 - p2);
 		}
 
-		/// <summary>Returns the second derivative for a point on a cubic bezier curve. t is clamped between 0 and 1</summary>
+        /// <summary>Returns the second derivative for a point on a cubic bezier curve. t is clamped between 0 and 1</summary>
 		public static Vector3 CubicBezierSecondDerivative (Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t) {
 			t = Mathf.Clamp01(t);
 			float t2 = 1-t;
 			return 6*t2*(p2 - 2*p1 + p0) + 6*t*(p3 - 2*p2 + p1);
 		}
-	}
+    }
 
 	/// <summary>
 	/// Various vector math utility functions.
@@ -79,7 +79,7 @@ namespace Pathfinding {
 	/// \ingroup utils
 	/// </summary>
 	public static class VectorMath {
-		/// <summary>
+        /// <summary>
 		/// Complex number multiplication.
 		/// Returns: a * b
 		///
@@ -91,7 +91,7 @@ namespace Pathfinding {
 			return new Vector2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Complex number multiplication.
 		/// Returns: a * conjugate(b)
 		///
@@ -104,7 +104,7 @@ namespace Pathfinding {
 			return new Vector2(a.x * b.x + a.y * b.y, a.y * b.x - a.x * b.y);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the closest point on the line.
 		/// The line is treated as infinite.
 		/// See: ClosestPointOnSegment
@@ -117,7 +117,7 @@ namespace Pathfinding {
 			return lineStart + (dot*lineDirection);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Factor along the line which is closest to the point.
 		/// Returned value is in the range [0,1] if the point lies on the segment otherwise it just lies on the line.
 		/// The closest point can be calculated using (end-start)*factor + start.
@@ -134,7 +134,7 @@ namespace Pathfinding {
 			return Vector3.Dot(point - lineStart, dir) / sqrMagn;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Factor along the line which is closest to the point.
 		/// Returned value is in the range [0,1] if the point lies on the segment otherwise it just lies on the line.
 		/// The closest point can be calculated using (end-start)*factor + start
@@ -150,7 +150,7 @@ namespace Pathfinding {
 			return closestPoint;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Factor of the nearest point on the segment.
 		/// Returned value is in the range [0,1] if the point lies on the segment otherwise it just lies on the line.
 		/// The closest point can be calculated using (end-start)*factor + start;
@@ -166,7 +166,7 @@ namespace Pathfinding {
 			return (float)closestPoint;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the closest point on the segment.
 		/// The segment is NOT treated as infinite.
 		/// See: ClosestPointOnLine
@@ -182,7 +182,7 @@ namespace Pathfinding {
 			return lineStart + Mathf.Clamp01(factor)*dir;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the closest point on the segment in the XZ plane.
 		/// The y coordinate of the result will be the same as the y coordinate of the point parameter.
 		///
@@ -203,7 +203,7 @@ namespace Pathfinding {
 			return lineStart+(Mathf.Clamp(closestPoint, 0.0f, fullDirection2.magnitude)*lineDirection);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the approximate shortest squared distance between x,z and the segment p-q.
 		/// The segment is not considered infinite.
 		/// This function is not entirely exact, but it is about twice as fast as DistancePointSegment2.
@@ -230,7 +230,7 @@ namespace Pathfinding {
 			return dx*dx + dz*dz;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the approximate shortest squared distance between x,z and the segment p-q.
 		/// The segment is not considered infinite.
 		/// This function is not entirely exact, but it is about twice as fast as DistancePointSegment2.
@@ -257,7 +257,7 @@ namespace Pathfinding {
 			return dx*dx + dz*dz;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the squared distance between p and the segment a-b.
 		/// The line is not considered infinite.
 		/// </summary>
@@ -267,7 +267,7 @@ namespace Pathfinding {
 			return (nearest-p).sqrMagnitude;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// 3D minimum distance between 2 segments.
 		/// Input: two 3D line segments S1 and S2
 		/// Returns: the shortest squared distance between S1 and S2
@@ -340,14 +340,14 @@ namespace Pathfinding {
 			return dP.sqrMagnitude;   // return the closest distance
 		}
 
-		/// <summary>Squared distance between two points in the XZ plane</summary>
+        /// <summary>Squared distance between two points in the XZ plane</summary>
 		public static float SqrDistanceXZ (Vector3 a, Vector3 b) {
 			var delta = a-b;
 
 			return delta.x*delta.x+delta.z*delta.z;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Signed area of a triangle in the XZ plane multiplied by 2.
 		/// This will be negative for clockwise triangles and positive for counter-clockwise ones
 		/// </summary>
@@ -355,7 +355,7 @@ namespace Pathfinding {
 			return (long)(b.x - a.x) * (long)(c.z - a.z) - (long)(c.x - a.x) * (long)(b.z - a.z);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Signed area of a triangle in the XZ plane multiplied by 2.
 		/// This will be negative for clockwise triangles and positive for counter-clockwise ones.
 		/// </summary>
@@ -363,7 +363,7 @@ namespace Pathfinding {
 			return (b.x - a.x) * (c.z - a.z) - (c.x - a.x) * (b.z - a.z);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if p lies on the right side of the line a - b.
 		/// Uses XZ space. Does not return true if the points are colinear.
 		/// </summary>
@@ -371,7 +371,7 @@ namespace Pathfinding {
 			return (b.x - a.x) * (p.z - a.z) - (p.x - a.x) * (b.z - a.z) < -float.Epsilon;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if p lies on the right side of the line a - b.
 		/// Uses XZ space. Does not return true if the points are colinear.
 		/// </summary>
@@ -379,7 +379,7 @@ namespace Pathfinding {
 			return (long)(b.x - a.x) * (long)(p.z - a.z) - (long)(p.x - a.x) * (long)(b.z - a.z) < 0;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns which side of the line a - b that p lies on.
 		/// Uses XZ space.
 		/// </summary>
@@ -389,7 +389,7 @@ namespace Pathfinding {
 			return s > 0 ? Side.Left : (s < 0 ? Side.Right : Side.Colinear);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if p lies on the right side of the line a - b.
 		/// Also returns true if the points are colinear.
 		/// </summary>
@@ -397,7 +397,7 @@ namespace Pathfinding {
 			return (b.x - a.x) * (p.y - a.y) - (p.x - a.x) * (b.y - a.y) <= 0;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if p lies on the right side of the line a - b.
 		/// Also returns true if the points are colinear.
 		/// </summary>
@@ -405,7 +405,7 @@ namespace Pathfinding {
 			return (long)(b.x - a.x) * (long)(p.y - a.y) - (long)(p.x - a.x) * (long)(b.y - a.y) <= 0;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if p lies on the left side of the line a - b.
 		/// Uses XZ space. Also returns true if the points are colinear.
 		/// </summary>
@@ -413,7 +413,7 @@ namespace Pathfinding {
 			return (b.x - a.x) * (p.z - a.z) - (p.x - a.x) * (b.z - a.z) <= 0;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if p lies on the left side of the line a - b.
 		/// Uses XZ space. Also returns true if the points are colinear.
 		/// </summary>
@@ -421,7 +421,7 @@ namespace Pathfinding {
 			return (long)(b.x - a.x) * (long)(p.z - a.z) - (long)(p.x - a.x) * (long)(b.z - a.z) <= 0;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if the points a in a clockwise order.
 		/// Will return true even if the points are colinear or very slightly counter-clockwise
 		/// (if the signed area of the triangle formed by the points has an area less than or equals to float.Epsilon)
@@ -430,27 +430,27 @@ namespace Pathfinding {
 			return (b.x-a.x)*(c.z-a.z)-(c.x-a.x)*(b.z-a.z) <= float.Epsilon;
 		}
 
-		/// <summary>Returns if the points a in a clockwise order</summary>
+        /// <summary>Returns if the points a in a clockwise order</summary>
 		public static bool IsClockwiseXZ (Vector3 a, Vector3 b, Vector3 c) {
 			return (b.x-a.x)*(c.z-a.z)-(c.x-a.x)*(b.z-a.z) < 0;
 		}
 
-		/// <summary>Returns if the points a in a clockwise order</summary>
+        /// <summary>Returns if the points a in a clockwise order</summary>
 		public static bool IsClockwiseXZ (Int3 a, Int3 b, Int3 c) {
 			return RightXZ(a, b, c);
 		}
 
-		/// <summary>Returns true if the points a in a clockwise order or if they are colinear</summary>
+        /// <summary>Returns true if the points a in a clockwise order or if they are colinear</summary>
 		public static bool IsClockwiseOrColinearXZ (Int3 a, Int3 b, Int3 c) {
 			return RightOrColinearXZ(a, b, c);
 		}
 
-		/// <summary>Returns true if the points a in a clockwise order or if they are colinear</summary>
+        /// <summary>Returns true if the points a in a clockwise order or if they are colinear</summary>
 		public static bool IsClockwiseOrColinear (Int2 a, Int2 b, Int2 c) {
 			return RightOrColinear(a, b, c);
 		}
 
-		/// <summary>Returns if the points are colinear (lie on a straight line)</summary>
+        /// <summary>Returns if the points are colinear (lie on a straight line)</summary>
 		public static bool IsColinear (Vector3 a, Vector3 b, Vector3 c) {
 			var lhs = b - a;
 			var rhs = c - a;
@@ -465,7 +465,7 @@ namespace Pathfinding {
 			return v <= 0.0000001f;
 		}
 
-		/// <summary>Returns if the points are colinear (lie on a straight line)</summary>
+        /// <summary>Returns if the points are colinear (lie on a straight line)</summary>
 		public static bool IsColinear (Vector2 a, Vector2 b, Vector2 c) {
 			float v = (b.x-a.x)*(c.y-a.y)-(c.x-a.x)*(b.y-a.y);
 
@@ -473,12 +473,12 @@ namespace Pathfinding {
 			return v <= 0.0000001f && v >= -0.0000001f;
 		}
 
-		/// <summary>Returns if the points are colinear (lie on a straight line)</summary>
+        /// <summary>Returns if the points are colinear (lie on a straight line)</summary>
 		public static bool IsColinearXZ (Int3 a, Int3 b, Int3 c) {
 			return (long)(b.x - a.x) * (long)(c.z - a.z) - (long)(c.x - a.x) * (long)(b.z - a.z) == 0;
 		}
 
-		/// <summary>Returns if the points are colinear (lie on a straight line)</summary>
+        /// <summary>Returns if the points are colinear (lie on a straight line)</summary>
 		public static bool IsColinearXZ (Vector3 a, Vector3 b, Vector3 c) {
 			float v = (b.x-a.x)*(c.z-a.z)-(c.x-a.x)*(b.z-a.z);
 
@@ -486,14 +486,14 @@ namespace Pathfinding {
 			return v <= 0.0000001f && v >= -0.0000001f;
 		}
 
-		/// <summary>Returns if the points are colinear (lie on a straight line)</summary>
+        /// <summary>Returns if the points are colinear (lie on a straight line)</summary>
 		public static bool IsColinearAlmostXZ (Int3 a, Int3 b, Int3 c) {
 			long v = (long)(b.x - a.x) * (long)(c.z - a.z) - (long)(c.x - a.x) * (long)(b.z - a.z);
 
 			return v > -1 && v < 1;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if the line segment start2 - end2 intersects the line segment start1 - end1.
 		/// If only the endpoints coincide, the result is undefined (may be true or false).
 		/// </summary>
@@ -501,7 +501,7 @@ namespace Pathfinding {
 			return RightOrColinear(start1, end1, start2) != RightOrColinear(start1, end1, end2) && RightOrColinear(start2, end2, start1) != RightOrColinear(start2, end2, end1);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if the line segment start2 - end2 intersects the line segment start1 - end1.
 		/// If only the endpoints coincide, the result is undefined (may be true or false).
 		///
@@ -511,7 +511,7 @@ namespace Pathfinding {
 			return RightOrColinearXZ(start1, end1, start2) != RightOrColinearXZ(start1, end1, end2) && RightOrColinearXZ(start2, end2, start1) != RightOrColinearXZ(start2, end2, end1);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if the two line segments intersects. The lines are NOT treated as infinite (just for clarification)
 		/// See: IntersectionPoint
 		/// </summary>
@@ -537,7 +537,7 @@ namespace Pathfinding {
 			return true;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Intersection point between two infinite lines.
 		/// Note that start points and directions are taken as parameters instead of start and end points.
 		/// Lines are treated as infinite. If the lines are parallel 'start1' will be returned.
@@ -558,7 +558,7 @@ namespace Pathfinding {
 			return start1 + dir1*u;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Intersection point between two infinite lines.
 		/// Note that start points and directions are taken as parameters instead of start and end points.
 		/// Lines are treated as infinite. If the lines are parallel 'start1' will be returned.
@@ -581,7 +581,7 @@ namespace Pathfinding {
 			return start1 + dir1*u;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if the ray (start1, end1) intersects the segment (start2, end2).
 		/// false is returned if the lines are parallel.
 		/// Only the XZ coordinates are used.
@@ -618,7 +618,7 @@ namespace Pathfinding {
 			return true;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the intersection factors for line 1 and line 2. The intersection factors is a distance along the line start - end where the other line intersects it.\n
 		/// <code> intersectionPoint = start1 + factor1 * (end1-start1) </code>
 		/// <code> intersectionPoint2 = start2 + factor2 * (end2-start2) </code>
@@ -647,7 +647,7 @@ namespace Pathfinding {
 			return true;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the intersection factors for line 1 and line 2. The intersection factors is a distance along the line start - end where the other line intersects it.\n
 		/// <code> intersectionPoint = start1 + factor1 * (end1-start1) </code>
 		/// <code> intersectionPoint2 = start2 + factor2 * (end2-start2) </code>
@@ -679,7 +679,7 @@ namespace Pathfinding {
 			return true;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the intersection factor for line 1 with ray 2.
 		/// The intersection factors is a factor distance along the line start - end where the other line intersects it.\n
 		/// <code> intersectionPoint = start1 + factor * (end1-start1) </code>
@@ -709,7 +709,7 @@ namespace Pathfinding {
 			return (float)nom/den;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the intersection factor for line 1 with line 2.
 		/// The intersection factor is a distance along the line start1 - end1 where the line start2 - end2 intersects it.\n
 		/// <code> intersectionPoint = start1 + intersectionFactor * (end1-start1) </code>.
@@ -732,14 +732,14 @@ namespace Pathfinding {
 			return u;
 		}
 
-		/// <summary>Returns the intersection point between the two lines. Lines are treated as infinite. start1 is returned if the lines are parallel</summary>
+        /// <summary>Returns the intersection point between the two lines. Lines are treated as infinite. start1 is returned if the lines are parallel</summary>
 		public static Vector3 LineIntersectionPointXZ (Vector3 start1, Vector3 end1, Vector3 start2, Vector3 end2) {
 			bool s;
 
 			return LineIntersectionPointXZ(start1, end1, start2, end2, out s);
 		}
 
-		/// <summary>Returns the intersection point between the two lines. Lines are treated as infinite. start1 is returned if the lines are parallel</summary>
+        /// <summary>Returns the intersection point between the two lines. Lines are treated as infinite. start1 is returned if the lines are parallel</summary>
 		public static Vector3 LineIntersectionPointXZ (Vector3 start1, Vector3 end1, Vector3 start2, Vector3 end2, out bool intersects) {
 			Vector3 dir1 = end1-start1;
 			Vector3 dir2 = end2-start2;
@@ -759,14 +759,14 @@ namespace Pathfinding {
 			return start1 + dir1*u;
 		}
 
-		/// <summary>Returns the intersection point between the two lines. Lines are treated as infinite. start1 is returned if the lines are parallel</summary>
+        /// <summary>Returns the intersection point between the two lines. Lines are treated as infinite. start1 is returned if the lines are parallel</summary>
 		public static Vector2 LineIntersectionPoint (Vector2 start1, Vector2 end1, Vector2 start2, Vector2 end2) {
 			bool s;
 
 			return LineIntersectionPoint(start1, end1, start2, end2, out s);
 		}
 
-		/// <summary>Returns the intersection point between the two lines. Lines are treated as infinite. start1 is returned if the lines are parallel</summary>
+        /// <summary>Returns the intersection point between the two lines. Lines are treated as infinite. start1 is returned if the lines are parallel</summary>
 		public static Vector2 LineIntersectionPoint (Vector2 start1, Vector2 end1, Vector2 start2, Vector2 end2, out bool intersects) {
 			Vector2 dir1 = end1-start1;
 			Vector2 dir2 = end2-start2;
@@ -786,7 +786,7 @@ namespace Pathfinding {
 			return start1 + dir1*u;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the intersection point between the two line segments in XZ space.
 		/// Lines are NOT treated as infinite. start1 is returned if the line segments do not intersect
 		/// The point will be returned along the line [start1, end1] (this matters only for the y coordinate).
@@ -816,7 +816,7 @@ namespace Pathfinding {
 			return start1 + dir1*u;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Does the line segment intersect the bounding box.
 		/// The line is NOT treated as infinite.
 		/// \author Slightly modified code from http://www.3dkingdoms.com/weekly/weekly.php?a=21
@@ -846,7 +846,7 @@ namespace Pathfinding {
 			return true;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Intersection of a line and a circle.
 		/// Returns the greatest t such that segmentStart+t*(segmentEnd-segmentStart) lies on the circle.
 		///
@@ -877,7 +877,7 @@ namespace Pathfinding {
 			return segmentLength > 0.00001f ? t / segmentLength : 1f;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// True if the matrix will reverse orientations of faces.
 		///
 		/// Scaling by a negative value along an odd number of axes will reverse
@@ -905,7 +905,7 @@ namespace Pathfinding {
 			return volume < 0;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// True if the matrix will reverse orientations of faces in the XZ plane.
 		/// Almost the same as ReversesFaceOrientations, but this method assumes
 		/// that scaling a face with a negative scale along the Y axis does not
@@ -936,7 +936,7 @@ namespace Pathfinding {
 			return cross < 0;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Normalize vector and also return the magnitude.
 		/// This is more efficient than calculating the magnitude and normalizing separately
 		/// </summary>
@@ -950,7 +950,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Normalize vector and also return the magnitude.
 		/// This is more efficient than calculating the magnitude and normalizing separately
 		/// </summary>
@@ -964,10 +964,10 @@ namespace Pathfinding {
 			}
 		}
 
-		/* Clamp magnitude along the X and Z axes.
-		 * The y component will not be changed.
-		 */
-		public static Vector3 ClampMagnitudeXZ (Vector3 v, float maxMagnitude) {
+        /* Clamp magnitude along the X and Z axes.
+         * The y component will not be changed.
+         */
+        public static Vector3 ClampMagnitudeXZ (Vector3 v, float maxMagnitude) {
 			float squaredMagnitudeXZ = v.x*v.x + v.z*v.z;
 
 			if (squaredMagnitudeXZ > maxMagnitude*maxMagnitude && maxMagnitude > 0) {
@@ -978,11 +978,11 @@ namespace Pathfinding {
 			return v;
 		}
 
-		/* Magnitude in the XZ plane */
-		public static float MagnitudeXZ (Vector3 v) {
+        /* Magnitude in the XZ plane */
+        public static float MagnitudeXZ (Vector3 v) {
 			return Mathf.Sqrt(v.x*v.x + v.z*v.z);
 		}
-	}
+    }
 
 	/// <summary>
 	/// Utility functions for working with numbers and strings.
@@ -991,12 +991,12 @@ namespace Pathfinding {
 	/// See: VectorMath
 	/// </summary>
 	public static class AstarMath {
-		/// <summary>Maps a value between startMin and startMax to be between targetMin and targetMax</summary>
+        /// <summary>Maps a value between startMin and startMax to be between targetMin and targetMax</summary>
 		public static float MapTo (float startMin, float startMax, float targetMin, float targetMax, float value) {
 			return Mathf.Lerp(targetMin, targetMax, Mathf.InverseLerp(startMin, startMax, value));
 		}
 
-		/// <summary>Returns a nicely formatted string for the number of bytes (KiB, MiB, GiB etc). Uses decimal names (KB, Mb - 1000) but calculates using binary values (KiB, MiB - 1024)</summary>
+        /// <summary>Returns a nicely formatted string for the number of bytes (KiB, MiB, GiB etc). Uses decimal names (KB, Mb - 1000) but calculates using binary values (KiB, MiB - 1024)</summary>
 		public static string FormatBytesBinary (int bytes) {
 			double sign = bytes >= 0 ? 1D : -1D;
 
@@ -1012,7 +1012,7 @@ namespace Pathfinding {
 			return ((bytes/(1024D*1024D*1024D))*sign).ToString("0.0") +" GiB";
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns bit number b from int a. The bit number is zero based. Relevant b values are from 0 to 31.
 		/// Equals to (a >> b) & 1
 		/// </summary>
@@ -1020,7 +1020,7 @@ namespace Pathfinding {
 			return (a >> b) & 1;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns a nice color from int i with alpha a. Got code from the open-source Recast project, works really well.
 		/// Seems like there are only 64 possible colors from studying the code
 		/// </summary>
@@ -1032,7 +1032,7 @@ namespace Pathfinding {
 			return new Color(r*0.25F, g*0.25F, b*0.25F, a);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Converts an HSV color to an RGB color.
 		/// According to the algorithm described at http://en.wikipedia.org/wiki/HSL_and_HSV
 		///
@@ -1074,7 +1074,7 @@ namespace Pathfinding {
 
 			return new Color(r, g, b);
 		}
-	}
+    }
 
 	/// <summary>
 	/// Utility functions for working with polygons, lines, and other vector math.
@@ -1089,7 +1089,10 @@ namespace Pathfinding {
 	/// \ingroup utils
 	/// </summary>
 	public static class Polygon {
-		/// <summary>
+        /// <summary>Cached dictionary to avoid excessive allocations</summary>
+		static readonly Dictionary<Int3, int> cached_Int3_int_dict = new Dictionary<Int3, int>();
+
+        /// <summary>
 		/// Returns if the triangle ABC contains the point p in XZ space.
 		/// The triangle vertices are assumed to be laid out in clockwise order.
 		/// </summary>
@@ -1097,7 +1100,7 @@ namespace Pathfinding {
 			return VectorMath.IsClockwiseMarginXZ(a, b, p) && VectorMath.IsClockwiseMarginXZ(b, c, p) && VectorMath.IsClockwiseMarginXZ(c, a, p);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if the triangle ABC contains the point p.
 		/// The triangle vertices are assumed to be laid out in clockwise order.
 		/// </summary>
@@ -1105,7 +1108,7 @@ namespace Pathfinding {
 			return VectorMath.IsClockwiseOrColinearXZ(a, b, p) && VectorMath.IsClockwiseOrColinearXZ(b, c, p) && VectorMath.IsClockwiseOrColinearXZ(c, a, p);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if the triangle ABC contains the point p.
 		/// The triangle vertices are assumed to be laid out in clockwise order.
 		/// </summary>
@@ -1113,7 +1116,7 @@ namespace Pathfinding {
 			return VectorMath.IsClockwiseOrColinear(a, b, p) && VectorMath.IsClockwiseOrColinear(b, c, p) && VectorMath.IsClockwiseOrColinear(c, a, p);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Checks if p is inside the polygon.
 		/// \author http://unifycommunity.com/wiki/index.php?title=PolyContainsPoint (Eric5h5)
 		/// </summary>
@@ -1129,7 +1132,7 @@ namespace Pathfinding {
 			return inside;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Checks if p is inside the polygon (XZ space).
 		/// \author http://unifycommunity.com/wiki/index.php?title=PolyContainsPoint (Eric5h5)
 		/// </summary>
@@ -1145,7 +1148,7 @@ namespace Pathfinding {
 			return inside;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Sample Y coordinate of the triangle (p1, p2, p3) at the point p in XZ space.
 		/// The y coordinate of p is ignored.
 		///
@@ -1162,7 +1165,7 @@ namespace Pathfinding {
 			return (int)Math.Round(lambda1 * p1.y + lambda2 * p2.y + (1 - lambda1 - lambda2) * p3.y);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Calculates convex hull in XZ space for the points.
 		/// Implemented using the very simple Gift Wrapping Algorithm
 		/// which has a complexity of O(nh) where n is the number of points and h is the number of points on the hull,
@@ -1200,7 +1203,7 @@ namespace Pathfinding {
 			return result;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Closest point on the triangle abc to the point p.
 		/// See: 'Real Time Collision Detection' by Christer Ericson, chapter 5.1, page 141
 		/// </summary>
@@ -1270,7 +1273,7 @@ namespace Pathfinding {
 			return p;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Closest point on the triangle abc to the point p when seen from above.
 		/// See: 'Real Time Collision Detection' by Christer Ericson, chapter 5.1, page 141
 		/// </summary>
@@ -1340,7 +1343,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Closest point on the triangle abc to the point p.
 		/// See: 'Real Time Collision Detection' by Christer Ericson, chapter 5.1, page 141
 		/// </summary>
@@ -1407,10 +1410,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Cached dictionary to avoid excessive allocations</summary>
-		static readonly Dictionary<Int3, int> cached_Int3_int_dict = new Dictionary<Int3, int>();
-
-		/// <summary>
+        /// <summary>
 		/// Compress the mesh by removing duplicate vertices.
 		///
 		/// Vertices that differ by only 1 along the y coordinate will also be merged together.
@@ -1463,7 +1463,7 @@ namespace Pathfinding {
 			ArrayPool<int>.Release(ref compressedPointers);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Given a set of edges between vertices, follows those edges and returns them as chains and cycles.
 		///
 		/// [Open online documentation to see images]
@@ -1518,7 +1518,7 @@ namespace Pathfinding {
 			ListPool<int>.Release(ref obstacleVertices);
 		}
 
-		/// <summary>Divides each segment in the list into subSegments segments and fills the result list with the new points</summary>
+        /// <summary>Divides each segment in the list into subSegments segments and fills the result list with the new points</summary>
 		public static void Subdivide (List<Vector3> points, List<Vector3> result, int subSegments) {
 			for (int i = 0; i < points.Count-1; i++)
 				for (int j = 0; j < subSegments; j++)
@@ -1526,5 +1526,5 @@ namespace Pathfinding {
 
 			result.Add(points[points.Count-1]);
 		}
-	}
+    }
 }

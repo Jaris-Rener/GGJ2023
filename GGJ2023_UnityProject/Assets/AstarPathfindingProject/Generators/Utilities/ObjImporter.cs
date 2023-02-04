@@ -15,17 +15,8 @@ using System.IO;
 
 namespace Pathfinding {
 	public class ObjImporter {
-		private struct meshStruct {
-			public Vector3[] vertices;
-			public Vector3[] normals;
-			public Vector2[] uv;
-			public int[] triangles;
-			public Vector3[] faceData;
-			public string fileName;
-		}
-
-		// Use this for initialization
-		public static Mesh ImportFile (string filePath) {
+        // Use this for initialization
+        public static Mesh ImportFile (string filePath) {
 #if NETFX_CORE
 			throw new System.NotSupportedException("Method not available on this platform");
 #else
@@ -68,7 +59,7 @@ namespace Pathfinding {
 #endif
 		}
 
-		private static meshStruct createMeshStruct (string filename) {
+        private static meshStruct createMeshStruct (string filename) {
 #if NETFX_CORE
 			throw new System.NotSupportedException("Method not available on this platform");
 #else
@@ -130,7 +121,7 @@ namespace Pathfinding {
 #endif
 		}
 
-		private static void populateMeshStruct (ref meshStruct mesh) {
+        private static void populateMeshStruct (ref meshStruct mesh) {
 #if NETFX_CORE
 			throw new System.NotSupportedException("Method not available on this platform");
 #else
@@ -239,5 +230,14 @@ namespace Pathfinding {
 			}
 #endif
 		}
-	}
+
+        private struct meshStruct {
+			public Vector3[] vertices;
+			public Vector3[] normals;
+			public Vector2[] uv;
+			public int[] triangles;
+			public Vector3[] faceData;
+			public string fileName;
+		}
+    }
 }

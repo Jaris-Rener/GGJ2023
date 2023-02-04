@@ -33,65 +33,64 @@ namespace Pathfinding {
 	/// </summary>
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_simple_smooth_modifier.php")]
 	public class SimpleSmoothModifier : MonoModifier {
-#if UNITY_EDITOR
-		[UnityEditor.MenuItem("CONTEXT/Seeker/Add Simple Smooth Modifier")]
-		public static void AddComp (UnityEditor.MenuCommand command) {
-			(command.context as Component).gameObject.AddComponent(typeof(SimpleSmoothModifier));
-		}
-#endif
-
-		public override int Order { get { return 50; } }
-
-		/// <summary>Type of smoothing to use</summary>
-		public SmoothType smoothType = SmoothType.Simple;
-
-		/// <summary>Number of times to subdivide when not using a uniform length</summary>
-		[Tooltip("The number of times to subdivide (divide in half) the path segments. [0...inf] (recommended [1...10])")]
-		public int subdivisions = 2;
-
-		/// <summary>Number of times to apply smoothing</summary>
-		[Tooltip("Number of times to apply smoothing")]
-		public int iterations = 2;
-
-		/// <summary>Determines how much smoothing to apply in each smooth iteration. 0.5 usually produces the nicest looking curves.</summary>
-		[Tooltip("Determines how much smoothing to apply in each smooth iteration. 0.5 usually produces the nicest looking curves")]
-		[Range(0, 1)]
-		public float strength = 0.5F;
-
-		/// <summary>
-		/// Toggle to divide all lines in equal length segments.
-		/// See: <see cref="maxSegmentLength"/>
-		/// </summary>
-		[Tooltip("Toggle to divide all lines in equal length segments")]
-		public bool uniformLength = true;
-
-		/// <summary>
-		/// The length of the segments in the smoothed path when using <see cref="uniformLength"/>.
-		/// A high value yields rough paths and low value yields very smooth paths, but is slower
-		/// </summary>
-		[Tooltip("The length of each segment in the smoothed path. A high value yields rough paths and low value yields very smooth paths, but is slower")]
-		public float maxSegmentLength = 2F;
-
-		/// <summary>Length factor of the bezier curves' tangents'</summary>
-		[Tooltip("Length factor of the bezier curves' tangents")]
-		public float bezierTangentLength = 0.4F;
-
-		/// <summary>Offset to apply in each smoothing iteration when using Offset Simple. See: <see cref="smoothType"/></summary>
-		[Tooltip("Offset to apply in each smoothing iteration when using Offset Simple")]
-		public float offset = 0.2F;
-
-		/// <summary>Roundness factor used for CurvedNonuniform</summary>
-		[Tooltip("How much to smooth the path. A higher value will give a smoother path, but might take the character far off the optimal path.")]
-		public float factor = 0.1F;
-
-		public enum SmoothType {
+        public enum SmoothType {
 			Simple,
 			Bezier,
 			OffsetSimple,
 			CurvedNonuniform
 		}
 
-		public override void Apply (Path p) {
+        /// <summary>Type of smoothing to use</summary>
+		public SmoothType smoothType = SmoothType.Simple;
+
+        /// <summary>Number of times to subdivide when not using a uniform length</summary>
+		[Tooltip("The number of times to subdivide (divide in half) the path segments. [0...inf] (recommended [1...10])")]
+		public int subdivisions = 2;
+
+        /// <summary>Number of times to apply smoothing</summary>
+		[Tooltip("Number of times to apply smoothing")]
+		public int iterations = 2;
+
+        /// <summary>Determines how much smoothing to apply in each smooth iteration. 0.5 usually produces the nicest looking curves.</summary>
+		[Tooltip("Determines how much smoothing to apply in each smooth iteration. 0.5 usually produces the nicest looking curves")]
+		[Range(0, 1)]
+		public float strength = 0.5F;
+
+        /// <summary>
+		/// Toggle to divide all lines in equal length segments.
+		/// See: <see cref="maxSegmentLength"/>
+		/// </summary>
+		[Tooltip("Toggle to divide all lines in equal length segments")]
+		public bool uniformLength = true;
+
+        /// <summary>
+		/// The length of the segments in the smoothed path when using <see cref="uniformLength"/>.
+		/// A high value yields rough paths and low value yields very smooth paths, but is slower
+		/// </summary>
+		[Tooltip("The length of each segment in the smoothed path. A high value yields rough paths and low value yields very smooth paths, but is slower")]
+		public float maxSegmentLength = 2F;
+
+        /// <summary>Length factor of the bezier curves' tangents'</summary>
+		[Tooltip("Length factor of the bezier curves' tangents")]
+		public float bezierTangentLength = 0.4F;
+
+        /// <summary>Offset to apply in each smoothing iteration when using Offset Simple. See: <see cref="smoothType"/></summary>
+		[Tooltip("Offset to apply in each smoothing iteration when using Offset Simple")]
+		public float offset = 0.2F;
+
+        /// <summary>Roundness factor used for CurvedNonuniform</summary>
+		[Tooltip("How much to smooth the path. A higher value will give a smoother path, but might take the character far off the optimal path.")]
+		public float factor = 0.1F;
+
+        public override int Order { get { return 50; } }
+#if UNITY_EDITOR
+        [UnityEditor.MenuItem("CONTEXT/Seeker/Add Simple Smooth Modifier")]
+		public static void AddComp (UnityEditor.MenuCommand command) {
+			(command.context as Component).gameObject.AddComponent(typeof(SimpleSmoothModifier));
+		}
+#endif
+
+        public override void Apply (Path p) {
 			// This should never trigger unless some other modifier has messed stuff up
 			if (p.vectorPath == null) {
 				Debug.LogWarning("Can't process NULL path (has another modifier logged an error?)");
@@ -117,7 +116,7 @@ namespace Pathfinding {
 			}
 		}
 
-		public List<Vector3> CurvedNonuniform (List<Vector3> path) {
+        public List<Vector3> CurvedNonuniform (List<Vector3> path) {
 			if (maxSegmentLength <= 0) {
 				Debug.LogWarning("Max Segment Length is <= 0 which would cause DivByZero-exception or other nasty errors (avoid this)");
 				return path;
@@ -168,7 +167,7 @@ namespace Pathfinding {
 			return subdivided;
 		}
 
-		public static Vector3 GetPointOnCubic (Vector3 a, Vector3 b, Vector3 tan1, Vector3 tan2, float t) {
+        public static Vector3 GetPointOnCubic (Vector3 a, Vector3 b, Vector3 tan1, Vector3 tan2, float t) {
 			float t2 = t*t, t3 = t2*t;
 
 			float h1 =  2*t3 - 3*t2 + 1;          // calculate basis function 1
@@ -182,7 +181,7 @@ namespace Pathfinding {
 				   h4*tan2;
 		}
 
-		public List<Vector3> SmoothOffsetSimple (List<Vector3> path) {
+        public List<Vector3> SmoothOffsetSimple (List<Vector3> path) {
 			if (path.Count <= 2 || iterations <= 0) {
 				return path;
 			}
@@ -254,7 +253,7 @@ namespace Pathfinding {
 			return subdivided;
 		}
 
-		public List<Vector3> SmoothSimple (List<Vector3> path) {
+        public List<Vector3> SmoothSimple (List<Vector3> path) {
 			if (path.Count < 2) return path;
 
 			List<Vector3> subdivided;
@@ -323,7 +322,7 @@ namespace Pathfinding {
 			return subdivided;
 		}
 
-		public List<Vector3> SmoothBezier (List<Vector3> path) {
+        public List<Vector3> SmoothBezier (List<Vector3> path) {
 			if (subdivisions < 0) subdivisions = 0;
 
 			int subMult = 1 << subdivisions;
@@ -362,5 +361,5 @@ namespace Pathfinding {
 
 			return subdivided;
 		}
-	}
+    }
 }

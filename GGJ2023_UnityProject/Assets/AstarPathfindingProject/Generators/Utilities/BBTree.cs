@@ -11,15 +11,7 @@ namespace Pathfinding {
 	/// Holds a bounding box tree of triangles.
 	/// </summary>
 	public class BBTree : IAstarPooledObject {
-		/// <summary>Holds all tree nodes</summary>
-		BBTreeBox[] tree = null;
-		TriangleMeshNode[] nodeLookup = null;
-		int count;
-		int leafNodes;
-
-		const int MaximumLeafSize = 4;
-
-		public Rect Size {
+        public Rect Size {
 			get {
 				if (count == 0) {
 					return new Rect(0, 0, 0, 0);
@@ -30,7 +22,20 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>Holds all tree nodes</summary>
+		BBTreeBox[] tree = null;
+
+        TriangleMeshNode[] nodeLookup = null;
+        int count;
+        int leafNodes;
+
+        const int MaximumLeafSize = 4;
+
+        void IAstarPooledObject.OnEnterPool () {
+			Clear();
+		}
+
+        /// <summary>
 		/// Clear the tree.
 		/// Note that references to old nodes will still be intact so the GC cannot immediately collect them.
 		/// </summary>
@@ -47,11 +52,7 @@ namespace Pathfinding {
 			nodeLookup = ArrayPool<TriangleMeshNode>.Claim(0);
 		}
 
-		void IAstarPooledObject.OnEnterPool () {
-			Clear();
-		}
-
-		void EnsureCapacity (int c) {
+        void EnsureCapacity (int c) {
 			if (c > tree.Length) {
 				var newArr = ArrayPool<BBTreeBox>.Claim(c);
 				tree.CopyTo(newArr, 0);
@@ -60,7 +61,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void EnsureNodeCapacity (int c) {
+        void EnsureNodeCapacity (int c) {
 			if (c > nodeLookup.Length) {
 				var newArr = ArrayPool<TriangleMeshNode>.Claim(c);
 				nodeLookup.CopyTo(newArr, 0);
@@ -69,7 +70,7 @@ namespace Pathfinding {
 			}
 		}
 
-		int GetBox (IntRect rect) {
+        int GetBox (IntRect rect) {
 			if (count >= tree.Length) EnsureCapacity(count+1);
 
 			tree[count] = new BBTreeBox(rect);
@@ -77,7 +78,7 @@ namespace Pathfinding {
 			return count-1;
 		}
 
-		/// <summary>Rebuilds the tree using the specified nodes</summary>
+        /// <summary>Rebuilds the tree using the specified nodes</summary>
 		public void RebuildFrom (TriangleMeshNode[] nodes) {
 			Clear();
 
@@ -120,7 +121,7 @@ namespace Pathfinding {
 			ArrayPool<IntRect>.Release(ref nodeBounds);
 		}
 
-		static int SplitByX (TriangleMeshNode[] nodes, int[] permutation, int from, int to, int divider) {
+        static int SplitByX (TriangleMeshNode[] nodes, int[] permutation, int from, int to, int divider) {
 			int mx = to;
 
 			for (int i = from; i < mx; i++) {
@@ -136,7 +137,7 @@ namespace Pathfinding {
 			return mx;
 		}
 
-		static int SplitByZ (TriangleMeshNode[] nodes, int[] permutation, int from, int to, int divider) {
+        static int SplitByZ (TriangleMeshNode[] nodes, int[] permutation, int from, int to, int divider) {
 			int mx = to;
 
 			for (int i = from; i < mx; i++) {
@@ -152,7 +153,7 @@ namespace Pathfinding {
 			return mx;
 		}
 
-		int RebuildFromInternal (TriangleMeshNode[] nodes, int[] permutation, IntRect[] nodeBounds, int from, int to, bool odd) {
+        int RebuildFromInternal (TriangleMeshNode[] nodes, int[] permutation, IntRect[] nodeBounds, int from, int to, bool odd) {
 			var rect = NodeBounds(permutation, nodeBounds, from, to);
 			int box = GetBox(rect);
 
@@ -205,7 +206,7 @@ namespace Pathfinding {
 			return box;
 		}
 
-		/// <summary>Calculates the bounding box in XZ space of all nodes between from (inclusive) and to (exclusive)</summary>
+        /// <summary>Calculates the bounding box in XZ space of all nodes between from (inclusive) and to (exclusive)</summary>
 		static IntRect NodeBounds (int[] permutation, IntRect[] nodeBounds, int from, int to) {
 			var rect = nodeBounds[permutation[from]];
 
@@ -225,7 +226,7 @@ namespace Pathfinding {
 			return rect;
 		}
 
-		[System.Diagnostics.Conditional("ASTARDEBUG")]
+        [System.Diagnostics.Conditional("ASTARDEBUG")]
 		static void DrawDebugRect (IntRect rect) {
 			Debug.DrawLine(new Vector3(rect.xmin, 0, rect.ymin), new Vector3(rect.xmax, 0, rect.ymin), Color.white);
 			Debug.DrawLine(new Vector3(rect.xmin, 0, rect.ymax), new Vector3(rect.xmax, 0, rect.ymax), Color.white);
@@ -233,14 +234,14 @@ namespace Pathfinding {
 			Debug.DrawLine(new Vector3(rect.xmax, 0, rect.ymin), new Vector3(rect.xmax, 0, rect.ymax), Color.white);
 		}
 
-		[System.Diagnostics.Conditional("ASTARDEBUG")]
+        [System.Diagnostics.Conditional("ASTARDEBUG")]
 		static void DrawDebugNode (TriangleMeshNode node, float yoffset, Color color) {
 			Debug.DrawLine((Vector3)node.GetVertex(1) + Vector3.up*yoffset, (Vector3)node.GetVertex(2) + Vector3.up*yoffset, color);
 			Debug.DrawLine((Vector3)node.GetVertex(0) + Vector3.up*yoffset, (Vector3)node.GetVertex(1) + Vector3.up*yoffset, color);
 			Debug.DrawLine((Vector3)node.GetVertex(2) + Vector3.up*yoffset, (Vector3)node.GetVertex(0) + Vector3.up*yoffset, color);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Queries the tree for the closest node to p constrained by the NNConstraint.
 		/// Note that this function will only fill in the constrained node.
 		/// If you want a node not constrained by any NNConstraint, do an additional search with constraint = NNConstraint.None
@@ -250,7 +251,7 @@ namespace Pathfinding {
 			return QueryClosest(p, constraint, ref distance, new NNInfoInternal(null));
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Queries the tree for the closest node to p constrained by the NNConstraint trying to improve an existing solution.
 		/// Note that this function will only fill in the constrained node.
 		/// If you want a node not constrained by any NNConstraint, do an additional search with constraint = NNConstraint.None
@@ -279,7 +280,7 @@ namespace Pathfinding {
 			return previous;
 		}
 
-		void SearchBoxClosestXZ (int boxi, Vector3 p, ref float closestSqrDist, NNConstraint constraint, ref NNInfoInternal nnInfo) {
+        void SearchBoxClosestXZ (int boxi, Vector3 p, ref float closestSqrDist, NNConstraint constraint, ref NNInfoInternal nnInfo) {
 			BBTreeBox box = tree[boxi];
 
 			if (box.IsLeaf) {
@@ -323,7 +324,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Queries the tree for the closest node to p constrained by the NNConstraint trying to improve an existing solution.
 		/// Note that this function will only fill in the constrained node.
 		/// If you want a node not constrained by any NNConstraint, do an additional search with constraint = NNConstraint.None
@@ -348,7 +349,7 @@ namespace Pathfinding {
 			return previous;
 		}
 
-		void SearchBoxClosest (int boxi, Vector3 p, ref float closestSqrDist, NNConstraint constraint, ref NNInfoInternal nnInfo) {
+        void SearchBoxClosest (int boxi, Vector3 p, ref float closestSqrDist, NNConstraint constraint, ref NNInfoInternal nnInfo) {
 			BBTreeBox box = tree[boxi];
 
 			if (box.IsLeaf) {
@@ -387,7 +388,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Orders the box indices first and second by the approximate distance to the point p</summary>
+        /// <summary>Orders the box indices first and second by the approximate distance to the point p</summary>
 		void GetOrderedChildren (ref int first, ref int second, out float firstDist, out float secondDist, Vector3 p) {
 			firstDist = SquaredRectPointDistance(tree[first].rect, p);
 			secondDist = SquaredRectPointDistance(tree[second].rect, p);
@@ -403,7 +404,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Searches for a node which contains the specified point.
 		/// If there are multiple nodes that contain the point any one of them
 		/// may be returned.
@@ -414,7 +415,7 @@ namespace Pathfinding {
 			return count != 0 && tree[0].Contains(p) ? SearchBoxInside(0, p, constraint) : null;
 		}
 
-		TriangleMeshNode SearchBoxInside (int boxi, Vector3 p, NNConstraint constraint) {
+        TriangleMeshNode SearchBoxInside (int boxi, Vector3 p, NNConstraint constraint) {
 			BBTreeBox box = tree[boxi];
 
 			if (box.IsLeaf) {
@@ -449,7 +450,71 @@ namespace Pathfinding {
 			return null;
 		}
 
-		struct BBTreeBox {
+        public void OnDrawGizmos () {
+			Gizmos.color = new Color(1, 1, 1, 0.5F);
+			if (count == 0) return;
+			OnDrawGizmos(0, 0);
+		}
+
+        void OnDrawGizmos (int boxi, int depth) {
+			BBTreeBox box = tree[boxi];
+
+			var min = (Vector3) new Int3(box.rect.xmin, 0, box.rect.ymin);
+			var max = (Vector3) new Int3(box.rect.xmax, 0, box.rect.ymax);
+
+			Vector3 center = (min+max)*0.5F;
+			Vector3 size = (max-center)*2;
+
+			size = new Vector3(size.x, 1, size.z);
+			center.y += depth * 2;
+
+			Gizmos.color = AstarMath.IntToColor(depth, 1f);
+			Gizmos.DrawCube(center, size);
+
+			if (!box.IsLeaf) {
+				OnDrawGizmos(box.left, depth + 1);
+				OnDrawGizmos(box.right, depth + 1);
+			}
+		}
+
+        static bool NodeIntersectsCircle (TriangleMeshNode node, Vector3 p, float radius) {
+			if (float.IsPositiveInfinity(radius)) return true;
+
+			/// <summary>\bug Is not correct on the Y axis</summary>
+			return (p - node.ClosestPointOnNode(p)).sqrMagnitude < radius*radius;
+		}
+
+        /// <summary>
+		/// Returns true if p is within radius from r.
+		/// Correctly handles cases where radius is positive infinity.
+		/// </summary>
+		static bool RectIntersectsCircle (IntRect r, Vector3 p, float radius) {
+			if (float.IsPositiveInfinity(radius)) return true;
+
+			Vector3 po = p;
+			p.x = Math.Max(p.x, r.xmin*Int3.PrecisionFactor);
+			p.x = Math.Min(p.x, r.xmax*Int3.PrecisionFactor);
+			p.z = Math.Max(p.z, r.ymin*Int3.PrecisionFactor);
+			p.z = Math.Min(p.z, r.ymax*Int3.PrecisionFactor);
+
+			// XZ squared magnitude comparison
+			return (p.x-po.x)*(p.x-po.x) + (p.z-po.z)*(p.z-po.z) < radius*radius;
+		}
+
+        /// <summary>Returns distance from p to the rectangle r</summary>
+		static float SquaredRectPointDistance (IntRect r, Vector3 p) {
+			Vector3 po = p;
+
+			p.x = Math.Max(p.x, r.xmin*Int3.PrecisionFactor);
+			p.x = Math.Min(p.x, r.xmax*Int3.PrecisionFactor);
+			p.z = Math.Max(p.z, r.ymin*Int3.PrecisionFactor);
+			p.z = Math.Min(p.z, r.ymax*Int3.PrecisionFactor);
+
+			// XZ squared magnitude comparison
+			return (p.x-po.x)*(p.x-po.x) + (p.z-po.z)*(p.z-po.z);
+		}
+
+        struct BBTreeBox {
 			public IntRect rect;
 
 			public int nodeOffset;
@@ -479,69 +544,5 @@ namespace Pathfinding {
 				return rect.Contains(pi.x, pi.z);
 			}
 		}
-
-		public void OnDrawGizmos () {
-			Gizmos.color = new Color(1, 1, 1, 0.5F);
-			if (count == 0) return;
-			OnDrawGizmos(0, 0);
-		}
-
-		void OnDrawGizmos (int boxi, int depth) {
-			BBTreeBox box = tree[boxi];
-
-			var min = (Vector3) new Int3(box.rect.xmin, 0, box.rect.ymin);
-			var max = (Vector3) new Int3(box.rect.xmax, 0, box.rect.ymax);
-
-			Vector3 center = (min+max)*0.5F;
-			Vector3 size = (max-center)*2;
-
-			size = new Vector3(size.x, 1, size.z);
-			center.y += depth * 2;
-
-			Gizmos.color = AstarMath.IntToColor(depth, 1f);
-			Gizmos.DrawCube(center, size);
-
-			if (!box.IsLeaf) {
-				OnDrawGizmos(box.left, depth + 1);
-				OnDrawGizmos(box.right, depth + 1);
-			}
-		}
-
-		static bool NodeIntersectsCircle (TriangleMeshNode node, Vector3 p, float radius) {
-			if (float.IsPositiveInfinity(radius)) return true;
-
-			/// <summary>\bug Is not correct on the Y axis</summary>
-			return (p - node.ClosestPointOnNode(p)).sqrMagnitude < radius*radius;
-		}
-
-		/// <summary>
-		/// Returns true if p is within radius from r.
-		/// Correctly handles cases where radius is positive infinity.
-		/// </summary>
-		static bool RectIntersectsCircle (IntRect r, Vector3 p, float radius) {
-			if (float.IsPositiveInfinity(radius)) return true;
-
-			Vector3 po = p;
-			p.x = Math.Max(p.x, r.xmin*Int3.PrecisionFactor);
-			p.x = Math.Min(p.x, r.xmax*Int3.PrecisionFactor);
-			p.z = Math.Max(p.z, r.ymin*Int3.PrecisionFactor);
-			p.z = Math.Min(p.z, r.ymax*Int3.PrecisionFactor);
-
-			// XZ squared magnitude comparison
-			return (p.x-po.x)*(p.x-po.x) + (p.z-po.z)*(p.z-po.z) < radius*radius;
-		}
-
-		/// <summary>Returns distance from p to the rectangle r</summary>
-		static float SquaredRectPointDistance (IntRect r, Vector3 p) {
-			Vector3 po = p;
-
-			p.x = Math.Max(p.x, r.xmin*Int3.PrecisionFactor);
-			p.x = Math.Min(p.x, r.xmax*Int3.PrecisionFactor);
-			p.z = Math.Max(p.z, r.ymin*Int3.PrecisionFactor);
-			p.z = Math.Min(p.z, r.ymax*Int3.PrecisionFactor);
-
-			// XZ squared magnitude comparison
-			return (p.x-po.x)*(p.x-po.x) + (p.z-po.z)*(p.z-po.z);
-		}
-	}
+    }
 }

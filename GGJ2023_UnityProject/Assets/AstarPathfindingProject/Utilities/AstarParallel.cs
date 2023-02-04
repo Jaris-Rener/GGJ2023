@@ -14,24 +14,21 @@ namespace Pathfinding.Util {
 	/// Any exception that is thrown in the worker threads will be propagated out to the caller of the <see cref="Run"/> method.
 	/// </summary>
 	public class ParallelWorkQueue<T> {
-		/// <summary>
+        /// <summary>
 		/// Callback to run for each item in the queue.
 		/// The callback takes the item as the first parameter and the thread index as the second parameter.
 		/// </summary>
 		public System.Action<T, int> action;
 
-		/// <summary>Number of threads to use</summary>
+        /// <summary>Number of threads to use</summary>
 		public readonly int threadCount;
 
-		/// <summary>Queue of items</summary>
+        /// <summary>Queue of items</summary>
 		readonly Queue<T> queue;
-		readonly int initialCount;
-#if !SINGLE_THREAD
-		ManualResetEvent[] waitEvents;
-		System.Exception innerException;
-#endif
 
-		public ParallelWorkQueue (Queue<T> queue) {
+        readonly int initialCount;
+
+        public ParallelWorkQueue (Queue<T> queue) {
 			this.queue = queue;
 			initialCount = queue.Count;
 #if SINGLE_THREAD
@@ -41,7 +38,7 @@ namespace Pathfinding.Util {
 #endif
 		}
 
-		/// <summary>Execute the tasks.</summary>
+        /// <summary>Execute the tasks.</summary>
 		/// <param name="progressTimeoutMillis">This iterator will yield approximately every progressTimeoutMillis milliseconds.
 		///  This can be used to e.g show a progress bar.</param>
 		public IEnumerable<int> Run (int progressTimeoutMillis) {
@@ -84,7 +81,7 @@ namespace Pathfinding.Util {
 		}
 
 #if !SINGLE_THREAD
-		void RunTask (int threadIndex) {
+        void RunTask (int threadIndex) {
 			try {
 				while (true) {
 					T tile;
@@ -103,5 +100,9 @@ namespace Pathfinding.Util {
 			}
 		}
 #endif
-	}
+#if !SINGLE_THREAD
+        ManualResetEvent[] waitEvents;
+        System.Exception innerException;
+#endif
+    }
 }

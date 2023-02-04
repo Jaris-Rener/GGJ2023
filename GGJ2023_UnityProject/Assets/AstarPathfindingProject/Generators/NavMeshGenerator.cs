@@ -6,8 +6,8 @@ namespace Pathfinding {
 	using Pathfinding.Serialization;
 
 	public interface INavmesh {
-		void GetNodes(System.Action<GraphNode> del);
-	}
+        void GetNodes(System.Action<GraphNode> del);
+    }
 
 	/// <summary>
 	/// Generates graphs based on navmeshes.
@@ -25,23 +25,23 @@ namespace Pathfinding {
 	[JsonOptIn]
 	[Pathfinding.Util.Preserve]
 	public class NavMeshGraph : NavmeshBase, IUpdatableGraph {
-		/// <summary>Mesh to construct navmesh from</summary>
+        /// <summary>Mesh to construct navmesh from</summary>
 		[JsonMember]
 		public Mesh sourceMesh;
 
-		/// <summary>Offset in world space</summary>
+        /// <summary>Offset in world space</summary>
 		[JsonMember]
 		public Vector3 offset;
 
-		/// <summary>Rotation in degrees</summary>
+        /// <summary>Rotation in degrees</summary>
 		[JsonMember]
 		public Vector3 rotation;
 
-		/// <summary>Scale of the graph</summary>
+        /// <summary>Scale of the graph</summary>
 		[JsonMember]
 		public float scale = 1;
 
-		/// <summary>
+        /// <summary>
 		/// Determines how normals are calculated.
 		/// Disable for spherical graphs or other complicated surfaces that allow the agents to e.g walk on walls or ceilings.
 		///
@@ -65,7 +65,28 @@ namespace Pathfinding {
 		[JsonMember]
 		public bool recalculateNormals = true;
 
-		/// <summary>
+        public override float TileWorldSizeX {
+			get {
+				return forcedBoundsSize.x;
+			}
+		}
+
+        public override float TileWorldSizeZ {
+			get {
+				return forcedBoundsSize.z;
+			}
+		}
+
+        protected override bool RecalculateNormals { get { return recalculateNormals; } }
+
+        protected override float MaxTileConnectionEdgeDistance {
+			get {
+				// Tiles are not supported, so this is irrelevant
+				return 0f;
+			}
+		}
+
+        /// <summary>
 		/// Cached bounding box minimum of <see cref="sourceMesh"/>.
 		/// This is important when the graph has been saved to a file and is later loaded again, but the original mesh does not exist anymore (or has been moved).
 		/// In that case we still need to be able to find the bounding box since the <see cref="CalculateTransform"/> method uses it.
@@ -73,43 +94,22 @@ namespace Pathfinding {
 		[JsonMember]
 		Vector3 cachedSourceMeshBoundsMin;
 
-		protected override bool RecalculateNormals { get { return recalculateNormals; } }
-
-		public override float TileWorldSizeX {
-			get {
-				return forcedBoundsSize.x;
-			}
-		}
-
-		public override float TileWorldSizeZ {
-			get {
-				return forcedBoundsSize.z;
-			}
-		}
-
-		protected override float MaxTileConnectionEdgeDistance {
-			get {
-				// Tiles are not supported, so this is irrelevant
-				return 0f;
-			}
-		}
-
-		public override GraphTransform CalculateTransform () {
-			return new GraphTransform(Matrix4x4.TRS(offset, Quaternion.Euler(rotation), Vector3.one) * Matrix4x4.TRS(sourceMesh != null ? sourceMesh.bounds.min * scale : cachedSourceMeshBoundsMin * scale, Quaternion.identity, Vector3.one));
-		}
-
-		GraphUpdateThreading IUpdatableGraph.CanUpdateAsync (GraphUpdateObject o) {
+        GraphUpdateThreading IUpdatableGraph.CanUpdateAsync (GraphUpdateObject o) {
 			return GraphUpdateThreading.UnityThread;
 		}
 
-		void IUpdatableGraph.UpdateAreaInit (GraphUpdateObject o) {}
-		void IUpdatableGraph.UpdateAreaPost (GraphUpdateObject o) {}
+        void IUpdatableGraph.UpdateAreaInit (GraphUpdateObject o) {}
+        void IUpdatableGraph.UpdateAreaPost (GraphUpdateObject o) {}
 
-		void IUpdatableGraph.UpdateArea (GraphUpdateObject o) {
+        void IUpdatableGraph.UpdateArea (GraphUpdateObject o) {
 			UpdateArea(o, this);
 		}
 
-		public static void UpdateArea (GraphUpdateObject o, INavmeshHolder graph) {
+        public override GraphTransform CalculateTransform () {
+			return new GraphTransform(Matrix4x4.TRS(offset, Quaternion.Euler(rotation), Vector3.one) * Matrix4x4.TRS(sourceMesh != null ? sourceMesh.bounds.min * scale : cachedSourceMeshBoundsMin * scale, Quaternion.identity, Vector3.one));
+		}
+
+        public static void UpdateArea (GraphUpdateObject o, INavmeshHolder graph) {
 			Bounds bounds = graph.transform.InverseTransform(o.bounds);
 
 			// Bounding rectangle with integer coordinates
@@ -201,7 +201,7 @@ namespace Pathfinding {
 			});
 		}
 
-		/// <summary>Scans the graph using the path to an .obj mesh</summary>
+        /// <summary>Scans the graph using the path to an .obj mesh</summary>
 		[System.Obsolete("Set the mesh to ObjImporter.ImportFile(...) and scan the graph the normal way instead")]
 		public void ScanInternal (string objMeshPath) {
 			Mesh mesh = ObjImporter.ImportFile(objMeshPath);
@@ -217,7 +217,7 @@ namespace Pathfinding {
 			while (scan.MoveNext()) {}
 		}
 
-		protected override IEnumerable<Progress> ScanInternal () {
+        protected override IEnumerable<Progress> ScanInternal () {
 			cachedSourceMeshBoundsMin = sourceMesh != null ? sourceMesh.bounds.min : Vector3.zero;
 			transform = CalculateTransform();
 			tileZCount = tileXCount = 1;
@@ -259,7 +259,7 @@ namespace Pathfinding {
 			if (OnRecalculatedTiles != null) OnRecalculatedTiles(tiles.Clone() as NavmeshTile[]);
 		}
 
-		protected override void DeserializeSettingsCompatibility (GraphSerializationContext ctx) {
+        protected override void DeserializeSettingsCompatibility (GraphSerializationContext ctx) {
 			base.DeserializeSettingsCompatibility(ctx);
 
 			sourceMesh = ctx.DeserializeUnityObject() as Mesh;
@@ -268,5 +268,5 @@ namespace Pathfinding {
 			scale = ctx.reader.ReadSingle();
 			nearestSearchOnlyXZ = !ctx.reader.ReadBoolean();
 		}
-	}
+    }
 }

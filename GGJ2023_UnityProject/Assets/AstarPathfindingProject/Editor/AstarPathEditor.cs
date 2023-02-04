@@ -6,70 +6,39 @@ using System.Reflection;
 namespace Pathfinding {
 	[CustomEditor(typeof(AstarPath))]
 	public class AstarPathEditor : Editor {
-		/// <summary>List of all graph editors available (e.g GridGraphEditor)</summary>
+        const string scriptsFolder = "Assets/AstarPathfindingProject";
+
+        /// <summary>List of all graph editors available (e.g GridGraphEditor)</summary>
 		static Dictionary<string, CustomGraphEditorAttribute> graphEditorTypes = new Dictionary<string, CustomGraphEditorAttribute>();
 
-		/// <summary>
+        /// <summary>
 		/// Holds node counts for each graph to avoid calculating it every frame.
 		/// Only used for visualization purposes
 		/// </summary>
 		static Dictionary<NavGraph, KeyValuePair<float, KeyValuePair<int, int> > > graphNodeCounts;
 
-		/// <summary>List of all graph editors for the graphs</summary>
+        static int lastUndoGroup = -1000;
+
+        /// <summary>Used to make sure correct behaviour when handling undos</summary>
+		static uint ignoredChecksum;
+
+        /// <summary>List of all graph editors for the graphs</summary>
 		GraphEditor[] graphEditors;
 
-		System.Type[] graphTypes {
+        /// <summary>Graph editor which has its 'name' field focused</summary>
+		GraphEditor graphNameFocused;
+
+        System.Type[] graphTypes {
 			get {
 				return script.data.graphTypes;
 			}
 		}
 
-		static int lastUndoGroup = -1000;
-
-		/// <summary>Used to make sure correct behaviour when handling undos</summary>
-		static uint ignoredChecksum;
-
-		const string scriptsFolder = "Assets/AstarPathfindingProject";
-
-		#region SectionFlags
-
-		static bool showSettings;
-		static bool customAreaColorsOpen;
-		static bool editTags;
-
-		FadeArea settingsArea;
-		FadeArea colorSettingsArea;
-		FadeArea editorSettingsArea;
-		FadeArea aboutArea;
-		FadeArea optimizationSettingsArea;
-		FadeArea serializationSettingsArea;
-		FadeArea tagsArea;
-		FadeArea graphsArea;
-		FadeArea addGraphsArea;
-		FadeArea alwaysVisibleArea;
-
-		#endregion
-
-		/// <summary>AstarPath instance that is being inspected</summary>
+        /// <summary>AstarPath instance that is being inspected</summary>
 		public AstarPath script { get; private set; }
 
-		#region Styles
 
-		static bool stylesLoaded;
-		public static GUISkin astarSkin { get; private set; }
-
-		static GUIStyle level0AreaStyle, level0LabelStyle;
-		static GUIStyle level1AreaStyle, level1LabelStyle;
-
-		static GUIStyle graphDeleteButtonStyle, graphInfoButtonStyle, graphGizmoButtonStyle, graphEditNameButtonStyle;
-
-		public static GUIStyle helpBox  { get; private set; }
-		public static GUIStyle thinHelpBox  { get; private set; }
-
-		#endregion
-
-
-		/// <summary>Enables editor stuff. Loads graphs, reads settings and sets everything up</summary>
+        /// <summary>Enables editor stuff. Loads graphs, reads settings and sets everything up</summary>
 		public void OnEnable () {
 			script = target as AstarPath;
 
@@ -98,23 +67,7 @@ namespace Pathfinding {
 			CreateFadeAreas();
 		}
 
-		void CreateFadeAreas () {
-			if (settingsArea == null) {
-				aboutArea                 = new FadeArea(false, this, level0AreaStyle, level0LabelStyle);
-				optimizationSettingsArea  = new FadeArea(false, this, level0AreaStyle, level0LabelStyle);
-				graphsArea                = new FadeArea(false, this, level0AreaStyle, level0LabelStyle);
-				serializationSettingsArea = new FadeArea(false, this, level0AreaStyle, level0LabelStyle);
-				settingsArea              = new FadeArea(showSettings, this, level0AreaStyle, level0LabelStyle);
-
-				addGraphsArea             = new FadeArea(false, this, level1AreaStyle, level1LabelStyle);
-				colorSettingsArea         = new FadeArea(false, this, level1AreaStyle, level1LabelStyle);
-				editorSettingsArea        = new FadeArea(false, this, level1AreaStyle, level1LabelStyle);
-				alwaysVisibleArea         = new FadeArea(true, this, level1AreaStyle, level1LabelStyle);
-				tagsArea                  = new FadeArea(editTags, this, level1AreaStyle, level1LabelStyle);
-			}
-		}
-
-		/// <summary>Cleans up editor stuff</summary>
+        /// <summary>Cleans up editor stuff</summary>
 		public void OnDisable () {
 			Undo.undoRedoPerformed -= OnUndoRedoPerformed;
 
@@ -130,21 +83,74 @@ namespace Pathfinding {
 			script = null;
 		}
 
-		/// <summary>Reads settings frome EditorPrefs</summary>
+        public void OnSceneGUI () {
+			script = target as AstarPath;
+
+			DrawSceneGUISettings();
+
+			// OnSceneGUI may be called from EditorUtility.DisplayProgressBar
+			// which is called repeatedly while the graphs are scanned in the
+			// editor. However running the OnSceneGUI method while the graphs
+			// are being scanned is a bad idea since it can interfere with
+			// scanning, especially by serializing changes
+			if (script.isScanning) {
+				return;
+			}
+
+			script.ConfigureReferencesInternal();
+			EditorGUI.BeginChangeCheck();
+
+			if (!LoadStyles()) return;
+
+			// Some GUI controls might change this to Used, so we need to grab it here
+			EventType et = Event.current.type;
+
+			CheckGraphEditors();
+			for (int i = 0; i < script.graphs.Length; i++) {
+				NavGraph graph = script.graphs[i];
+				if (graph != null) {
+					graphEditors[i].OnSceneGUI(graph);
+				}
+			}
+
+			SaveGraphsAndUndo(et);
+
+			if (EditorGUI.EndChangeCheck()) {
+				EditorUtility.SetDirty(target);
+			}
+		}
+
+        void CreateFadeAreas () {
+			if (settingsArea == null) {
+				aboutArea                 = new FadeArea(false, this, level0AreaStyle, level0LabelStyle);
+				optimizationSettingsArea  = new FadeArea(false, this, level0AreaStyle, level0LabelStyle);
+				graphsArea                = new FadeArea(false, this, level0AreaStyle, level0LabelStyle);
+				serializationSettingsArea = new FadeArea(false, this, level0AreaStyle, level0LabelStyle);
+				settingsArea              = new FadeArea(showSettings, this, level0AreaStyle, level0LabelStyle);
+
+				addGraphsArea             = new FadeArea(false, this, level1AreaStyle, level1LabelStyle);
+				colorSettingsArea         = new FadeArea(false, this, level1AreaStyle, level1LabelStyle);
+				editorSettingsArea        = new FadeArea(false, this, level1AreaStyle, level1LabelStyle);
+				alwaysVisibleArea         = new FadeArea(true, this, level1AreaStyle, level1LabelStyle);
+				tagsArea                  = new FadeArea(editTags, this, level1AreaStyle, level1LabelStyle);
+			}
+		}
+
+        /// <summary>Reads settings frome EditorPrefs</summary>
 		void GetAstarEditorSettings () {
 			FadeArea.fancyEffects = EditorPrefs.GetBool("EditorGUILayoutx.fancyEffects", true);
 		}
 
-		void SetAstarEditorSettings () {
+        void SetAstarEditorSettings () {
 			EditorPrefs.SetBool("EditorGUILayoutx.fancyEffects", FadeArea.fancyEffects);
 		}
 
-		/// <summary>Checks if JS support is enabled. This is done by checking if the directory 'Assets/AstarPathfindingEditor/Editor' exists</summary>
+        /// <summary>Checks if JS support is enabled. This is done by checking if the directory 'Assets/AstarPathfindingEditor/Editor' exists</summary>
 		static bool IsJsEnabled () {
 			return System.IO.Directory.Exists(Application.dataPath+"/AstarPathfindingEditor/Editor");
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Enables JS support.
 		/// This is done by restructuring folders in the project.
 		/// See: javascript (view in online documentation for working links)
@@ -182,7 +188,7 @@ namespace Pathfinding {
 			AssetDatabase.Refresh();
 		}
 
-		/// <summary>Disables JS support if it was enabled. This is done by restructuring folders in the project</summary>
+        /// <summary>Disables JS support if it was enabled. This is done by restructuring folders in the project</summary>
 		static void DisableJs () {
 			if (System.IO.Directory.Exists(Application.dataPath+"/Plugins/AstarPathfindingProject")) {
 				string error = AssetDatabase.MoveAsset("Assets/Plugins/AstarPathfindingProject", scriptsFolder);
@@ -213,7 +219,7 @@ namespace Pathfinding {
 			AssetDatabase.Refresh();
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Repaints Scene View.
 		/// Warning: Uses Undocumented Unity Calls (should be safe for Unity 3.x though)
 		/// </summary>
@@ -221,12 +227,12 @@ namespace Pathfinding {
 			if (!Application.isPlaying || EditorApplication.isPaused) SceneView.RepaintAll();
 		}
 
-		/// <summary>Tell Unity that we want to use the whole inspector width</summary>
+        /// <summary>Tell Unity that we want to use the whole inspector width</summary>
 		public override bool UseDefaultMargins () {
 			return false;
 		}
 
-		public override void OnInspectorGUI () {
+        public override void OnInspectorGUI () {
 			// Do some loading and checking
 			if (!LoadStyles()) {
 				EditorGUILayout.HelpBox("The GUISkin 'AstarEditorSkin.guiskin' in the folder "+EditorResourceHelper.editorAssets+"/ was not found or some custom styles in it does not exist.\n"+
@@ -293,7 +299,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Loads GUISkin and sets up styles.
 		/// See: EditorResourceHelper.LocateEditorAssets
 		/// Returns: True if all styles were found, false if there was an error somewhere
@@ -346,7 +352,7 @@ namespace Pathfinding {
 			return true;
 		}
 
-		/// <summary>Draws the main area in the inspector</summary>
+        /// <summary>Draws the main area in the inspector</summary>
 		void DrawMainArea () {
 			CheckGraphEditors();
 
@@ -399,7 +405,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Draws optimizations settings.</summary>
+        /// <summary>Draws optimizations settings.</summary>
 		void DrawOptimizationSettings () {
 			optimizationSettingsArea.Begin();
 			optimizationSettingsArea.Header("Optimization");
@@ -415,7 +421,7 @@ namespace Pathfinding {
 			optimizationSettingsArea.End();
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns a version with all fields fully defined.
 		/// This is used because by default new Version(3,0,0) > new Version(3,0).
 		/// This is not the desired behaviour so we make sure that all fields are defined here
@@ -424,7 +430,7 @@ namespace Pathfinding {
 			return new System.Version(Mathf.Max(v.Major, 0), Mathf.Max(v.Minor, 0), Mathf.Max(v.Build, 0), Mathf.Max(v.Revision, 0));
 		}
 
-		void DrawAboutArea () {
+        void DrawAboutArea () {
 			aboutArea.Begin();
 
 			GUILayout.BeginHorizontal();
@@ -497,10 +503,7 @@ namespace Pathfinding {
 			aboutArea.End();
 		}
 
-		/// <summary>Graph editor which has its 'name' field focused</summary>
-		GraphEditor graphNameFocused;
-
-		void DrawGraphHeader (GraphEditor graphEditor) {
+        void DrawGraphHeader (GraphEditor graphEditor) {
 			var graph = graphEditor.target;
 
 			// Graph guid, just used to get a unique value
@@ -585,7 +588,7 @@ namespace Pathfinding {
 			GUILayout.EndHorizontal();
 		}
 
-		void DrawGraphInfoArea (GraphEditor graphEditor) {
+        void DrawGraphInfoArea (GraphEditor graphEditor) {
 			graphEditor.infoFadeArea.Begin();
 
 			if (graphEditor.infoFadeArea.BeginFade()) {
@@ -631,7 +634,7 @@ namespace Pathfinding {
 			graphEditor.infoFadeArea.End();
 		}
 
-		/// <summary>Draws the inspector for the given graph with the given graph editor</summary>
+        /// <summary>Draws the inspector for the given graph with the given graph editor</summary>
 		void DrawGraph (GraphEditor graphEditor) {
 			graphEditor.fadeArea.Begin();
 			DrawGraphHeader(graphEditor);
@@ -645,44 +648,7 @@ namespace Pathfinding {
 			graphEditor.fadeArea.End();
 		}
 
-		public void OnSceneGUI () {
-			script = target as AstarPath;
-
-			DrawSceneGUISettings();
-
-			// OnSceneGUI may be called from EditorUtility.DisplayProgressBar
-			// which is called repeatedly while the graphs are scanned in the
-			// editor. However running the OnSceneGUI method while the graphs
-			// are being scanned is a bad idea since it can interfere with
-			// scanning, especially by serializing changes
-			if (script.isScanning) {
-				return;
-			}
-
-			script.ConfigureReferencesInternal();
-			EditorGUI.BeginChangeCheck();
-
-			if (!LoadStyles()) return;
-
-			// Some GUI controls might change this to Used, so we need to grab it here
-			EventType et = Event.current.type;
-
-			CheckGraphEditors();
-			for (int i = 0; i < script.graphs.Length; i++) {
-				NavGraph graph = script.graphs[i];
-				if (graph != null) {
-					graphEditors[i].OnSceneGUI(graph);
-				}
-			}
-
-			SaveGraphsAndUndo(et);
-
-			if (EditorGUI.EndChangeCheck()) {
-				EditorUtility.SetDirty(target);
-			}
-		}
-
-		void DrawSceneGUISettings () {
+        void DrawSceneGUISettings () {
 			var darkSkin = EditorGUIUtility.GetBuiltinSkin(EditorSkin.Scene);
 
 			Handles.BeginGUI();
@@ -711,7 +677,7 @@ namespace Pathfinding {
 		}
 
 
-		TextAsset SaveGraphData (byte[] bytes, TextAsset target = null) {
+        TextAsset SaveGraphData (byte[] bytes, TextAsset target = null) {
 			string projectPath = System.IO.Path.GetDirectoryName(Application.dataPath) + "/";
 
 			string path;
@@ -739,7 +705,7 @@ namespace Pathfinding {
 			return AssetDatabase.LoadAssetAtPath<TextAsset>(path);
 		}
 
-		void DrawSerializationSettings () {
+        void DrawSerializationSettings () {
 			serializationSettingsArea.Begin();
 			GUILayout.BeginHorizontal();
 
@@ -852,7 +818,7 @@ namespace Pathfinding {
 			serializationSettingsArea.End();
 		}
 
-		void DrawSettings () {
+        void DrawSettings () {
 			settingsArea.Begin();
 			settingsArea.Header("Settings", ref showSettings);
 
@@ -867,7 +833,7 @@ namespace Pathfinding {
 			settingsArea.End();
 		}
 
-		void DrawPathfindingSettings () {
+        void DrawPathfindingSettings () {
 			alwaysVisibleArea.Begin();
 			alwaysVisibleArea.HeaderLabel("Pathfinding");
 			alwaysVisibleArea.BeginFade();
@@ -942,11 +908,11 @@ namespace Pathfinding {
 			alwaysVisibleArea.End();
 		}
 
-		void DrawHeuristicOptimizationSettings () {
+        void DrawHeuristicOptimizationSettings () {
 			// Pro only feature
 		}
 
-		/// <summary>Opens the A* Inspector and shows the section for editing tags</summary>
+        /// <summary>Opens the A* Inspector and shows the section for editing tags</summary>
 		public static void EditTags () {
 			AstarPath astar = GameObject.FindObjectOfType<AstarPath>();
 
@@ -959,7 +925,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void DrawTagSettings () {
+        void DrawTagSettings () {
 			tagsArea.Begin();
 			tagsArea.Header("Tag Names", ref editTags);
 
@@ -975,7 +941,7 @@ namespace Pathfinding {
 			tagsArea.End();
 		}
 
-		void DrawEditorSettings () {
+        void DrawEditorSettings () {
 			editorSettingsArea.Begin();
 			editorSettingsArea.Header("Editor");
 
@@ -996,7 +962,7 @@ namespace Pathfinding {
 			editorSettingsArea.End();
 		}
 
-		static void DrawColorSlider (ref float left, ref float right, bool editable) {
+        static void DrawColorSlider (ref float left, ref float right, bool editable) {
 			GUILayout.BeginHorizontal();
 			GUILayout.Space(20);
 			GUILayout.BeginVertical();
@@ -1021,7 +987,7 @@ namespace Pathfinding {
 			GUILayout.EndHorizontal();
 		}
 
-		void DrawDebugSettings () {
+        void DrawDebugSettings () {
 			alwaysVisibleArea.Begin();
 			alwaysVisibleArea.HeaderLabel("Debug");
 			alwaysVisibleArea.BeginFade();
@@ -1059,7 +1025,7 @@ namespace Pathfinding {
 			alwaysVisibleArea.End();
 		}
 
-		void DrawColorSettings () {
+        void DrawColorSettings () {
 			colorSettingsArea.Begin();
 			colorSettingsArea.Header("Colors");
 
@@ -1147,7 +1113,7 @@ namespace Pathfinding {
 			colorSettingsArea.End();
 		}
 
-		/// <summary>Make sure every graph has a graph editor</summary>
+        /// <summary>Make sure every graph has a graph editor</summary>
 		void CheckGraphEditors (bool forceRebuild = false) {
 			if (forceRebuild || graphEditors == null || script.graphs == null || script.graphs.Length != graphEditors.Length) {
 				if (script.data.graphs == null) {
@@ -1185,20 +1151,20 @@ namespace Pathfinding {
 			}
 		}
 
-		void RemoveGraph (NavGraph graph) {
+        void RemoveGraph (NavGraph graph) {
 			script.data.RemoveGraph(graph);
 			CheckGraphEditors(true);
 			GUI.changed = true;
 			Repaint();
 		}
 
-		void AddGraph (System.Type type) {
+        void AddGraph (System.Type type) {
 			script.data.AddGraph(type);
 			CheckGraphEditors();
 			GUI.changed = true;
 		}
 
-		/// <summary>Creates a GraphEditor for a graph</summary>
+        /// <summary>Creates a GraphEditor for a graph</summary>
 		GraphEditor CreateGraphEditor (NavGraph graph) {
 			var graphType = graph.GetType().Name;
 			GraphEditor result;
@@ -1218,7 +1184,7 @@ namespace Pathfinding {
 			return result;
 		}
 
-		bool HandleUndo () {
+        bool HandleUndo () {
 			// The user has tried to undo something, apply that
 			if (script.data.GetData() == null) {
 				script.data.SetData(new byte[0]);
@@ -1229,7 +1195,7 @@ namespace Pathfinding {
 			return false;
 		}
 
-		/// <summary>Hashes the contents of a byte array</summary>
+        /// <summary>Hashes the contents of a byte array</summary>
 		static int ByteArrayHash (byte[] arr) {
 			if (arr == null) return -1;
 			int hash = -1;
@@ -1239,7 +1205,7 @@ namespace Pathfinding {
 			return hash;
 		}
 
-		void SerializeIfDataChanged () {
+        void SerializeIfDataChanged () {
 			uint checksum;
 
 			byte[] bytes = SerializeGraphs(out checksum);
@@ -1260,7 +1226,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Called when an undo or redo operation has been performed</summary>
+        /// <summary>Called when an undo or redo operation has been performed</summary>
 		void OnUndoRedoPerformed () {
 			if (!this) return;
 
@@ -1282,7 +1248,7 @@ namespace Pathfinding {
 			ignoredChecksum = checksum;
 		}
 
-		public void SaveGraphsAndUndo (EventType et = EventType.Used, string eventCommand = "") {
+        public void SaveGraphsAndUndo (EventType et = EventType.Used, string eventCommand = "") {
 			// Serialize the settings of the graphs
 
 			// Dont process undo events in editor, we don't want to reset graphs
@@ -1304,19 +1270,19 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Load graphs from serialized data</summary>
+        /// <summary>Load graphs from serialized data</summary>
 		public void LoadGraphs () {
 			DeserializeGraphs();
 		}
 
-		public byte[] SerializeGraphs (out uint checksum) {
+        public byte[] SerializeGraphs (out uint checksum) {
 			var settings = Pathfinding.Serialization.SerializeSettings.Settings;
 
 			settings.editorSettings = true;
 			return SerializeGraphs(settings, out checksum);
 		}
 
-		public byte[] SerializeGraphs (Pathfinding.Serialization.SerializeSettings settings, out uint checksum) {
+        public byte[] SerializeGraphs (Pathfinding.Serialization.SerializeSettings settings, out uint checksum) {
 			byte[] bytes = null;
 			uint tmpChecksum = 0;
 
@@ -1337,7 +1303,7 @@ namespace Pathfinding {
 			return bytes;
 		}
 
-		void DeserializeGraphs () {
+        void DeserializeGraphs () {
 			if (script.data.GetData() == null || script.data.GetData().Length == 0) {
 				script.data.graphs = new NavGraph[0];
 			} else {
@@ -1345,7 +1311,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void DeserializeGraphs (byte[] bytes) {
+        void DeserializeGraphs (byte[] bytes) {
 			try {
 				script.data.DeserializeGraphs(bytes);
 				// Make sure every graph has a graph editor
@@ -1362,7 +1328,7 @@ namespace Pathfinding {
 			}
 		}
 
-		[MenuItem("Edit/Pathfinding/Scan All Graphs %&s")]
+        [MenuItem("Edit/Pathfinding/Scan All Graphs %&s")]
 		public static void MenuScan () {
 			if (AstarPath.active == null) {
 				AstarPath.active = FindObjectOfType<AstarPath>();
@@ -1395,7 +1361,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Searches in the current assembly for GraphEditor and NavGraph types</summary>
+        /// <summary>Searches in the current assembly for GraphEditor and NavGraph types</summary>
 		void FindGraphTypes () {
 			graphEditorTypes = new Dictionary<string, CustomGraphEditorAttribute>();
 
@@ -1438,5 +1404,39 @@ namespace Pathfinding {
 			// Make sure graph types (not graph editor types) are also up to date
 			script.data.FindGraphTypes();
 		}
-	}
+
+        #region SectionFlags
+
+        static bool showSettings;
+        static bool customAreaColorsOpen;
+        static bool editTags;
+
+        FadeArea settingsArea;
+        FadeArea colorSettingsArea;
+        FadeArea editorSettingsArea;
+        FadeArea aboutArea;
+        FadeArea optimizationSettingsArea;
+        FadeArea serializationSettingsArea;
+        FadeArea tagsArea;
+        FadeArea graphsArea;
+        FadeArea addGraphsArea;
+        FadeArea alwaysVisibleArea;
+
+        #endregion
+
+        #region Styles
+
+        static bool stylesLoaded;
+        public static GUISkin astarSkin { get; private set; }
+
+        static GUIStyle level0AreaStyle, level0LabelStyle;
+        static GUIStyle level1AreaStyle, level1LabelStyle;
+
+        static GUIStyle graphDeleteButtonStyle, graphInfoButtonStyle, graphGizmoButtonStyle, graphEditNameButtonStyle;
+
+        public static GUIStyle helpBox  { get; private set; }
+        public static GUIStyle thinHelpBox  { get; private set; }
+
+        #endregion
+    }
 }

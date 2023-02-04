@@ -4,28 +4,26 @@ using System.Collections.Generic;
 namespace Pathfinding {
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_animation_link.php")]
 	public class AnimationLink : NodeLink2 {
-		public string clip;
-		public float animSpeed = 1;
-		public bool reverseAnim = true;
+        public string clip;
+        public float animSpeed = 1;
+        public bool reverseAnim = true;
 
-		public GameObject referenceMesh;
-		public LinkClip[] sequence;
-		public string boneRoot = "bn_COG_Root";
+        public GameObject referenceMesh;
+        public LinkClip[] sequence;
+        public string boneRoot = "bn_COG_Root";
 
-		[System.Serializable]
-		public class LinkClip {
-			public AnimationClip clip;
-			public Vector3 velocity;
-			public int loopCount = 1;
-
-			public string name {
-				get {
-					return clip != null ? clip.name : "";
-				}
+        public override void OnDrawGizmosSelected () {
+			base.OnDrawGizmosSelected();
+			List<Vector3> buffer = Pathfinding.Util.ListPool<Vector3>.Claim();
+			Vector3 endPosition = Vector3.zero;
+			CalculateOffsets(buffer, out endPosition);
+			Gizmos.color = Color.blue;
+			for (int i = 0; i < buffer.Count-1; i++) {
+				Gizmos.DrawLine(buffer[i], buffer[i+1]);
 			}
 		}
 
-		static Transform SearchRec (Transform tr, string name) {
+        static Transform SearchRec (Transform tr, string name) {
 			int childCount = tr.childCount;
 
 			for (int i = 0; i < childCount; i++) {
@@ -39,7 +37,7 @@ namespace Pathfinding {
 			return null;
 		}
 
-		public void CalculateOffsets (List<Vector3> trace, out Vector3 endPosition) {
+        public void CalculateOffsets (List<Vector3> trace, out Vector3 endPosition) {
 			//Vector3 opos = transform.position;
 			endPosition = transform.position;
 			if (referenceMesh == null) return;
@@ -108,15 +106,17 @@ namespace Pathfinding {
 			endPosition = position;
 		}
 
-		public override void OnDrawGizmosSelected () {
-			base.OnDrawGizmosSelected();
-			List<Vector3> buffer = Pathfinding.Util.ListPool<Vector3>.Claim();
-			Vector3 endPosition = Vector3.zero;
-			CalculateOffsets(buffer, out endPosition);
-			Gizmos.color = Color.blue;
-			for (int i = 0; i < buffer.Count-1; i++) {
-				Gizmos.DrawLine(buffer[i], buffer[i+1]);
+        [System.Serializable]
+		public class LinkClip {
+            public AnimationClip clip;
+            public Vector3 velocity;
+            public int loopCount = 1;
+
+            public string name {
+				get {
+					return clip != null ? clip.name : "";
+				}
 			}
-		}
-	}
+        }
+    }
 }

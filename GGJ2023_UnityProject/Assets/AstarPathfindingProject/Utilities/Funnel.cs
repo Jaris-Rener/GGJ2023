@@ -11,28 +11,7 @@ namespace Pathfinding {
 	/// See: FunnelModifier for the component that you can attach to objects to use the funnel algorithm.
 	/// </summary>
 	public class Funnel {
-		/// <summary>Funnel in which the path to the target will be</summary>
-		public struct FunnelPortals {
-			public List<Vector3> left;
-			public List<Vector3> right;
-		}
-
-		/// <summary>
-		/// Part of a path.
-		/// This is either a sequence of adjacent triangles
-		/// or a link.
-		/// See: NodeLink2
-		/// </summary>
-		public struct PathPart {
-			/// <summary>Index of the first node in this part</summary>
-			public int startIndex;
-			/// <summary>Index of the last node in this part</summary>
-			public int endIndex;
-			public Vector3 startPoint, endPoint;
-			public bool isLink;
-		}
-
-		public static List<PathPart> SplitIntoParts (Path path) {
+        public static List<PathPart> SplitIntoParts (Path path) {
 			var nodes = path.path;
 
 			var result = ListPool<PathPart>.Claim();
@@ -108,7 +87,7 @@ namespace Pathfinding {
 			return result;
 		}
 
-		public static FunnelPortals ConstructFunnelPortals (List<GraphNode> nodes, PathPart part) {
+        public static FunnelPortals ConstructFunnelPortals (List<GraphNode> nodes, PathPart part) {
 			if (nodes == null || nodes.Count == 0) {
 				return new FunnelPortals { left = ListPool<Vector3>.Claim(0), right = ListPool<Vector3>.Claim(0) };
 			}
@@ -145,7 +124,7 @@ namespace Pathfinding {
 			return new FunnelPortals { left = left, right = right };
 		}
 
-		public static void ShrinkPortals (FunnelPortals portals, float shrink) {
+        public static void ShrinkPortals (FunnelPortals portals, float shrink) {
 			if (shrink <= 0.00001f) return;
 
 			for (int i = 0; i < portals.left.Count; i++) {
@@ -161,7 +140,7 @@ namespace Pathfinding {
 			}
 		}
 
-		static bool UnwrapHelper (Vector3 portalStart, Vector3 portalEnd, Vector3 prevPoint, Vector3 nextPoint, ref Quaternion mRot, ref Vector3 mOffset) {
+        static bool UnwrapHelper (Vector3 portalStart, Vector3 portalEnd, Vector3 prevPoint, Vector3 nextPoint, ref Quaternion mRot, ref Vector3 mOffset) {
 			// Skip the point if it was on the rotation axis
 			if (VectorMath.IsColinear(portalStart, portalEnd, nextPoint)) {
 				return false;
@@ -182,7 +161,7 @@ namespace Pathfinding {
 			return true;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Unwraps the funnel portals from 3D space to 2D space.
 		/// The result is stored in the left and right arrays which must be at least as large as the funnel.left and funnel.right lists.
 		///
@@ -233,7 +212,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Try to fix degenerate or invalid funnels.
 		/// Returns: The number of vertices at the start of both arrays that should be ignored or -1 if the algorithm failed.
 		/// </summary>
@@ -260,25 +239,25 @@ namespace Pathfinding {
 			return startIndex;
 		}
 
-		protected static Vector2 ToXZ (Vector3 p) {
+        protected static Vector2 ToXZ (Vector3 p) {
 			return new Vector2(p.x, p.z);
 		}
 
-		protected static Vector3 FromXZ (Vector2 p) {
+        protected static Vector3 FromXZ (Vector2 p) {
 			return new Vector3(p.x, 0, p.y);
 		}
 
-		/// <summary>True if b is to the right of or on the line from (0,0) to a</summary>
+        /// <summary>True if b is to the right of or on the line from (0,0) to a</summary>
 		protected static bool RightOrColinear (Vector2 a, Vector2 b) {
 			return (a.x*b.y - b.x*a.y) <= 0;
 		}
 
-		/// <summary>True if b is to the left of or on the line from (0,0) to a</summary>
+        /// <summary>True if b is to the left of or on the line from (0,0) to a</summary>
 		protected static bool LeftOrColinear (Vector2 a, Vector2 b) {
 			return (a.x*b.y - b.x*a.y) >= 0;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Calculate the shortest path through the funnel.
 		///
 		/// If the unwrap option is disabled the funnel will simply be projected onto the XZ plane.
@@ -358,7 +337,7 @@ namespace Pathfinding {
 			return result;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Funnel algorithm.
 		/// funnelPath will be filled with the result.
 		/// The result is the indices of the vertices that were picked, a non-negative value refers to the corresponding index in the
@@ -428,5 +407,26 @@ namespace Pathfinding {
 			lastCorner = true;
 			funnelPath.Add(numPortals-1);
 		}
-	}
+
+        /// <summary>Funnel in which the path to the target will be</summary>
+		public struct FunnelPortals {
+			public List<Vector3> left;
+			public List<Vector3> right;
+		}
+
+        /// <summary>
+		/// Part of a path.
+		/// This is either a sequence of adjacent triangles
+		/// or a link.
+		/// See: NodeLink2
+		/// </summary>
+		public struct PathPart {
+			/// <summary>Index of the first node in this part</summary>
+			public int startIndex;
+			/// <summary>Index of the last node in this part</summary>
+			public int endIndex;
+			public Vector3 startPoint, endPoint;
+			public bool isLink;
+		}
+    }
 }

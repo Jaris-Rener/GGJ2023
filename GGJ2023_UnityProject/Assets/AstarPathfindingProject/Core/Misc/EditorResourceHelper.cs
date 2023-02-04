@@ -6,41 +6,42 @@ namespace Pathfinding {
 
 	/// <summary>Internal utility class for looking up editor resources</summary>
 	public static class EditorResourceHelper {
-		/// <summary>
+        /// <summary>
 		/// Path to the editor assets folder for the A* Pathfinding Project. If this path turns out to be incorrect, the script will try to find the correct path
 		/// See: LoadStyles
 		/// </summary>
 		public static string editorAssets;
 
-		static EditorResourceHelper () {
-			// Look up editor assets directory when first accessed
-			LocateEditorAssets();
-		}
-
-		static Material surfaceMat, lineMat;
-		static Texture2D handlesAALineTex;
-		public static Material GizmoSurfaceMaterial {
+        public static Material GizmoSurfaceMaterial {
 			get {
 				if (!surfaceMat) surfaceMat = UnityEditor.AssetDatabase.LoadAssetAtPath(EditorResourceHelper.editorAssets + "/Materials/Navmesh.mat", typeof(Material)) as Material;
 				return surfaceMat;
 			}
 		}
 
-		public static Material GizmoLineMaterial {
+        public static Material GizmoLineMaterial {
 			get {
 				if (!lineMat) lineMat = UnityEditor.AssetDatabase.LoadAssetAtPath(EditorResourceHelper.editorAssets + "/Materials/NavmeshOutline.mat", typeof(Material)) as Material;
 				return lineMat;
 			}
 		}
 
-		public static Texture2D HandlesAALineTexture {
+        public static Texture2D HandlesAALineTexture {
 			get {
 				if (!handlesAALineTex) handlesAALineTex = Resources.Load<Texture2D>("handles_aaline");
 				return handlesAALineTex;
 			}
 		}
 
-		/// <summary>Locates the editor assets folder in case the user has moved it</summary>
+        static Material surfaceMat, lineMat;
+        static Texture2D handlesAALineTex;
+
+        static EditorResourceHelper () {
+			// Look up editor assets directory when first accessed
+			LocateEditorAssets();
+		}
+
+        /// <summary>Locates the editor assets folder in case the user has moved it</summary>
 		public static bool LocateEditorAssets () {
 #if UNITY_2019_3_OR_NEWER
 			var package = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(EditorResourceHelper).Assembly);
@@ -100,6 +101,6 @@ namespace Pathfinding {
 			}
 			return true;
 		}
-	}
+    }
 #endif
 }

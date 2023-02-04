@@ -6,13 +6,13 @@ namespace Pathfinding {
 	[CustomEditor(typeof(Seeker))]
 	[CanEditMultipleObjects]
 	public class SeekerEditor : EditorBase {
-		static bool tagPenaltiesOpen;
-		static List<Seeker> scripts = new List<Seeker>();
+        static bool tagPenaltiesOpen;
+        static List<Seeker> scripts = new List<Seeker>();
 
-		GUIContent[] exactnessLabels = new [] { new GUIContent("Node Center (Snap To Node)"), new GUIContent("Original"), new GUIContent("Interpolate (deprecated)"), new GUIContent("Closest On Node Surface"), new GUIContent("Node Connection") };
-		string[] graphLabels = new string[32];
+        GUIContent[] exactnessLabels = new [] { new GUIContent("Node Center (Snap To Node)"), new GUIContent("Original"), new GUIContent("Interpolate (deprecated)"), new GUIContent("Closest On Node Surface"), new GUIContent("Node Connection") };
+        string[] graphLabels = new string[32];
 
-		protected override void Inspector () {
+        protected override void Inspector () {
 			base.Inspector();
 
 			scripts.Clear();
@@ -137,5 +137,5 @@ namespace Pathfinding {
 			// Make sure we don't leak any memory
 			scripts.Clear();
 		}
-	}
+    }
 }

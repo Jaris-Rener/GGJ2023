@@ -58,34 +58,35 @@ namespace Pathfinding {
 	/// See: <see cref="Pathfinding.GraphNode.Area"/>
 	/// </summary>
 	public class HierarchicalGraph {
-		const int Tiling = 16;
-		const int MaxChildrenPerNode = Tiling * Tiling;
-		const int MinChildrenPerNode = MaxChildrenPerNode/2;
+        public int version { get; private set; }
+        public System.Action onConnectedComponentsChanged;
 
-		List<GraphNode>[] children = new List<GraphNode>[0];
-		List<int>[] connections = new List<int>[0];
-		int[] areas = new int[0];
-		byte[] dirty = new byte[0];
+        public int NumConnectedComponents { get; private set; }
+        const int Tiling = 16;
+        const int MaxChildrenPerNode = Tiling * Tiling;
+        const int MinChildrenPerNode = MaxChildrenPerNode/2;
 
-		public int version { get; private set; }
-		public System.Action onConnectedComponentsChanged;
+        List<GraphNode>[] children = new List<GraphNode>[0];
+        List<int>[] connections = new List<int>[0];
+        int[] areas = new int[0];
+        byte[] dirty = new byte[0];
 
-		System.Action<GraphNode> connectionCallback;
+        System.Action<GraphNode> connectionCallback;
 
-		Queue<GraphNode> temporaryQueue = new Queue<GraphNode>();
-		List<GraphNode> currentChildren = null;
-		List<int> currentConnections = null;
-		int currentHierarchicalNodeIndex;
-		Stack<int> temporaryStack = new Stack<int>();
+        Queue<GraphNode> temporaryQueue = new Queue<GraphNode>();
+        List<GraphNode> currentChildren = null;
+        List<int> currentConnections = null;
+        int currentHierarchicalNodeIndex;
+        Stack<int> temporaryStack = new Stack<int>();
 
-		int numDirtyNodes = 0;
-		GraphNode[] dirtyNodes = new GraphNode[128];
+        int numDirtyNodes = 0;
+        GraphNode[] dirtyNodes = new GraphNode[128];
 
-		Stack<int> freeNodeIndices = new Stack<int>();
+        Stack<int> freeNodeIndices = new Stack<int>();
 
-		int gizmoVersion = 0;
+        int gizmoVersion = 0;
 
-		public HierarchicalGraph () {
+        public HierarchicalGraph () {
 			// Cache this callback to avoid allocating a new one every time the FindHierarchicalNodeChildren method is called.
 			// It is a big ugly to have to use member variables for the state information in that method, but I see no better way.
 			connectionCallback = (GraphNode neighbour) => {
@@ -107,7 +108,7 @@ namespace Pathfinding {
 			Grow();
 		}
 
-		void Grow () {
+        void Grow () {
 			var newChildren = new List<GraphNode>[System.Math.Max(64, children.Length*2)];
 			var newConnections = new List<int>[newChildren.Length];
 			var newAreas = new int[newChildren.Length];
@@ -130,12 +131,12 @@ namespace Pathfinding {
 			dirty = newDirty;
 		}
 
-		int GetHierarchicalNodeIndex () {
+        int GetHierarchicalNodeIndex () {
 			if (freeNodeIndices.Count == 0) Grow();
 			return freeNodeIndices.Pop();
 		}
 
-		internal void OnCreatedNode (GraphNode node) {
+        internal void OnCreatedNode (GraphNode node) {
 			if (node.NodeIndex >= dirtyNodes.Length) {
 				var newDirty = new GraphNode[System.Math.Max(node.NodeIndex + 1, dirtyNodes.Length*2)];
 				dirtyNodes.CopyTo(newDirty, 0);
@@ -144,7 +145,7 @@ namespace Pathfinding {
 			AddDirtyNode(node);
 		}
 
-		internal void AddDirtyNode (GraphNode node) {
+        internal void AddDirtyNode (GraphNode node) {
 			if (!node.IsHierarchicalNodeDirty) {
 				node.IsHierarchicalNodeDirty = true;
 				// While the dirtyNodes array is guaranteed to be large enough to hold all nodes in the graphs
@@ -172,14 +173,12 @@ namespace Pathfinding {
 			}
 		}
 
-		public int NumConnectedComponents { get; private set; }
-
-		/// <summary>Get the connected component index of a hierarchical node</summary>
+        /// <summary>Get the connected component index of a hierarchical node</summary>
 		public uint GetConnectedComponent (int hierarchicalNodeIndex) {
 			return (uint)areas[hierarchicalNodeIndex];
 		}
 
-		void RemoveHierarchicalNode (int hierarchicalNode, bool removeAdjacentSmallNodes) {
+        void RemoveHierarchicalNode (int hierarchicalNode, bool removeAdjacentSmallNodes) {
 			freeNodeIndices.Push(hierarchicalNode);
 			var conns = connections[hierarchicalNode];
 
@@ -207,7 +206,7 @@ namespace Pathfinding {
 			nodeChildren.ClearFast();
 		}
 
-		/// <summary>Recalculate the hierarchical graph and the connected components if any nodes have been marked as dirty</summary>
+        /// <summary>Recalculate the hierarchical graph and the connected components if any nodes have been marked as dirty</summary>
 		public void RecalculateIfNecessary () {
 			if (numDirtyNodes > 0) {
 				Profiler.BeginSample("Recalculate Connected Components");
@@ -245,7 +244,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Recalculate everything from scratch.
 		/// This is primarily to be used for legacy code for compatibility reasons, not for any new code.
 		///
@@ -256,7 +255,7 @@ namespace Pathfinding {
 			RecalculateIfNecessary();
 		}
 
-		/// <summary>Flood fills the graph of hierarchical nodes and assigns the same area ID to all hierarchical nodes that are in the same connected component</summary>
+        /// <summary>Flood fills the graph of hierarchical nodes and assigns the same area ID to all hierarchical nodes that are in the same connected component</summary>
 		void FloodFill () {
 			for (int i = 0; i < areas.Length; i++) areas[i] = 0;
 
@@ -287,7 +286,7 @@ namespace Pathfinding {
 			version++;
 		}
 
-		/// <summary>Run a BFS out from a start node and assign up to MaxChildrenPerNode nodes to the specified hierarchical node which are not already assigned to another hierarchical node</summary>
+        /// <summary>Run a BFS out from a start node and assign up to MaxChildrenPerNode nodes to the specified hierarchical node which are not already assigned to another hierarchical node</summary>
 		void FindHierarchicalNodeChildren (int hierarchicalNode, GraphNode startNode) {
 			// Set some state for the connectionCallback delegate to use
 			currentChildren = children[hierarchicalNode];
@@ -311,7 +310,7 @@ namespace Pathfinding {
 			que.Clear();
 		}
 
-		public void OnDrawGizmos (Pathfinding.Util.RetainedGizmos gizmos) {
+        public void OnDrawGizmos (Pathfinding.Util.RetainedGizmos gizmos) {
 			var hasher = new Pathfinding.Util.RetainedGizmos.Hasher(AstarPath.active);
 
 			hasher.AddHash(gizmoVersion);
@@ -342,5 +341,5 @@ namespace Pathfinding {
 				builder.Submit(gizmos, hasher);
 			}
 		}
-	}
+    }
 }

@@ -3,39 +3,59 @@ using System.Threading;
 namespace Pathfinding {
 	/// <summary>Queue of paths to be processed by the system</summary>
 	class ThreadControlQueue {
-		public class QueueTerminationException : System.Exception {
+        /// <summary>True if the queue is empty</summary>
+		public bool IsEmpty {
+			get {
+				return head == null;
+			}
 		}
 
-		Path head;
-		Path tail;
+        /// <summary>True if TerminateReceivers has been called</summary>
+		public bool IsTerminating {
+			get {
+				return terminate;
+			}
+		}
 
-		readonly System.Object lockObj = new System.Object();
+        /// <summary>True if blocking and all receivers are waiting for unblocking</summary>
+		public bool AllReceiversBlocked {
+			get {
+				lock (lockObj) {
+					return blocked && blockedReceivers == numReceivers;
+				}
+			}
+		}
 
-		readonly int numReceivers;
+        Path head;
+        Path tail;
 
-		bool blocked;
+        readonly System.Object lockObj = new System.Object();
 
-		/// <summary>
+        readonly int numReceivers;
+
+        bool blocked;
+
+        /// <summary>
 		/// Number of receiver threads that are currently blocked.
 		/// This is only modified while a thread has a lock on lockObj
 		/// </summary>
 		int blockedReceivers;
 
-		/// <summary>
+        /// <summary>
 		/// True while head == null.
 		/// This is only modified while a thread has a lock on lockObj
 		/// </summary>
 		bool starving;
 
-		/// <summary>
+        /// <summary>
 		/// True after TerminateReceivers has been called.
 		/// All receivers will be terminated when they next call Pop.
 		/// </summary>
 		bool terminate;
 
-		ManualResetEvent block = new ManualResetEvent(true);
+        ManualResetEvent block = new ManualResetEvent(true);
 
-		/// <summary>
+        /// <summary>
 		/// Create a new queue with the specified number of receivers.
 		/// It is important that the number of receivers is fixed.
 		/// Properties like AllReceiversBlocked rely on knowing the exact number of receivers using the Pop (or PopNoBlock) methods.
@@ -44,21 +64,7 @@ namespace Pathfinding {
 			this.numReceivers = numReceivers;
 		}
 
-		/// <summary>True if the queue is empty</summary>
-		public bool IsEmpty {
-			get {
-				return head == null;
-			}
-		}
-
-		/// <summary>True if TerminateReceivers has been called</summary>
-		public bool IsTerminating {
-			get {
-				return terminate;
-			}
-		}
-
-		/// <summary>Block queue, all calls to Pop will block until Unblock is called</summary>
+        /// <summary>Block queue, all calls to Pop will block until Unblock is called</summary>
 		public void Block () {
 			lock (lockObj) {
 				blocked = true;
@@ -66,7 +72,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Unblock queue.
 		/// Calls to Pop will not block anymore.
 		/// See: Block
@@ -78,7 +84,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Aquires a lock on this queue.
 		/// Must be paired with a call to <see cref="Unlock"/>
 		/// </summary>
@@ -86,21 +92,12 @@ namespace Pathfinding {
 			Monitor.Enter(lockObj);
 		}
 
-		/// <summary>Releases the lock on this queue</summary>
+        /// <summary>Releases the lock on this queue</summary>
 		public void Unlock () {
 			Monitor.Exit(lockObj);
 		}
 
-		/// <summary>True if blocking and all receivers are waiting for unblocking</summary>
-		public bool AllReceiversBlocked {
-			get {
-				lock (lockObj) {
-					return blocked && blockedReceivers == numReceivers;
-				}
-			}
-		}
-
-		/// <summary>Push a path to the front of the queue</summary>
+        /// <summary>Push a path to the front of the queue</summary>
 		public void PushFront (Path path) {
 			lock (lockObj) {
 				// If termination is due, why add stuff to a queue which will not be read from anyway
@@ -123,7 +120,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Push a path to the end of the queue</summary>
+        /// <summary>Push a path to the end of the queue</summary>
 		public void Push (Path path) {
 			lock (lockObj) {
 				// If termination is due, why add stuff to a queue which will not be read from anyway
@@ -146,12 +143,12 @@ namespace Pathfinding {
 			}
 		}
 
-		void Starving () {
+        void Starving () {
 			starving = true;
 			block.Reset();
 		}
 
-		/// <summary>All calls to Pop and PopNoBlock will now generate exceptions</summary>
+        /// <summary>All calls to Pop and PopNoBlock will now generate exceptions</summary>
 		public void TerminateReceivers () {
 			lock (lockObj) {
 				terminate = true;
@@ -159,7 +156,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Pops the next item off the queue.
 		/// This call will block if there are no items in the queue or if the queue is currently blocked.
 		///
@@ -224,7 +221,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Call when a receiver was terminated in other ways than by a QueueTerminationException.
 		///
 		/// After this call, the receiver should be dead and not call anything else in this class.
@@ -235,7 +232,7 @@ namespace Pathfinding {
 			Monitor.Exit(lockObj);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Pops the next item off the queue, this call will not block.
 		/// To ensure stability, the caller must follow this pattern.
 		/// 1. Call PopNoBlock(false), if a null value is returned, wait for a bit (e.g yield return null in a Unity coroutine)
@@ -287,5 +284,7 @@ namespace Pathfinding {
 				Monitor.Exit(lockObj);
 			}
 		}
-	}
+
+        public class QueueTerminationException : System.Exception {}
+    }
 }

@@ -9,7 +9,7 @@ namespace Pathfinding {
 	/// See: <see cref="Pathfinding.AILerp"/>
 	/// </summary>
 	public interface IAstarAI {
-		/// <summary>
+        /// <summary>
 		/// Radius of the agent in world units.
 		/// This is visualized in the scene view as a yellow cylinder around the character.
 		///
@@ -17,7 +17,7 @@ namespace Pathfinding {
 		/// </summary>
 		float radius { get; set; }
 
-		/// <summary>
+        /// <summary>
 		/// Height of the agent in world units.
 		/// This is visualized in the scene view as a yellow cylinder around the character.
 		///
@@ -29,7 +29,7 @@ namespace Pathfinding {
 		/// </summary>
 		float height { get; set; }
 
-		/// <summary>
+        /// <summary>
 		/// Position of the agent.
 		/// In world space.
 		/// See: <see cref="rotation"/>
@@ -38,17 +38,17 @@ namespace Pathfinding {
 		/// </summary>
 		Vector3 position { get; }
 
-		/// <summary>
+        /// <summary>
 		/// Rotation of the agent.
 		/// In world space.
 		/// See: <see cref="position"/>
 		/// </summary>
 		Quaternion rotation { get; set; }
 
-		/// <summary>Max speed in world units per second</summary>
+        /// <summary>Max speed in world units per second</summary>
 		float maxSpeed { get; set; }
 
-		/// <summary>
+        /// <summary>
 		/// Actual velocity that the agent is moving with.
 		/// In world units per second.
 		///
@@ -56,7 +56,7 @@ namespace Pathfinding {
 		/// </summary>
 		Vector3 velocity { get; }
 
-		/// <summary>
+        /// <summary>
 		/// Velocity that this agent wants to move with.
 		/// Includes gravity and local avoidance if applicable.
 		/// In world units per second.
@@ -65,7 +65,7 @@ namespace Pathfinding {
 		/// </summary>
 		Vector3 desiredVelocity { get; }
 
-		/// <summary>
+        /// <summary>
 		/// Approximate remaining distance along the current path to the end of the path.
 		/// The RichAI movement script approximates this distance since it is quite expensive to calculate the real distance.
 		/// However it will be accurate when the agent is within 1 corner of the destination.
@@ -85,7 +85,7 @@ namespace Pathfinding {
 		/// </summary>
 		float remainingDistance { get; }
 
-		/// <summary>
+        /// <summary>
 		/// True if the ai has reached the <see cref="destination"/>.
 		/// This is a best effort calculation to see if the <see cref="destination"/> has been reached.
 		/// For the AIPath/RichAI scripts, this is when the character is within <see cref="AIPath.endReachedDistance"/> world units from the <see cref="destination"/>.
@@ -124,7 +124,7 @@ namespace Pathfinding {
 		/// </summary>
 		bool reachedDestination { get; }
 
-		/// <summary>
+        /// <summary>
 		/// True if the agent has reached the end of the current path.
 		///
 		/// Note that setting the <see cref="destination"/> does not immediately update the path, nor is there any guarantee that the
@@ -139,7 +139,7 @@ namespace Pathfinding {
 		/// </summary>
 		bool reachedEndOfPath { get; }
 
-		/// <summary>
+        /// <summary>
 		/// Position in the world that this agent should move to.
 		///
 		/// If no destination has been set yet, then (+infinity, +infinity, +infinity) will be returned.
@@ -185,7 +185,7 @@ namespace Pathfinding {
 		/// </summary>
 		Vector3 destination { get; set; }
 
-		/// <summary>
+        /// <summary>
 		/// Enables or disables recalculating the path at regular intervals.
 		/// Setting this to false does not stop any active path requests from being calculated or stop it from continuing to follow the current path.
 		///
@@ -196,7 +196,7 @@ namespace Pathfinding {
 		/// </summary>
 		bool canSearch { get; set; }
 
-		/// <summary>
+        /// <summary>
 		/// Enables or disables movement completely.
 		/// If you want the agent to stand still, but still react to local avoidance and use gravity: use <see cref="isStopped"/> instead.
 		///
@@ -208,13 +208,13 @@ namespace Pathfinding {
 		/// </summary>
 		bool canMove { get; set; }
 
-		/// <summary>True if this agent currently has a path that it follows</summary>
+        /// <summary>True if this agent currently has a path that it follows</summary>
 		bool hasPath { get; }
 
-		/// <summary>True if a path is currently being calculated</summary>
+        /// <summary>True if a path is currently being calculated</summary>
 		bool pathPending { get; }
 
-		/// <summary>
+        /// <summary>
 		/// Gets or sets if the agent should stop moving.
 		/// If this is set to true the agent will immediately start to slow down as quickly as it can to come to a full stop.
 		/// The agent will still react to local avoidance and gravity (if applicable), but it will not try to move in any particular direction.
@@ -237,7 +237,7 @@ namespace Pathfinding {
 		/// </summary>
 		bool isStopped { get; set; }
 
-		/// <summary>
+        /// <summary>
 		/// Point on the path which the agent is currently moving towards.
 		/// This is usually a point a small distance ahead of the agent
 		/// or the end of the path.
@@ -246,7 +246,7 @@ namespace Pathfinding {
 		/// </summary>
 		Vector3 steeringTarget { get; }
 
-		/// <summary>
+        /// <summary>
 		/// Called when the agent recalculates its path.
 		/// This is called both for automatic path recalculations (see <see cref="canSearch)"/> and manual ones (see <see cref="SearchPath)"/>.
 		///
@@ -254,7 +254,7 @@ namespace Pathfinding {
 		/// </summary>
 		System.Action onSearchPath { get; set; }
 
-		/// <summary>
+        /// <summary>
 		/// Fills buffer with the remaining path.
 		///
 		/// <code>
@@ -271,7 +271,7 @@ namespace Pathfinding {
 		/// <param name="stale">May be true if the path is invalid in some way. For example if the agent has no path or (for the RichAI script only) if the agent has detected that some nodes in the path have been destroyed.</param>
 		void GetRemainingPath(List<Vector3> buffer, out bool stale);
 
-		/// <summary>
+        /// <summary>
 		/// Recalculate the current path.
 		/// You can for example use this if you want very quick reaction times when you have changed the <see cref="destination"/>
 		/// so that the agent does not have to wait until the next automatic path recalculation (see <see cref="canSearch)"/>.
@@ -288,7 +288,7 @@ namespace Pathfinding {
 		/// </summary>
 		void SearchPath();
 
-		/// <summary>
+        /// <summary>
 		/// Make the AI follow the specified path.
 		/// In case the path has not been calculated, the script will call seeker.StartPath to calculate it.
 		/// This means the AI may not actually start to follow the path until in a few frames when the path has been calculated.
@@ -321,7 +321,7 @@ namespace Pathfinding {
 		/// </summary>
 		void SetPath(Path path);
 
-		/// <summary>
+        /// <summary>
 		/// Instantly move the agent to a new position.
 		/// This will trigger a path recalculation (if clearPath is true, which is the default) so if you want to teleport the agent and change its <see cref="destination"/>
 		/// it is recommended that you set the <see cref="destination"/> before calling this method.
@@ -333,7 +333,7 @@ namespace Pathfinding {
 		/// </summary>
 		void Teleport(Vector3 newPosition, bool clearPath = true);
 
-		/// <summary>
+        /// <summary>
 		/// Move the agent.
 		///
 		/// This is intended for external movement forces such as those applied by wind, conveyor belts, knockbacks etc.
@@ -352,7 +352,7 @@ namespace Pathfinding {
 		/// <param name="deltaPosition">Direction and distance to move the agent in world space.</param>
 		void Move(Vector3 deltaPosition);
 
-		/// <summary>
+        /// <summary>
 		/// Calculate how the character wants to move during this frame.
 		///
 		/// Note that this does not actually move the character. You need to call <see cref="FinalizeMovement"/> for that.
@@ -379,7 +379,7 @@ namespace Pathfinding {
 		/// <param name="nextRotation">the rotation that the agent wants to rotate to during this frame.</param>
 		void MovementUpdate(float deltaTime, out Vector3 nextPosition, out Quaternion nextRotation);
 
-		/// <summary>
+        /// <summary>
 		/// Move the agent.
 		/// To be called as the last step when you are handling movement manually.
 		///
@@ -388,5 +388,5 @@ namespace Pathfinding {
 		/// See: <see cref="MovementUpdate"/> for a code example.
 		/// </summary>
 		void FinalizeMovement(Vector3 nextPosition, Quaternion nextRotation);
-	}
+    }
 }

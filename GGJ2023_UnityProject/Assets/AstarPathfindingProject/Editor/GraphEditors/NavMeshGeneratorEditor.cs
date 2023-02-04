@@ -4,7 +4,7 @@ using UnityEditor;
 namespace Pathfinding {
 	[CustomGraphEditor(typeof(NavMeshGraph), "Navmesh Graph")]
 	public class NavMeshGraphEditor : GraphEditor {
-		public override void OnInspectorGUI (NavGraph target) {
+        public override void OnInspectorGUI (NavGraph target) {
 			var graph = target as NavMeshGraph;
 
 			graph.sourceMesh = ObjectField("Source Mesh", graph.sourceMesh, typeof(Mesh), false, true) as Mesh;
@@ -33,5 +33,5 @@ namespace Pathfinding {
 			graph.showNodeConnections = GUILayout.Toggle(graph.showNodeConnections, new GUIContent("Show connections", "Toggles gizmos for drawing node connections"), EditorStyles.miniButtonRight);
 			GUILayout.EndHorizontal();
 		}
-	}
+    }
 }

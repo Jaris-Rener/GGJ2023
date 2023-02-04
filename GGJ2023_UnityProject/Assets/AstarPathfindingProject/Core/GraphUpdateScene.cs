@@ -34,27 +34,24 @@ namespace Pathfinding {
 	/// </summary>
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_graph_update_scene.php")]
 	public class GraphUpdateScene : GraphModifier {
-		/// <summary>Points which define the region to update</summary>
+        /// <summary>Points which define the region to update</summary>
 		public Vector3[] points;
 
-		/// <summary>Private cached convex hull of the <see cref="points"/></summary>
-		private Vector3[] convexPoints;
-
-		/// <summary>
+        /// <summary>
 		/// Use the convex hull of the points instead of the original polygon.
 		///
 		/// See: https://en.wikipedia.org/wiki/Convex_hull
 		/// </summary>
 		public bool convex = true;
 
-		/// <summary>
+        /// <summary>
 		/// Minumum height of the bounds of the resulting Graph Update Object.
 		/// Useful when all points are laid out on a plane but you still need a bounds with a height greater than zero since a
 		/// zero height graph update object would usually result in no nodes being updated.
 		/// </summary>
 		public float minBoundsHeight = 1;
 
-		/// <summary>
+        /// <summary>
 		/// Penalty to add to nodes.
 		/// Usually you need quite large values, at least 1000-10000. A higher penalty means that agents will try to avoid those nodes more.
 		///
@@ -65,19 +62,19 @@ namespace Pathfinding {
 		/// </summary>
 		public int penaltyDelta;
 
-		/// <summary>If true, then all affected nodes will be made walkable or unwalkable according to <see cref="setWalkability"/></summary>
+        /// <summary>If true, then all affected nodes will be made walkable or unwalkable according to <see cref="setWalkability"/></summary>
 		public bool modifyWalkability;
 
-		/// <summary>Nodes will be made walkable or unwalkable according to this value if <see cref="modifyWalkability"/> is true</summary>
+        /// <summary>Nodes will be made walkable or unwalkable according to this value if <see cref="modifyWalkability"/> is true</summary>
 		public bool setWalkability;
 
-		/// <summary>Apply this graph update object on start</summary>
+        /// <summary>Apply this graph update object on start</summary>
 		public bool applyOnStart = true;
 
-		/// <summary>Apply this graph update object whenever a graph is rescanned</summary>
+        /// <summary>Apply this graph update object whenever a graph is rescanned</summary>
 		public bool applyOnScan = true;
 
-		/// <summary>
+        /// <summary>
 		/// Update node's walkability and connectivity using physics functions.
 		/// For grid graphs, this will update the node's position and walkability exactly like when doing a scan of the graph.
 		/// If enabled for grid graphs, <see cref="modifyWalkability"/> will be ignored.
@@ -87,41 +84,29 @@ namespace Pathfinding {
 		/// </summary>
 		public bool updatePhysics;
 
-		/// <summary>\copydoc Pathfinding::GraphUpdateObject::resetPenaltyOnPhysics</summary>
+        /// <summary>\copydoc Pathfinding::GraphUpdateObject::resetPenaltyOnPhysics</summary>
 		public bool resetPenaltyOnPhysics = true;
 
-		/// <summary>\copydoc Pathfinding::GraphUpdateObject::updateErosion</summary>
+        /// <summary>\copydoc Pathfinding::GraphUpdateObject::updateErosion</summary>
 		public bool updateErosion = true;
 
-		/// <summary>
+        /// <summary>
 		/// Should the tags of the nodes be modified.
 		/// If enabled, set all nodes' tags to <see cref="setTag"/>
 		/// </summary>
 		public bool modifyTag;
 
-		/// <summary>If <see cref="modifyTag"/> is enabled, set all nodes' tags to this value</summary>
+        /// <summary>If <see cref="modifyTag"/> is enabled, set all nodes' tags to this value</summary>
 		public int setTag;
 
-		/// <summary>Emulates behavior from before version 4.0</summary>
+        /// <summary>Emulates behavior from before version 4.0</summary>
 		[HideInInspector]
 		public bool legacyMode = false;
 
-		/// <summary>
-		/// Private cached inversion of <see cref="setTag"/>.
-		/// Used for InvertSettings()
-		/// </summary>
-		private int setTagInvert;
-
-		/// <summary>
-		/// Has apply been called yet.
-		/// Used to prevent applying twice when both applyOnScan and applyOnStart are enabled
-		/// </summary>
-		private bool firstApplied;
-
-		[SerializeField]
+        [SerializeField]
 		private int serializedVersion = 0;
 
-		/// <summary>
+        /// <summary>
 		/// Use world space for coordinates.
 		/// If true, the shape will not follow when moving around the transform.
 		///
@@ -131,7 +116,31 @@ namespace Pathfinding {
 		[UnityEngine.Serialization.FormerlySerializedAs("useWorldSpace")]
 		private bool legacyUseWorldSpace;
 
-		/// <summary>Do some stuff at start</summary>
+        /// <summary>Private cached convex hull of the <see cref="points"/></summary>
+		private Vector3[] convexPoints;
+
+        /// <summary>
+		/// Has apply been called yet.
+		/// Used to prevent applying twice when both applyOnScan and applyOnStart are enabled
+		/// </summary>
+		private bool firstApplied;
+
+        /// <summary>
+		/// Private cached inversion of <see cref="setTag"/>.
+		/// Used for InvertSettings()
+		/// </summary>
+		private int setTagInvert;
+
+        protected override void Awake () {
+			if (serializedVersion == 0) {
+				// Use the old behavior if some points are already set
+				if (points != null && points.Length > 0) legacyMode = true;
+				serializedVersion = 1;
+			}
+			base.Awake();
+		}
+
+        /// <summary>Do some stuff at start</summary>
 		public void Start () {
 			if (!Application.isPlaying) return;
 
@@ -142,164 +151,12 @@ namespace Pathfinding {
 			}
 		}
 
-		public override void OnPostScan () {
-			if (applyOnScan) Apply();
-		}
-
-		/// <summary>
-		/// Inverts all invertable settings for this GUS.
-		/// Namely: penalty delta, walkability, tags.
-		///
-		/// Penalty delta will be changed to negative penalty delta.\n
-		/// <see cref="setWalkability"/> will be inverted.\n
-		/// <see cref="setTag"/> will be stored in a private variable, and the new value will be 0. When calling this function again, the saved
-		/// value will be the new value.
-		///
-		/// Calling this function an even number of times without changing any settings in between will be identical to no change in settings.
-		/// </summary>
-		public virtual void InvertSettings () {
-			setWalkability = !setWalkability;
-			penaltyDelta = -penaltyDelta;
-			if (setTagInvert == 0) {
-				setTagInvert = setTag;
-				setTag = 0;
-			} else {
-				setTag = setTagInvert;
-				setTagInvert = 0;
-			}
-		}
-
-		/// <summary>
-		/// Recalculate convex hull.
-		/// Will not do anything if <see cref="convex"/> is disabled.
-		/// </summary>
-		public void RecalcConvex () {
-			convexPoints = convex ? Polygon.ConvexHullXZ(points) : null;
-		}
-
-		/// <summary>
-		/// Switches between using world space and using local space.
-		/// Deprecated: World space can no longer be used as it does not work well with rotated graphs. Use transform.InverseTransformPoint to transform points to local space.
-		/// </summary>
-		[System.ObsoleteAttribute("World space can no longer be used as it does not work well with rotated graphs. Use transform.InverseTransformPoint to transform points to local space.", true)]
-		void ToggleUseWorldSpace () {
-		}
-
-		/// <summary>
-		/// Lock all points to a specific Y value.
-		/// Deprecated: The Y coordinate is no longer important. Use the position of the object instead.
-		/// </summary>
-		[System.ObsoleteAttribute("The Y coordinate is no longer important. Use the position of the object instead", true)]
-		public void LockToY () {
-		}
-
-		/// <summary>
-		/// Calculates the bounds for this component.
-		/// This is a relatively expensive operation, it needs to go through all points and
-		/// run matrix multiplications.
-		/// </summary>
-		public Bounds GetBounds () {
-			if (points == null || points.Length == 0) {
-				Bounds bounds;
-				var coll = GetComponent<Collider>();
-				var coll2D = GetComponent<Collider2D>();
-				var rend = GetComponent<Renderer>();
-
-				if (coll != null) bounds = coll.bounds;
-				else if (coll2D != null) {
-					bounds = coll2D.bounds;
-					bounds.size = new Vector3(bounds.size.x, bounds.size.y, Mathf.Max(bounds.size.z, 1f));
-				} else if (rend != null) {
-					bounds = rend.bounds;
-				} else {
-					return new Bounds(Vector3.zero, Vector3.zero);
-				}
-
-				if (legacyMode && bounds.size.y < minBoundsHeight) bounds.size = new Vector3(bounds.size.x, minBoundsHeight, bounds.size.z);
-				return bounds;
-			} else {
-				return GraphUpdateShape.GetBounds(convex ? convexPoints : points, legacyMode && legacyUseWorldSpace ? Matrix4x4.identity : transform.localToWorldMatrix, minBoundsHeight);
-			}
-		}
-
-		/// <summary>
-		/// Updates graphs with a created GUO.
-		/// Creates a Pathfinding.GraphUpdateObject with a Pathfinding.GraphUpdateShape
-		/// representing the polygon of this object and update all graphs using AstarPath.UpdateGraphs.
-		/// This will not update graphs immediately. See AstarPath.UpdateGraph for more info.
-		/// </summary>
-		public void Apply () {
-			if (AstarPath.active == null) {
-				Debug.LogError("There is no AstarPath object in the scene", this);
-				return;
-			}
-
-			GraphUpdateObject guo;
-
-			if (points == null || points.Length == 0) {
-				var polygonCollider = GetComponent<PolygonCollider2D>();
-				if (polygonCollider != null) {
-					var points2D = polygonCollider.points;
-					Vector3[] pts = new Vector3[points2D.Length];
-					for (int i = 0; i < pts.Length; i++) {
-						var p = points2D[i] + polygonCollider.offset;
-						pts[i] = new Vector3(p.x, 0, p.y);
-					}
-
-					var mat = transform.localToWorldMatrix * Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(-90, 0, 0), Vector3.one);
-					var shape = new GraphUpdateShape(pts, convex, mat, minBoundsHeight);
-					guo = new GraphUpdateObject(GetBounds());
-					guo.shape = shape;
-				} else {
-					var bounds = GetBounds();
-					if (bounds.center == Vector3.zero && bounds.size == Vector3.zero) {
-						Debug.LogError("Cannot apply GraphUpdateScene, no points defined and no renderer or collider attached", this);
-						return;
-					}
-
-					guo = new GraphUpdateObject(bounds);
-				}
-			} else {
-				GraphUpdateShape shape;
-				if (legacyMode && !legacyUseWorldSpace) {
-					// Used for compatibility with older versions
-					var worldPoints = new Vector3[points.Length];
-					for (int i = 0; i < points.Length; i++) worldPoints[i] = transform.TransformPoint(points[i]);
-					shape = new GraphUpdateShape(worldPoints, convex, Matrix4x4.identity, minBoundsHeight);
-				} else {
-					shape = new GraphUpdateShape(points, convex, legacyMode && legacyUseWorldSpace ? Matrix4x4.identity : transform.localToWorldMatrix, minBoundsHeight);
-				}
-				var bounds = shape.GetBounds();
-				guo = new GraphUpdateObject(bounds);
-				guo.shape = shape;
-			}
-
-			firstApplied = true;
-
-			guo.modifyWalkability = modifyWalkability;
-			guo.setWalkability = setWalkability;
-			guo.addPenalty = penaltyDelta;
-			guo.updatePhysics = updatePhysics;
-			guo.updateErosion = updateErosion;
-			guo.resetPenaltyOnPhysics = resetPenaltyOnPhysics;
-
-			guo.modifyTag = modifyTag;
-			guo.setTag = setTag;
-
-			AstarPath.active.UpdateGraphs(guo);
-		}
-
-		/// <summary>Draws some gizmos</summary>
+        /// <summary>Draws some gizmos</summary>
 		void OnDrawGizmos () {
 			OnDrawGizmos(false);
 		}
 
-		/// <summary>Draws some gizmos</summary>
-		void OnDrawGizmosSelected () {
-			OnDrawGizmos(true);
-		}
-
-		/// <summary>Draws some gizmos</summary>
+        /// <summary>Draws some gizmos</summary>
 		void OnDrawGizmos (bool selected) {
 			Color c = selected ? new Color(227/255f, 61/255f, 22/255f, 1.0f) : new Color(227/255f, 61/255f, 22/255f, 0.9f);
 
@@ -369,7 +226,159 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>Draws some gizmos</summary>
+		void OnDrawGizmosSelected () {
+			OnDrawGizmos(true);
+		}
+
+        public override void OnPostScan () {
+			if (applyOnScan) Apply();
+		}
+
+        /// <summary>
+		/// Inverts all invertable settings for this GUS.
+		/// Namely: penalty delta, walkability, tags.
+		///
+		/// Penalty delta will be changed to negative penalty delta.\n
+		/// <see cref="setWalkability"/> will be inverted.\n
+		/// <see cref="setTag"/> will be stored in a private variable, and the new value will be 0. When calling this function again, the saved
+		/// value will be the new value.
+		///
+		/// Calling this function an even number of times without changing any settings in between will be identical to no change in settings.
+		/// </summary>
+		public virtual void InvertSettings () {
+			setWalkability = !setWalkability;
+			penaltyDelta = -penaltyDelta;
+			if (setTagInvert == 0) {
+				setTagInvert = setTag;
+				setTag = 0;
+			} else {
+				setTag = setTagInvert;
+				setTagInvert = 0;
+			}
+		}
+
+        /// <summary>
+		/// Recalculate convex hull.
+		/// Will not do anything if <see cref="convex"/> is disabled.
+		/// </summary>
+		public void RecalcConvex () {
+			convexPoints = convex ? Polygon.ConvexHullXZ(points) : null;
+		}
+
+        /// <summary>
+		/// Switches between using world space and using local space.
+		/// Deprecated: World space can no longer be used as it does not work well with rotated graphs. Use transform.InverseTransformPoint to transform points to local space.
+		/// </summary>
+		[System.ObsoleteAttribute("World space can no longer be used as it does not work well with rotated graphs. Use transform.InverseTransformPoint to transform points to local space.", true)]
+		void ToggleUseWorldSpace () {
+		}
+
+        /// <summary>
+		/// Lock all points to a specific Y value.
+		/// Deprecated: The Y coordinate is no longer important. Use the position of the object instead.
+		/// </summary>
+		[System.ObsoleteAttribute("The Y coordinate is no longer important. Use the position of the object instead", true)]
+		public void LockToY () {
+		}
+
+        /// <summary>
+		/// Calculates the bounds for this component.
+		/// This is a relatively expensive operation, it needs to go through all points and
+		/// run matrix multiplications.
+		/// </summary>
+		public Bounds GetBounds () {
+			if (points == null || points.Length == 0) {
+				Bounds bounds;
+				var coll = GetComponent<Collider>();
+				var coll2D = GetComponent<Collider2D>();
+				var rend = GetComponent<Renderer>();
+
+				if (coll != null) bounds = coll.bounds;
+				else if (coll2D != null) {
+					bounds = coll2D.bounds;
+					bounds.size = new Vector3(bounds.size.x, bounds.size.y, Mathf.Max(bounds.size.z, 1f));
+				} else if (rend != null) {
+					bounds = rend.bounds;
+				} else {
+					return new Bounds(Vector3.zero, Vector3.zero);
+				}
+
+				if (legacyMode && bounds.size.y < minBoundsHeight) bounds.size = new Vector3(bounds.size.x, minBoundsHeight, bounds.size.z);
+				return bounds;
+			} else {
+				return GraphUpdateShape.GetBounds(convex ? convexPoints : points, legacyMode && legacyUseWorldSpace ? Matrix4x4.identity : transform.localToWorldMatrix, minBoundsHeight);
+			}
+		}
+
+        /// <summary>
+		/// Updates graphs with a created GUO.
+		/// Creates a Pathfinding.GraphUpdateObject with a Pathfinding.GraphUpdateShape
+		/// representing the polygon of this object and update all graphs using AstarPath.UpdateGraphs.
+		/// This will not update graphs immediately. See AstarPath.UpdateGraph for more info.
+		/// </summary>
+		public void Apply () {
+			if (AstarPath.active == null) {
+				Debug.LogError("There is no AstarPath object in the scene", this);
+				return;
+			}
+
+			GraphUpdateObject guo;
+
+			if (points == null || points.Length == 0) {
+				var polygonCollider = GetComponent<PolygonCollider2D>();
+				if (polygonCollider != null) {
+					var points2D = polygonCollider.points;
+					Vector3[] pts = new Vector3[points2D.Length];
+					for (int i = 0; i < pts.Length; i++) {
+						var p = points2D[i] + polygonCollider.offset;
+						pts[i] = new Vector3(p.x, 0, p.y);
+					}
+
+					var mat = transform.localToWorldMatrix * Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(-90, 0, 0), Vector3.one);
+					var shape = new GraphUpdateShape(pts, convex, mat, minBoundsHeight);
+					guo = new GraphUpdateObject(GetBounds());
+					guo.shape = shape;
+				} else {
+					var bounds = GetBounds();
+					if (bounds.center == Vector3.zero && bounds.size == Vector3.zero) {
+						Debug.LogError("Cannot apply GraphUpdateScene, no points defined and no renderer or collider attached", this);
+						return;
+					}
+
+					guo = new GraphUpdateObject(bounds);
+				}
+			} else {
+				GraphUpdateShape shape;
+				if (legacyMode && !legacyUseWorldSpace) {
+					// Used for compatibility with older versions
+					var worldPoints = new Vector3[points.Length];
+					for (int i = 0; i < points.Length; i++) worldPoints[i] = transform.TransformPoint(points[i]);
+					shape = new GraphUpdateShape(worldPoints, convex, Matrix4x4.identity, minBoundsHeight);
+				} else {
+					shape = new GraphUpdateShape(points, convex, legacyMode && legacyUseWorldSpace ? Matrix4x4.identity : transform.localToWorldMatrix, minBoundsHeight);
+				}
+				var bounds = shape.GetBounds();
+				guo = new GraphUpdateObject(bounds);
+				guo.shape = shape;
+			}
+
+			firstApplied = true;
+
+			guo.modifyWalkability = modifyWalkability;
+			guo.setWalkability = setWalkability;
+			guo.addPenalty = penaltyDelta;
+			guo.updatePhysics = updatePhysics;
+			guo.updateErosion = updateErosion;
+			guo.resetPenaltyOnPhysics = resetPenaltyOnPhysics;
+
+			guo.modifyTag = modifyTag;
+			guo.setTag = setTag;
+
+			AstarPath.active.UpdateGraphs(guo);
+		}
+
+        /// <summary>
 		/// Disables legacy mode if it is enabled.
 		/// Legacy mode is automatically enabled for components when upgrading from an earlier version than 3.8.6.
 		/// </summary>
@@ -385,14 +394,5 @@ namespace Pathfinding {
 				}
 			}
 		}
-
-		protected override void Awake () {
-			if (serializedVersion == 0) {
-				// Use the old behavior if some points are already set
-				if (points != null && points.Length > 0) legacyMode = true;
-				serializedVersion = 1;
-			}
-			base.Awake();
-		}
-	}
+    }
 }

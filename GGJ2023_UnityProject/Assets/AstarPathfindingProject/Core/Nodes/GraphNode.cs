@@ -50,31 +50,7 @@ namespace Pathfinding {
 
 	/// <summary>Base class for all nodes</summary>
 	public abstract class GraphNode {
-		/// <summary>Internal unique index. Also stores some bitpacked values such as <see cref="TemporaryFlag1"/> and <see cref="TemporaryFlag2"/>.</summary>
-		private int nodeIndex;
-
-		/// <summary>
-		/// Bitpacked field holding several pieces of data.
-		/// See: Walkable
-		/// See: Area
-		/// See: GraphIndex
-		/// See: Tag
-		/// </summary>
-		protected uint flags;
-
-#if !ASTAR_NO_PENALTY
-		/// <summary>
-		/// Penalty cost for walking on this node.
-		/// This can be used to make it harder/slower to walk over certain nodes.
-		///
-		/// A penalty of 1000 (Int3.Precision) corresponds to the cost of walking one world unit.
-		///
-		/// See: graph-updates (view in online documentation for working links)
-		/// </summary>
-		private uint penalty;
-#endif
-
-		/// <summary>
+        /// <summary>
 		/// Graph which this node belongs to.
 		///
 		/// If you know the node belongs to a particular graph type, you can cast it to that type:
@@ -91,7 +67,70 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Constructor for a graph node.</summary>
+        public bool Destroyed {
+			get {
+				return NodeIndex == DestroyedNodeIndex;
+			}
+		}
+
+        /// <summary>
+		/// Internal unique index.
+		/// Every node will get a unique index.
+		/// This index is not necessarily correlated with e.g the position of the node in the graph.
+		/// </summary>
+		public int NodeIndex { get { return nodeIndex & NodeIndexMask; } private set { nodeIndex = (nodeIndex & ~NodeIndexMask) | value; } }
+
+        /// <summary>
+		/// Position of the node in world space.
+		/// Note: The position is stored as an Int3, not a Vector3.
+		/// You can convert an Int3 to a Vector3 using an explicit conversion.
+		/// <code> var v3 = (Vector3)node.position; </code>
+		/// </summary>
+		public Int3 position;
+
+        /// <summary>
+		/// Bitpacked field holding several pieces of data.
+		/// See: Walkable
+		/// See: Area
+		/// See: GraphIndex
+		/// See: Tag
+		/// </summary>
+		protected uint flags;
+
+        /// <summary>
+		/// Temporary flag for internal purposes.
+		/// May only be used in the Unity thread. Must be reset to false after every use.
+		/// </summary>
+		internal bool TemporaryFlag1 { get { return (nodeIndex & TemporaryFlag1Mask) != 0; } set { nodeIndex = (nodeIndex & ~TemporaryFlag1Mask) | (value ? TemporaryFlag1Mask : 0); } }
+
+        /// <summary>
+		/// Temporary flag for internal purposes.
+		/// May only be used in the Unity thread. Must be reset to false after every use.
+		/// </summary>
+		internal bool TemporaryFlag2 { get { return (nodeIndex & TemporaryFlag2Mask) != 0; } set { nodeIndex = (nodeIndex & ~TemporaryFlag2Mask) | (value ? TemporaryFlag2Mask : 0); } }
+
+        /// <summary>Internal unique index. Also stores some bitpacked values such as <see cref="TemporaryFlag1"/> and <see cref="TemporaryFlag2"/>.</summary>
+		private int nodeIndex;
+
+#if !ASTAR_NO_PENALTY
+        /// <summary>
+		/// Penalty cost for walking on this node.
+		/// This can be used to make it harder/slower to walk over certain nodes.
+		///
+		/// A penalty of 1000 (Int3.Precision) corresponds to the cost of walking one world unit.
+		///
+		/// See: graph-updates (view in online documentation for working links)
+		/// </summary>
+		private uint penalty;
+#endif
+
+        // If anyone creates more than about 200 million nodes then things will not go so well, however at that point one will certainly have more pressing problems, such as having run out of RAM
+        const int NodeIndexMask = 0xFFFFFFF;
+        const int DestroyedNodeIndex = NodeIndexMask - 1;
+        const int TemporaryFlag1Mask = 0x10000000;
+        const int TemporaryFlag2Mask = 0x20000000;
+
+        /// <summary>Constructor for a graph node.</summary>
 		protected GraphNode (AstarPath astar) {
 			if (!System.Object.ReferenceEquals(astar, null)) {
 				this.nodeIndex = astar.GetNewNodeIndex();
@@ -101,7 +140,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Destroys the node.
 		/// Cleans up any temporary pathfinding data used for this node.
 		/// The graph is responsible for calling this method on nodes when they are destroyed, including when the whole graph is destoyed.
@@ -124,214 +163,7 @@ namespace Pathfinding {
 			NodeIndex = DestroyedNodeIndex;
 		}
 
-		public bool Destroyed {
-			get {
-				return NodeIndex == DestroyedNodeIndex;
-			}
-		}
-
-		// If anyone creates more than about 200 million nodes then things will not go so well, however at that point one will certainly have more pressing problems, such as having run out of RAM
-		const int NodeIndexMask = 0xFFFFFFF;
-		const int DestroyedNodeIndex = NodeIndexMask - 1;
-		const int TemporaryFlag1Mask = 0x10000000;
-		const int TemporaryFlag2Mask = 0x20000000;
-
-		/// <summary>
-		/// Internal unique index.
-		/// Every node will get a unique index.
-		/// This index is not necessarily correlated with e.g the position of the node in the graph.
-		/// </summary>
-		public int NodeIndex { get { return nodeIndex & NodeIndexMask; } private set { nodeIndex = (nodeIndex & ~NodeIndexMask) | value; } }
-
-		/// <summary>
-		/// Temporary flag for internal purposes.
-		/// May only be used in the Unity thread. Must be reset to false after every use.
-		/// </summary>
-		internal bool TemporaryFlag1 { get { return (nodeIndex & TemporaryFlag1Mask) != 0; } set { nodeIndex = (nodeIndex & ~TemporaryFlag1Mask) | (value ? TemporaryFlag1Mask : 0); } }
-
-		/// <summary>
-		/// Temporary flag for internal purposes.
-		/// May only be used in the Unity thread. Must be reset to false after every use.
-		/// </summary>
-		internal bool TemporaryFlag2 { get { return (nodeIndex & TemporaryFlag2Mask) != 0; } set { nodeIndex = (nodeIndex & ~TemporaryFlag2Mask) | (value ? TemporaryFlag2Mask : 0); } }
-
-		/// <summary>
-		/// Position of the node in world space.
-		/// Note: The position is stored as an Int3, not a Vector3.
-		/// You can convert an Int3 to a Vector3 using an explicit conversion.
-		/// <code> var v3 = (Vector3)node.position; </code>
-		/// </summary>
-		public Int3 position;
-
-		#region Constants
-		/// <summary>Position of the walkable bit. See: <see cref="Walkable"/></summary>
-		const int FlagsWalkableOffset = 0;
-		/// <summary>Mask of the walkable bit. See: <see cref="Walkable"/></summary>
-		const uint FlagsWalkableMask = 1 << FlagsWalkableOffset;
-
-		/// <summary>Start of hierarchical node index bits. See: <see cref="HierarchicalNodeIndex"/></summary>
-		const int FlagsHierarchicalIndexOffset = 1;
-		/// <summary>Mask of hierarchical node index bits. See: <see cref="HierarchicalNodeIndex"/></summary>
-		const uint HierarchicalIndexMask = (131072-1) << FlagsHierarchicalIndexOffset;
-
-		/// <summary>Start of <see cref="IsHierarchicalNodeDirty"/> bits. See: <see cref="IsHierarchicalNodeDirty"/></summary>
-		const int HierarchicalDirtyOffset = 18;
-
-		/// <summary>Mask of the <see cref="IsHierarchicalNodeDirty"/> bit. See: <see cref="IsHierarchicalNodeDirty"/></summary>
-		const uint HierarchicalDirtyMask = 1 << HierarchicalDirtyOffset;
-
-		/// <summary>Start of graph index bits. See: <see cref="GraphIndex"/></summary>
-		const int FlagsGraphOffset = 24;
-		/// <summary>Mask of graph index bits. See: <see cref="GraphIndex"/></summary>
-		const uint FlagsGraphMask = (256u-1) << FlagsGraphOffset;
-
-		public const uint MaxHierarchicalNodeIndex = HierarchicalIndexMask >> FlagsHierarchicalIndexOffset;
-
-		/// <summary>Max number of graphs-1</summary>
-		public const uint MaxGraphIndex = FlagsGraphMask >> FlagsGraphOffset;
-
-		/// <summary>Start of tag bits. See: <see cref="Tag"/></summary>
-		const int FlagsTagOffset = 19;
-		/// <summary>Mask of tag bits. See: <see cref="Tag"/></summary>
-		const uint FlagsTagMask = (32-1) << FlagsTagOffset;
-
-		#endregion
-
-		#region Properties
-
-		/// <summary>
-		/// Holds various bitpacked variables.
-		///
-		/// Bit 0: <see cref="Walkable"/>
-		/// Bits 1 through 17: <see cref="HierarchicalNodeIndex"/>
-		/// Bit 18: <see cref="IsHierarchicalNodeDirty"/>
-		/// Bits 19 through 23: <see cref="Tag"/>
-		/// Bits 24 through 31: <see cref="GraphIndex"/>
-		///
-		/// Warning: You should pretty much never modify this property directly. Use the other properties instead.
-		/// </summary>
-		public uint Flags {
-			get {
-				return flags;
-			}
-			set {
-				flags = value;
-			}
-		}
-
-		/// <summary>
-		/// Penalty cost for walking on this node.
-		/// This can be used to make it harder/slower to walk over certain nodes.
-		/// A cost of 1000 (<see cref="Pathfinding.Int3.Precision"/>) corresponds to the cost of moving 1 world unit.
-		///
-		/// See: graph-updates (view in online documentation for working links)
-		/// </summary>
-		public uint Penalty {
-#if !ASTAR_NO_PENALTY
-			get {
-				return penalty;
-			}
-			set {
-				if (value > 0xFFFFFF)
-					Debug.LogWarning("Very high penalty applied. Are you sure negative values haven't underflowed?\n" +
-						"Penalty values this high could with long paths cause overflows and in some cases infinity loops because of that.\n" +
-						"Penalty value applied: "+value);
-				penalty = value;
-			}
-#else
-			get { return 0U; }
-			set {}
-#endif
-		}
-
-		/// <summary>
-		/// True if the node is traversable.
-		///
-		/// See: graph-updates (view in online documentation for working links)
-		/// </summary>
-		public bool Walkable {
-			get {
-				return (flags & FlagsWalkableMask) != 0;
-			}
-			set {
-				flags = flags & ~FlagsWalkableMask | (value ? 1U : 0U) << FlagsWalkableOffset;
-				AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
-			}
-		}
-
-		/// <summary>
-		/// Hierarchical Node that contains this node.
-		/// The graph is divided into clusters of small hierarchical nodes in which there is a path from every node to every other node.
-		/// This structure is used to speed up connected component calculations which is used to quickly determine if a node is reachable from another node.
-		///
-		/// See: <see cref="Pathfinding.HierarchicalGraph"/>
-		///
-		/// Warning: This is an internal property and you should most likely not change it.
-		/// </summary>
-		internal int HierarchicalNodeIndex {
-			get {
-				return (int)((flags & HierarchicalIndexMask) >> FlagsHierarchicalIndexOffset);
-			}
-			set {
-				flags = (flags & ~HierarchicalIndexMask) | (uint)(value << FlagsHierarchicalIndexOffset);
-			}
-		}
-
-		/// <summary>Some internal bookkeeping</summary>
-		internal bool IsHierarchicalNodeDirty {
-			get {
-				return (flags & HierarchicalDirtyMask) != 0;
-			}
-			set {
-				flags = flags & ~HierarchicalDirtyMask | (value ? 1U : 0U) << HierarchicalDirtyOffset;
-			}
-		}
-
-		/// <summary>
-		/// Connected component that contains the node.
-		/// This is visualized in the scene view as differently colored nodes (if the graph coloring mode is set to 'Areas').
-		/// Each area represents a set of nodes such that there is no valid path between nodes of different colors.
-		///
-		/// See: https://en.wikipedia.org/wiki/Connected_component_(graph_theory)
-		/// See: <see cref="Pathfinding.HierarchicalGraph"/>
-		/// </summary>
-		public uint Area {
-			get {
-				return AstarPath.active.hierarchicalGraph.GetConnectedComponent(HierarchicalNodeIndex);
-			}
-		}
-
-		/// <summary>
-		/// Graph which contains this node.
-		/// See: <see cref="Pathfinding.AstarData.graphs"/>
-		/// See: <see cref="Graph"/>
-		/// </summary>
-		public uint GraphIndex {
-			get {
-				return (flags & FlagsGraphMask) >> FlagsGraphOffset;
-			}
-			set {
-				flags = flags & ~FlagsGraphMask | value << FlagsGraphOffset;
-			}
-		}
-
-		/// <summary>
-		/// Node tag.
-		/// See: tags (view in online documentation for working links)
-		/// See: graph-updates (view in online documentation for working links)
-		/// </summary>
-		public uint Tag {
-			get {
-				return (flags & FlagsTagMask) >> FlagsTagOffset;
-			}
-			set {
-				flags = flags & ~FlagsTagMask | ((value << FlagsTagOffset) & FlagsTagMask);
-			}
-		}
-
-		#endregion
-
-		/// <summary>
+        /// <summary>
 		/// Inform the system that the node's connectivity has changed.
 		/// This is used for recalculating the connected components of the graph.
 		///
@@ -344,7 +176,7 @@ namespace Pathfinding {
 			AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Recalculates a node's connection costs.
 		/// Deprecated: This method is deprecated because it never did anything, you can safely remove any calls to this method.
 		/// </summary>
@@ -352,7 +184,7 @@ namespace Pathfinding {
 		public void RecalculateConnectionCosts () {
 		}
 
-		public virtual void UpdateRecursiveG (Path path, PathNode pathNode, PathHandler handler) {
+        public virtual void UpdateRecursiveG (Path path, PathNode pathNode, PathHandler handler) {
 			//Simple but slow default implementation
 			pathNode.UpdateG(path);
 
@@ -364,7 +196,7 @@ namespace Pathfinding {
 			});
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Calls the delegate with all connections from this node.
 		/// <code>
 		/// node.GetConnections(connectedTo => {
@@ -380,7 +212,7 @@ namespace Pathfinding {
 		/// </summary>
 		public abstract void GetConnections(System.Action<GraphNode> action);
 
-		/// <summary>
+        /// <summary>
 		/// Add a connection from this node to the specified node.
 		/// If the connection already exists, the cost will simply be updated and
 		/// no extra connection added.
@@ -406,7 +238,7 @@ namespace Pathfinding {
 		/// </summary>
 		public abstract void AddConnection(GraphNode node, uint cost);
 
-		/// <summary>
+        /// <summary>
 		/// Removes any connection from this node to the specified node.
 		/// If no such connection exists, nothing will be done.
 		///
@@ -432,11 +264,11 @@ namespace Pathfinding {
 		/// </summary>
 		public abstract void RemoveConnection(GraphNode node);
 
-		/// <summary>Remove all connections from this node.</summary>
+        /// <summary>Remove all connections from this node.</summary>
 		/// <param name="alsoReverse">if true, neighbours will be requested to remove connections to this node.</param>
 		public abstract void ClearConnections(bool alsoReverse);
 
-		/// <summary>
+        /// <summary>
 		/// Checks if this node has a connection to the specified node.
 		///
 		/// <code>
@@ -465,7 +297,7 @@ namespace Pathfinding {
 			return contains;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Add a portal from this node to the specified node.
 		/// This function should add a portal to the left and right lists which is connecting the two nodes (this and other).
 		///
@@ -489,18 +321,18 @@ namespace Pathfinding {
 			return false;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Open the node.
 		/// Used internally for the A* algorithm.
 		/// </summary>
 		public abstract void Open(Path path, PathNode pathNode, PathHandler handler);
 
-		/// <summary>The surface area of the node in square world units</summary>
+        /// <summary>The surface area of the node in square world units</summary>
 		public virtual float SurfaceArea () {
 			return 0;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// A random point on the surface of the node.
 		/// For point nodes and other nodes which do not have a surface, this will always return the position of the node.
 		/// </summary>
@@ -508,10 +340,10 @@ namespace Pathfinding {
 			return (Vector3)position;
 		}
 
-		/// <summary>Closest point on the surface of this node to the point p</summary>
+        /// <summary>Closest point on the surface of this node to the point p</summary>
 		public abstract Vector3 ClosestPointOnNode(Vector3 p);
 
-		/// <summary>
+        /// <summary>
 		/// Hash code used for checking if the gizmos need to be updated.
 		/// Will change when the gizmos for the node might change.
 		/// </summary>
@@ -520,7 +352,7 @@ namespace Pathfinding {
 			return position.GetHashCode() ^ (19 * (int)Penalty) ^ (41 * (int)(flags & ~(HierarchicalIndexMask | HierarchicalDirtyMask)));
 		}
 
-		/// <summary>Serialized the node data to a byte array</summary>
+        /// <summary>Serialized the node data to a byte array</summary>
 		public virtual void SerializeNode (GraphSerializationContext ctx) {
 			//Write basic node data.
 			ctx.writer.Write(Penalty);
@@ -528,7 +360,7 @@ namespace Pathfinding {
 			ctx.writer.Write(Flags & ~(HierarchicalIndexMask | HierarchicalDirtyMask));
 		}
 
-		/// <summary>Deserializes the node data from a byte array</summary>
+        /// <summary>Deserializes the node data from a byte array</summary>
 		public virtual void DeserializeNode (GraphSerializationContext ctx) {
 			Penalty = ctx.reader.ReadUInt32();
 			// Load all flags except the hierarchical node index and the dirty bit (they aren't saved in newer versions and older data should just be cleared)
@@ -539,7 +371,7 @@ namespace Pathfinding {
 			GraphIndex = ctx.graphIndex;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Used to serialize references to other nodes e.g connections.
 		/// Use the GraphSerializationContext.GetNodeIdentifier and
 		/// GraphSerializationContext.GetNodeFromIdentifier methods
@@ -552,7 +384,7 @@ namespace Pathfinding {
 		public virtual void SerializeReferences (GraphSerializationContext ctx) {
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Used to deserialize references to other nodes e.g connections.
 		/// Use the GraphSerializationContext.GetNodeIdentifier and
 		/// GraphSerializationContext.GetNodeFromIdentifier methods
@@ -564,13 +396,183 @@ namespace Pathfinding {
 		/// </summary>
 		public virtual void DeserializeReferences (GraphSerializationContext ctx) {
 		}
-	}
 
-	public abstract class MeshNode : GraphNode {
-		protected MeshNode (AstarPath astar) : base(astar) {
+        #region Constants
+
+        /// <summary>Position of the walkable bit. See: <see cref="Walkable"/></summary>
+		const int FlagsWalkableOffset = 0;
+
+        /// <summary>Mask of the walkable bit. See: <see cref="Walkable"/></summary>
+		const uint FlagsWalkableMask = 1 << FlagsWalkableOffset;
+
+        /// <summary>Start of hierarchical node index bits. See: <see cref="HierarchicalNodeIndex"/></summary>
+		const int FlagsHierarchicalIndexOffset = 1;
+
+        /// <summary>Mask of hierarchical node index bits. See: <see cref="HierarchicalNodeIndex"/></summary>
+		const uint HierarchicalIndexMask = (131072-1) << FlagsHierarchicalIndexOffset;
+
+        /// <summary>Start of <see cref="IsHierarchicalNodeDirty"/> bits. See: <see cref="IsHierarchicalNodeDirty"/></summary>
+		const int HierarchicalDirtyOffset = 18;
+
+        /// <summary>Mask of the <see cref="IsHierarchicalNodeDirty"/> bit. See: <see cref="IsHierarchicalNodeDirty"/></summary>
+		const uint HierarchicalDirtyMask = 1 << HierarchicalDirtyOffset;
+
+        /// <summary>Start of graph index bits. See: <see cref="GraphIndex"/></summary>
+		const int FlagsGraphOffset = 24;
+
+        /// <summary>Mask of graph index bits. See: <see cref="GraphIndex"/></summary>
+		const uint FlagsGraphMask = (256u-1) << FlagsGraphOffset;
+
+        public const uint MaxHierarchicalNodeIndex = HierarchicalIndexMask >> FlagsHierarchicalIndexOffset;
+
+        /// <summary>Max number of graphs-1</summary>
+		public const uint MaxGraphIndex = FlagsGraphMask >> FlagsGraphOffset;
+
+        /// <summary>Start of tag bits. See: <see cref="Tag"/></summary>
+		const int FlagsTagOffset = 19;
+
+        /// <summary>Mask of tag bits. See: <see cref="Tag"/></summary>
+		const uint FlagsTagMask = (32-1) << FlagsTagOffset;
+
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+		/// Holds various bitpacked variables.
+		///
+		/// Bit 0: <see cref="Walkable"/>
+		/// Bits 1 through 17: <see cref="HierarchicalNodeIndex"/>
+		/// Bit 18: <see cref="IsHierarchicalNodeDirty"/>
+		/// Bits 19 through 23: <see cref="Tag"/>
+		/// Bits 24 through 31: <see cref="GraphIndex"/>
+		///
+		/// Warning: You should pretty much never modify this property directly. Use the other properties instead.
+		/// </summary>
+		public uint Flags {
+			get {
+				return flags;
+			}
+			set {
+				flags = value;
+			}
 		}
 
-		/// <summary>
+        /// <summary>
+		/// Penalty cost for walking on this node.
+		/// This can be used to make it harder/slower to walk over certain nodes.
+		/// A cost of 1000 (<see cref="Pathfinding.Int3.Precision"/>) corresponds to the cost of moving 1 world unit.
+		///
+		/// See: graph-updates (view in online documentation for working links)
+		/// </summary>
+		public uint Penalty {
+#if !ASTAR_NO_PENALTY
+			get {
+				return penalty;
+			}
+			set {
+				if (value > 0xFFFFFF)
+					Debug.LogWarning("Very high penalty applied. Are you sure negative values haven't underflowed?\n" +
+						"Penalty values this high could with long paths cause overflows and in some cases infinity loops because of that.\n" +
+						"Penalty value applied: "+value);
+				penalty = value;
+			}
+#else
+			get { return 0U; }
+			set {}
+#endif
+		}
+
+        /// <summary>
+		/// True if the node is traversable.
+		///
+		/// See: graph-updates (view in online documentation for working links)
+		/// </summary>
+		public bool Walkable {
+			get {
+				return (flags & FlagsWalkableMask) != 0;
+			}
+			set {
+				flags = flags & ~FlagsWalkableMask | (value ? 1U : 0U) << FlagsWalkableOffset;
+				AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
+			}
+		}
+
+        /// <summary>
+		/// Hierarchical Node that contains this node.
+		/// The graph is divided into clusters of small hierarchical nodes in which there is a path from every node to every other node.
+		/// This structure is used to speed up connected component calculations which is used to quickly determine if a node is reachable from another node.
+		///
+		/// See: <see cref="Pathfinding.HierarchicalGraph"/>
+		///
+		/// Warning: This is an internal property and you should most likely not change it.
+		/// </summary>
+		internal int HierarchicalNodeIndex {
+			get {
+				return (int)((flags & HierarchicalIndexMask) >> FlagsHierarchicalIndexOffset);
+			}
+			set {
+				flags = (flags & ~HierarchicalIndexMask) | (uint)(value << FlagsHierarchicalIndexOffset);
+			}
+		}
+
+        /// <summary>Some internal bookkeeping</summary>
+		internal bool IsHierarchicalNodeDirty {
+			get {
+				return (flags & HierarchicalDirtyMask) != 0;
+			}
+			set {
+				flags = flags & ~HierarchicalDirtyMask | (value ? 1U : 0U) << HierarchicalDirtyOffset;
+			}
+		}
+
+        /// <summary>
+		/// Connected component that contains the node.
+		/// This is visualized in the scene view as differently colored nodes (if the graph coloring mode is set to 'Areas').
+		/// Each area represents a set of nodes such that there is no valid path between nodes of different colors.
+		///
+		/// See: https://en.wikipedia.org/wiki/Connected_component_(graph_theory)
+		/// See: <see cref="Pathfinding.HierarchicalGraph"/>
+		/// </summary>
+		public uint Area {
+			get {
+				return AstarPath.active.hierarchicalGraph.GetConnectedComponent(HierarchicalNodeIndex);
+			}
+		}
+
+        /// <summary>
+		/// Graph which contains this node.
+		/// See: <see cref="Pathfinding.AstarData.graphs"/>
+		/// See: <see cref="Graph"/>
+		/// </summary>
+		public uint GraphIndex {
+			get {
+				return (flags & FlagsGraphMask) >> FlagsGraphOffset;
+			}
+			set {
+				flags = flags & ~FlagsGraphMask | value << FlagsGraphOffset;
+			}
+		}
+
+        /// <summary>
+		/// Node tag.
+		/// See: tags (view in online documentation for working links)
+		/// See: graph-updates (view in online documentation for working links)
+		/// </summary>
+		public uint Tag {
+			get {
+				return (flags & FlagsTagMask) >> FlagsTagOffset;
+			}
+			set {
+				flags = flags & ~FlagsTagMask | ((value << FlagsTagOffset) & FlagsTagMask);
+			}
+		}
+
+        #endregion
+    }
+
+	public abstract class MeshNode : GraphNode {
+        /// <summary>
 		/// All connections from this node.
 		/// See: <see cref="AddConnection"/>
 		/// See: <see cref="RemoveConnection"/>
@@ -579,17 +581,20 @@ namespace Pathfinding {
 		/// </summary>
 		public Connection[] connections;
 
-		/// <summary>Get a vertex of this node.</summary>
+        protected MeshNode (AstarPath astar) : base(astar) {
+		}
+
+        /// <summary>Get a vertex of this node.</summary>
 		/// <param name="i">vertex index. Must be between 0 and #GetVertexCount (exclusive).</param>
 		public abstract Int3 GetVertex(int i);
 
-		/// <summary>
+        /// <summary>
 		/// Number of corner vertices that this node has.
 		/// For example for a triangle node this will return 3.
 		/// </summary>
 		public abstract int GetVertexCount();
 
-		/// <summary>
+        /// <summary>
 		/// Closest point on the surface of this node when seen from above.
 		/// This is usually very similar to <see cref="ClosestPointOnNode"/> but when the node is in a slope this can be significantly different.
 		/// [Open online documentation to see images]
@@ -597,7 +602,7 @@ namespace Pathfinding {
 		/// </summary>
 		public abstract Vector3 ClosestPointOnNodeXZ(Vector3 p);
 
-		public override void ClearConnections (bool alsoReverse) {
+        public override void ClearConnections (bool alsoReverse) {
 			// Remove all connections to this node from our neighbours
 			if (alsoReverse && connections != null) {
 				for (int i = 0; i < connections.Length; i++) {
@@ -614,17 +619,17 @@ namespace Pathfinding {
 			AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
 		}
 
-		public override void GetConnections (System.Action<GraphNode> action) {
+        public override void GetConnections (System.Action<GraphNode> action) {
 			if (connections == null) return;
 			for (int i = 0; i < connections.Length; i++) action(connections[i].node);
 		}
 
-		public override bool ContainsConnection (GraphNode node) {
+        public override bool ContainsConnection (GraphNode node) {
 			for (int i = 0; i < connections.Length; i++) if (connections[i].node == node) return true;
 			return false;
 		}
 
-		public override void UpdateRecursiveG (Path path, PathNode pathNode, PathHandler handler) {
+        public override void UpdateRecursiveG (Path path, PathNode pathNode, PathHandler handler) {
 			pathNode.UpdateG(path);
 
 			handler.heap.Add(pathNode);
@@ -638,7 +643,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Add a connection from this node to the specified node.
 		///
 		/// If the connection already exists, the cost will simply be updated and
@@ -653,7 +658,7 @@ namespace Pathfinding {
 			AddConnection(node, cost, -1);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Add a connection from this node to the specified node.
 		/// See: Pathfinding.Connection.edge
 		///
@@ -702,7 +707,7 @@ namespace Pathfinding {
 			AstarPath.active.hierarchicalGraph.AddDirtyNode(this);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Removes any connection from this node to the specified node.
 		/// If no such connection exists, nothing will be done.
 		///
@@ -738,12 +743,12 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Checks if point is inside the node when seen from above</summary>
+        /// <summary>Checks if point is inside the node when seen from above</summary>
 		public virtual bool ContainsPoint (Int3 point) {
 			return ContainsPoint((Vector3)point);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Checks if point is inside the node when seen from above.
 		///
 		/// Note that <see cref="ContainsPointInGraphSpace"/> is faster than this method as it avoids
@@ -758,7 +763,7 @@ namespace Pathfinding {
 		/// </summary>
 		public abstract bool ContainsPoint(Vector3 point);
 
-		/// <summary>
+        /// <summary>
 		/// Checks if point is inside the node in graph space.
 		///
 		/// In graph space the up direction is always the Y axis so in principle
@@ -766,7 +771,7 @@ namespace Pathfinding {
 		/// </summary>
 		public abstract bool ContainsPointInGraphSpace(Int3 point);
 
-		public override int GetGizmoHashCode () {
+        public override int GetGizmoHashCode () {
 			var hash = base.GetGizmoHashCode();
 
 			if (connections != null) {
@@ -777,7 +782,7 @@ namespace Pathfinding {
 			return hash;
 		}
 
-		public override void SerializeReferences (GraphSerializationContext ctx) {
+        public override void SerializeReferences (GraphSerializationContext ctx) {
 			if (connections == null) {
 				ctx.writer.Write(-1);
 			} else {
@@ -790,7 +795,7 @@ namespace Pathfinding {
 			}
 		}
 
-		public override void DeserializeReferences (GraphSerializationContext ctx) {
+        public override void DeserializeReferences (GraphSerializationContext ctx) {
 			int count = ctx.reader.ReadInt32();
 
 			if (count == -1) {
@@ -807,5 +812,5 @@ namespace Pathfinding {
 				}
 			}
 		}
-	}
+    }
 }

@@ -8,8 +8,8 @@ using System.Collections.Generic;
 
 namespace Pathfinding.Util {
 	public interface IAstarPooledObject {
-		void OnEnterPool();
-	}
+        void OnEnterPool();
+    }
 
 	/// <summary>
 	/// Lightweight object Pool for IAstarPooledObject.
@@ -28,15 +28,15 @@ namespace Pathfinding.Util {
 	/// See: ObjectPoolSimple
 	/// </summary>
 	public static class ObjectPool<T> where T : class, IAstarPooledObject, new(){
-		public static T Claim () {
+        public static T Claim () {
 			return ObjectPoolSimple<T>.Claim();
 		}
 
-		public static void Release (ref T obj) {
+        public static void Release (ref T obj) {
 			obj.OnEnterPool();
 			ObjectPoolSimple<T>.Release(ref obj);
 		}
-	}
+    }
 
 	/// <summary>
 	/// Lightweight object Pool.
@@ -55,14 +55,14 @@ namespace Pathfinding.Util {
 	/// See: ObjectPool
 	/// </summary>
 	public static class ObjectPoolSimple<T> where T : class, new(){
-		/// <summary>Internal pool</summary>
+        /// <summary>Internal pool</summary>
 		static List<T> pool = new List<T>();
 
 #if !ASTAR_NO_POOLING
-		static readonly HashSet<T> inPool = new HashSet<T>();
+        static readonly HashSet<T> inPool = new HashSet<T>();
 #endif
 
-		/// <summary>
+        /// <summary>
 		/// Claim a object.
 		/// Returns a pooled object if any are in the pool.
 		/// Otherwise it creates a new one.
@@ -85,7 +85,7 @@ namespace Pathfinding.Util {
 #endif
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Releases an object.
 		/// After the object has been released it should not be used anymore.
 		/// The variable will be set to null to prevent silly mistakes.
@@ -110,7 +110,7 @@ namespace Pathfinding.Util {
 			obj = null;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Clears the pool for objects of this type.
 		/// This is an O(n) operation, where n is the number of pooled objects.
 		/// </summary>
@@ -123,9 +123,9 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>Number of objects of this type in the pool</summary>
+        /// <summary>Number of objects of this type in the pool</summary>
 		public static int GetSize () {
 			return pool.Count;
 		}
-	}
+    }
 }

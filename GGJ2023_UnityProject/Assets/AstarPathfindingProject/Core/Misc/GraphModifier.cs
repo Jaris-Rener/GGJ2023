@@ -12,21 +12,63 @@ namespace Pathfinding {
 	/// </summary>
 	[ExecuteInEditMode]
 	public abstract class GraphModifier : VersionedMonoBehaviour {
-		/// <summary>All active graph modifiers</summary>
+        /// <summary>GraphModifier event type</summary>
+		public enum EventType {
+			PostScan = 1 << 0,
+			PreScan = 1 << 1,
+			LatePostScan = 1 << 2,
+			PreUpdate = 1 << 3,
+			PostUpdate = 1 << 4,
+			PostCacheLoad = 1 << 5
+		}
+
+        /// <summary>All active graph modifiers</summary>
 		private static GraphModifier root;
 
-		private GraphModifier prev;
-		private GraphModifier next;
+        /// <summary>Maps persistent IDs to the component that uses it</summary>
+		protected static Dictionary<ulong, GraphModifier> usedIDs = new Dictionary<ulong, GraphModifier>();
 
-		/// <summary>Unique persistent ID for this component, used for serialization</summary>
+        /// <summary>Unique persistent ID for this component, used for serialization</summary>
 		[SerializeField]
 		[HideInInspector]
 		protected ulong uniqueID;
 
-		/// <summary>Maps persistent IDs to the component that uses it</summary>
-		protected static Dictionary<ulong, GraphModifier> usedIDs = new Dictionary<ulong, GraphModifier>();
+        private GraphModifier next;
 
-		protected static List<T> GetModifiersOfType<T>() where T : GraphModifier {
+        private GraphModifier prev;
+
+        protected override void Awake () {
+			base.Awake();
+			ConfigureUniqueID();
+		}
+
+        protected override void Reset () {
+			base.Reset();
+			// Create a new random 64 bit value (62 bit actually because we skip negative numbers, but that's still enough by a huge margin)
+			var rnd1 = (ulong)Random.Range(0, int.MaxValue);
+			var rnd2 = ((ulong)Random.Range(0, int.MaxValue) << 32);
+
+			uniqueID = rnd1 | rnd2;
+			usedIDs[uniqueID] = this;
+		}
+
+        /// <summary>Adds this modifier to list of active modifiers</summary>
+		protected virtual void OnEnable () {
+			RemoveFromLinkedList();
+			AddToLinkedList();
+			ConfigureUniqueID();
+		}
+
+        /// <summary>Removes this modifier from list of active modifiers</summary>
+		protected virtual void OnDisable () {
+			RemoveFromLinkedList();
+		}
+
+        protected virtual void OnDestroy () {
+			usedIDs.Remove(uniqueID);
+		}
+
+        protected static List<T> GetModifiersOfType<T>() where T : GraphModifier {
 			var current = root;
 			var result = new List<T>();
 
@@ -38,7 +80,7 @@ namespace Pathfinding {
 			return result;
 		}
 
-		public static void FindAllModifiers () {
+        public static void FindAllModifiers () {
 			var allModifiers = FindObjectsOfType(typeof(GraphModifier)) as GraphModifier[];
 
 			for (int i = 0; i < allModifiers.Length; i++) {
@@ -46,17 +88,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>GraphModifier event type</summary>
-		public enum EventType {
-			PostScan = 1 << 0,
-			PreScan = 1 << 1,
-			LatePostScan = 1 << 2,
-			PreUpdate = 1 << 3,
-			PostUpdate = 1 << 4,
-			PostCacheLoad = 1 << 5
-		}
-
-		/// <summary>Triggers an event for all active graph modifiers</summary>
+        /// <summary>Triggers an event for all active graph modifiers</summary>
 		public static void TriggerEvent (GraphModifier.EventType type) {
 			if (!Application.isPlaying) {
 				FindAllModifiers();
@@ -85,24 +117,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>Adds this modifier to list of active modifiers</summary>
-		protected virtual void OnEnable () {
-			RemoveFromLinkedList();
-			AddToLinkedList();
-			ConfigureUniqueID();
-		}
-
-		/// <summary>Removes this modifier from list of active modifiers</summary>
-		protected virtual void OnDisable () {
-			RemoveFromLinkedList();
-		}
-
-		protected override void Awake () {
-			base.Awake();
-			ConfigureUniqueID();
-		}
-
-		void ConfigureUniqueID () {
+        void ConfigureUniqueID () {
 			// Check if any other object is using the same uniqueID
 			// In that case this object may have been duplicated
 			GraphModifier usedBy;
@@ -114,7 +129,7 @@ namespace Pathfinding {
 			usedIDs[uniqueID] = this;
 		}
 
-		void AddToLinkedList () {
+        void AddToLinkedList () {
 			if (root == null) {
 				root = this;
 			} else {
@@ -124,7 +139,7 @@ namespace Pathfinding {
 			}
 		}
 
-		void RemoveFromLinkedList () {
+        void RemoveFromLinkedList () {
 			if (root == this) {
 				root = next;
 				if (root != null) root.prev = null;
@@ -136,11 +151,7 @@ namespace Pathfinding {
 			next = null;
 		}
 
-		protected virtual void OnDestroy () {
-			usedIDs.Remove(uniqueID);
-		}
-
-		/// <summary>
+        /// <summary>
 		/// Called right after all graphs have been scanned.
 		/// FloodFill and other post processing has not been done.
 		///
@@ -155,7 +166,7 @@ namespace Pathfinding {
 		/// </summary>
 		public virtual void OnPostScan () {}
 
-		/// <summary>
+        /// <summary>
 		/// Called right before graphs are going to be scanned.
 		///
 		/// Warning: Since OnEnable and Awake are called roughly in the same time, the only way
@@ -169,36 +180,26 @@ namespace Pathfinding {
 		/// </summary>
 		public virtual void OnPreScan () {}
 
-		/// <summary>
+        /// <summary>
 		/// Called at the end of the scanning procedure.
 		/// This is the absolute last thing done by Scan.
 		/// </summary>
 		public virtual void OnLatePostScan () {}
 
-		/// <summary>
+        /// <summary>
 		/// Called after cached graphs have been loaded.
 		/// When using cached startup, this event is analogous to OnLatePostScan and implementing scripts
 		/// should do roughly the same thing for both events.
 		/// </summary>
 		public virtual void OnPostCacheLoad () {}
 
-		/// <summary>Called before graphs are updated using GraphUpdateObjects</summary>
+        /// <summary>Called before graphs are updated using GraphUpdateObjects</summary>
 		public virtual void OnGraphsPreUpdate () {}
 
-		/// <summary>
+        /// <summary>
 		/// Called after graphs have been updated using GraphUpdateObjects.
 		/// Eventual flood filling has been done
 		/// </summary>
 		public virtual void OnGraphsPostUpdate () {}
-
-		protected override void Reset () {
-			base.Reset();
-			// Create a new random 64 bit value (62 bit actually because we skip negative numbers, but that's still enough by a huge margin)
-			var rnd1 = (ulong)Random.Range(0, int.MaxValue);
-			var rnd2 = ((ulong)Random.Range(0, int.MaxValue) << 32);
-
-			uniqueID = rnd1 | rnd2;
-			usedIDs[uniqueID] = this;
-		}
-	}
+    }
 }

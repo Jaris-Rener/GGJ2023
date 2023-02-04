@@ -7,9 +7,11 @@ namespace LemonBerry
     using UnityEngine.InputSystem;
 
     [RequireComponent(typeof(Rigidbody))]
-    public class PlayerController : Singleton<PlayerController>
+    public class PlayerController : Singleton<PlayerController>, IRespawn
     {
         [SerializeField] private AudioClip _jumpSound;
+        [SerializeField] private AudioClip _grabSound;
+        [SerializeField] private AudioClip _dropSound;
         [SerializeField] private Animator _animator;
         [SerializeField] private Transform _grabPoint;
 
@@ -28,21 +30,23 @@ namespace LemonBerry
         [SerializeField] private float _moveSpeed = 5;
         [SerializeField] private float _rotSpeed = 15;
 
-        private readonly List<Interactable> _hoveredInteractables = new();
-        private Rigidbody _rigidbody;
-        private Vector2 _moveInputVec;
-        private Vector3 _moveDir;
-        private bool _grounded;
-
         [SerializeField] private AudioSource _walkingAudioSource;
         [SerializeField] private AudioSource _audioSource;
 
         [SerializeField] private List<WaterDroplet> _followers;
 
+        private readonly List<Interactable> _hoveredInteractables = new();
+        private bool _grounded;
+
         private Grabbable _heldObject;
+        private Vector3 _moveDir;
+        private Vector2 _moveInputVec;
+        private Rigidbody _rigidbody;
+        private Vector3 _startPos;
 
         private void Start()
         {
+            _startPos = transform.position;
             _rigidbody = GetComponent<Rigidbody>();
             _jumpInput.action.performed += Jump;
             _interactInput.action.performed += Interact;
@@ -52,6 +56,53 @@ namespace LemonBerry
             foreach (var water in _followers)
             {
                 water.OnEnteredSeed += RemoveFollower;
+            }
+        }
+
+        private void Update()
+        {
+            _moveInputVec = _moveInput.action.ReadValue<Vector2>();
+            _animator.SetBool("Walking", _moveInputVec != Vector2.zero);
+            PlayerLook();
+            GroundedCheck();
+            CheckInteractionArea();
+
+            if (_moveDir == Vector3.zero || !_grounded)
+            {
+                _walkingAudioSource.Stop();
+            }
+            else if (_walkingAudioSource.isPlaying == false)
+            {
+                _walkingAudioSource.Play();
+            }
+        }
+
+        private void FixedUpdate()
+        {
+            var cam = CameraController.Instance.Camera;
+            var forward = cam.transform.forward;
+            var right = cam.transform.right;
+            forward.y = right.y = 0f;
+            forward.Normalize();
+            right.Normalize();
+
+            _moveDir = forward*_moveInputVec.y + right*_moveInputVec.x;
+            _rigidbody.position += _moveDir*_moveSpeed*Time.deltaTime;
+        }
+
+        private void OnDestroy()
+        {
+            _jumpInput.action.performed -= Jump;
+            _interactInput.action.performed -= Interact;
+            _addWaterInput.action.performed -= AddWater;
+            _removeWaterInput.action.performed -= RemoveWater;
+        }
+
+        private void OnGUI()
+        {
+            foreach (var seed in FindObjectsOfType<Seed>())
+            {
+                GUILayout.Label($"{seed.name}: {seed.GrowCost - seed.RemainingGrowCost}/{seed.GrowCost}");
             }
         }
 
@@ -69,14 +120,6 @@ namespace LemonBerry
         {
             obj.OnEnteredSeed -= RemoveFollower;
             _followers.Remove(obj);
-        }
-
-        private void OnDestroy()
-        {
-            _jumpInput.action.performed -= Jump;
-            _interactInput.action.performed -= Interact;
-            _addWaterInput.action.performed -= AddWater;
-            _removeWaterInput.action.performed -= RemoveWater;
         }
 
         private void AddWater(InputAction.CallbackContext obj)
@@ -139,6 +182,7 @@ namespace LemonBerry
                     GetComponent<Collider>(),
                     ignore: true);
 
+                _audioSource.PlayOneShot(_grabSound);
                 grabbable.transform.SetParent(_grabPoint);
                 grabbable.transform.DOKill();
                 grabbable.transform.DOLocalMove(Vector3.zero, 0.1f);
@@ -149,6 +193,10 @@ namespace LemonBerry
 
         private void ReleaseHeldObject()
         {
+            if (_heldObject == null)
+                return;
+
+            _audioSource.PlayOneShot(_dropSound);
             _heldObject.Release();
             _heldObject.transform.SetParent(null);
 
@@ -158,32 +206,6 @@ namespace LemonBerry
                 ignore: false);
 
             _heldObject = null;
-        }
-
-        private void Update()
-        {
-            _moveInputVec = _moveInput.action.ReadValue<Vector2>();
-            _animator.SetBool("Walking", _moveInputVec != Vector2.zero);
-            PlayerLook();
-            GroundedCheck();
-            CheckInteractionArea();
-
-            if (_moveDir == Vector3.zero || !_grounded)
-            {
-                _walkingAudioSource.Stop();
-            }
-            else if (_walkingAudioSource.isPlaying == false)
-            {
-                _walkingAudioSource.Play();
-            }
-        }
-
-        private void OnGUI()
-        {
-            foreach (var seed in FindObjectsOfType<Seed>())
-            {
-                GUILayout.Label($"{seed.name}: {seed.GrowCost - seed.RemainingGrowCost}/{seed.GrowCost}");
-            }
         }
 
         private void GroundedCheck()
@@ -238,19 +260,6 @@ namespace LemonBerry
             }
         }
 
-        private void FixedUpdate()
-        {
-            var cam = CameraController.Instance.Camera;
-            var forward = cam.transform.forward;
-            var right = cam.transform.right;
-            forward.y = right.y = 0f;
-            forward.Normalize();
-            right.Normalize();
-
-            _moveDir = forward*_moveInputVec.y + right*_moveInputVec.x;
-            _rigidbody.position += _moveDir*_moveSpeed*Time.deltaTime;
-        }
-
         private void Jump(InputAction.CallbackContext obj)
         {
             if (!_grounded)
@@ -263,6 +272,12 @@ namespace LemonBerry
         public void AddFollower(WaterDroplet droplet)
         {
             _followers.Add(droplet);
+        }
+
+        public void OnRespawn()
+        {
+            ReleaseHeldObject();
+            transform.position = _startPos;
         }
     }
 }

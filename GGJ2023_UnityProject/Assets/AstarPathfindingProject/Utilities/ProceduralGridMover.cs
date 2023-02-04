@@ -34,7 +34,7 @@ namespace Pathfinding {
 	/// </summary>
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_procedural_grid_mover.php")]
 	public class ProceduralGridMover : VersionedMonoBehaviour {
-		/// <summary>
+        /// <summary>
 		/// Graph will be updated if the target is more than this number of nodes from the graph center.
 		/// Note that this is in nodes, not world units.
 		///
@@ -42,23 +42,10 @@ namespace Pathfinding {
 		/// </summary>
 		public float updateDistance = 10;
 
-		/// <summary>Graph will be moved to follow this target</summary>
+        /// <summary>Graph will be moved to follow this target</summary>
 		public Transform target;
 
-		/// <summary>Temporary buffer</summary>
-		GridNodeBase[] buffer;
-
-		/// <summary>True while the graph is being updated by this script</summary>
-		public bool updatingGraph { get; private set; }
-
-		/// <summary>
-		/// Grid graph to update.
-		/// This will be set at Start based on <see cref="graphIndex"/>.
-		/// During runtime you may set this to any graph or to null to disable updates.
-		/// </summary>
-		public GridGraph graph;
-
-		/// <summary>
+        /// <summary>
 		/// Index for the graph to update.
 		/// This will be used at Start to set <see cref="graph"/>.
 		///
@@ -67,7 +54,20 @@ namespace Pathfinding {
 		[HideInInspector]
 		public int graphIndex;
 
-		void Start () {
+        /// <summary>Temporary buffer</summary>
+		GridNodeBase[] buffer;
+
+        /// <summary>
+		/// Grid graph to update.
+		/// This will be set at Start based on <see cref="graphIndex"/>.
+		/// During runtime you may set this to any graph or to null to disable updates.
+		/// </summary>
+		public GridGraph graph;
+
+        /// <summary>True while the graph is being updated by this script</summary>
+		public bool updatingGraph { get; private set; }
+
+        void Start () {
 			if (AstarPath.active == null) throw new System.Exception("There is no AstarPath object in the scene");
 
 			// If one creates this component via a script then they may have already set the graph field.
@@ -83,7 +83,7 @@ namespace Pathfinding {
 			UpdateGraph();
 		}
 
-		/// <summary>Update is called once per frame</summary>
+        /// <summary>Update is called once per frame</summary>
 		void Update () {
 			if (graph == null) return;
 
@@ -99,7 +99,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Transforms a point from world space to graph space.
 		/// In graph space, (0,0,0) is bottom left corner of the graph
 		/// and one unit along the X and Z axes equals distance between two nodes
@@ -111,7 +111,7 @@ namespace Pathfinding {
 			return graph.transform.InverseTransform(p);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Updates the graph asynchronously.
 		/// This will move the graph so that the target's position is the center of the graph.
 		/// If the graph is already being updated, the call will be ignored.
@@ -166,7 +166,7 @@ namespace Pathfinding {
 			}));
 		}
 
-		/// <summary>Async method for moving the graph</summary>
+        /// <summary>Async method for moving the graph</summary>
 		IEnumerator UpdateGraphCoroutine () {
 			// Find the direction that we want to move the graph in.
 			// Calcuculate this in graph space (where a distance of one is the size of one node)
@@ -372,5 +372,5 @@ namespace Pathfinding {
 				}
 			}
 		}
-	}
+    }
 }

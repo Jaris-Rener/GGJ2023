@@ -10,20 +10,20 @@ namespace Pathfinding {
 	/// See: turnbased (view in online documentation for working links)
 	/// </summary>
 	public interface ITraversalProvider {
-		bool CanTraverse(Path path, GraphNode node);
-		uint GetTraversalCost(Path path, GraphNode node);
-	}
+        bool CanTraverse(Path path, GraphNode node);
+        uint GetTraversalCost(Path path, GraphNode node);
+    }
 
 	/// <summary>Convenience class to access the default implementation of the ITraversalProvider</summary>
 	public static class DefaultITraversalProvider {
-		public static bool CanTraverse (Path path, GraphNode node) {
+        public static bool CanTraverse (Path path, GraphNode node) {
 			return node.Walkable && (path.enabledTags >> (int)node.Tag & 0x1) != 0;
 		}
 
-		public static uint GetTraversalCost (Path path, GraphNode node) {
+        public static uint GetTraversalCost (Path path, GraphNode node) {
 			return path.GetTagPenalty((int)node.Tag) + node.Penalty;
 		}
-	}
+    }
 
 	/// <summary>Base class for all path types</summary>
 	public abstract class Path : IPathInternals {
@@ -829,17 +829,17 @@ namespace Pathfinding {
 
 	/// <summary>Used for hiding internal methods of the Path class</summary>
 	internal interface IPathInternals {
-		PathHandler PathHandler { get; }
-		bool Pooled { get; set; }
-		void AdvanceState(PathState s);
-		void OnEnterPool();
-		void Reset();
-		void ReturnPath();
-		void PrepareBase(PathHandler handler);
-		void Prepare();
-		void Initialize();
-		void Cleanup();
-		void CalculateStep(long targetTick);
-		string DebugString(PathLog logMode);
-	}
+        PathHandler PathHandler { get; }
+        bool Pooled { get; set; }
+        void AdvanceState(PathState s);
+        void OnEnterPool();
+        void Reset();
+        void ReturnPath();
+        void PrepareBase(PathHandler handler);
+        void Prepare();
+        void Initialize();
+        void Cleanup();
+        void CalculateStep(long targetTick);
+        string DebugString(PathLog logMode);
+    }
 }

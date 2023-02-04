@@ -42,13 +42,13 @@ namespace Pathfinding.Legacy {
 	[AddComponentMenu("Pathfinding/Legacy/AI/Legacy AIPath (3D)")]
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_legacy_1_1_legacy_a_i_path.php")]
 	public class LegacyAIPath : AIPath {
-		/// <summary>
+        /// <summary>
 		/// Target point is Interpolated on the current segment in the path so that it has a distance of <see cref="forwardLook"/> from the AI.
 		/// See the detailed description of AIPath for an illustrative image
 		/// </summary>
 		public float forwardLook = 1;
 
-		/// <summary>
+        /// <summary>
 		/// Do a closest point on path check when receiving path callback.
 		/// Usually the AI has moved a bit between requesting the path, and getting it back, and there is usually a small gap between the AI
 		/// and the closest node.
@@ -58,19 +58,42 @@ namespace Pathfinding.Legacy {
 		/// </summary>
 		public bool closestOnPathCheck = true;
 
-		protected float minMoveScale = 0.05F;
-
-		/// <summary>Current index in the path which is current target</summary>
+        /// <summary>Current index in the path which is current target</summary>
 		protected int currentWaypointIndex = 0;
 
-		protected Vector3 lastFoundWaypointPosition;
-		protected float lastFoundWaypointTime = -9999;
+        protected Vector3 lastFoundWaypointPosition;
+        protected float lastFoundWaypointTime = -9999;
 
-		protected override void Awake () {
+        protected float minMoveScale = 0.05F;
+
+        /// <summary>
+		/// Relative direction to where the AI is heading.
+		/// Filled in by <see cref="CalculateVelocity"/>
+		/// </summary>
+		protected new Vector3 targetDirection;
+
+        protected override void Awake () {
 			base.Awake();
 		}
 
-		/// <summary>
+        protected override void Update () {
+			if (!canMove) { return; }
+
+			Vector3 dir = CalculateVelocity(GetFeetPosition());
+
+			//Rotate towards targetDirection (filled in by CalculateVelocity)
+			RotateTowards(targetDirection);
+
+			if (controller != null) {
+				controller.SimpleMove(dir);
+			} else if (rigid != null) {
+				rigid.AddForce(dir);
+			} else {
+				tr.Translate(dir*Time.deltaTime, Space.World);
+			}
+		}
+
+        /// <summary>
 		/// Called when a requested path has finished calculation.
 		/// A path is first requested by <see cref="SearchPath"/>, it is then calculated, probably in the same or the next frame.
 		/// Finally it is returned to the seeker which forwards it to this function.\n
@@ -131,37 +154,14 @@ namespace Pathfinding.Legacy {
 			}
 		}
 
-		protected override void Update () {
-			if (!canMove) { return; }
-
-			Vector3 dir = CalculateVelocity(GetFeetPosition());
-
-			//Rotate towards targetDirection (filled in by CalculateVelocity)
-			RotateTowards(targetDirection);
-
-			if (controller != null) {
-				controller.SimpleMove(dir);
-			} else if (rigid != null) {
-				rigid.AddForce(dir);
-			} else {
-				tr.Translate(dir*Time.deltaTime, Space.World);
-			}
-		}
-
-		/// <summary>
-		/// Relative direction to where the AI is heading.
-		/// Filled in by <see cref="CalculateVelocity"/>
-		/// </summary>
-		protected new Vector3 targetDirection;
-
-		protected float XZSqrMagnitude (Vector3 a, Vector3 b) {
+        protected float XZSqrMagnitude (Vector3 a, Vector3 b) {
 			float dx = b.x-a.x;
 			float dz = b.z-a.z;
 
 			return dx*dx + dz*dz;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Calculates desired velocity.
 		/// Finds the target path segment and returns the forward direction, scaled with speed.
 		/// A whole bunch of restrictions on the velocity is applied to make sure it doesn't overshoot, does not look too far ahead,
@@ -242,7 +242,7 @@ namespace Pathfinding.Legacy {
 			return forward*sp;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Rotates in the specified direction.
 		/// Rotates around the Y-axis.
 		/// See: turningSpeed
@@ -262,7 +262,7 @@ namespace Pathfinding.Legacy {
 			tr.rotation = rot;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Calculates target point from the current line segment.
 		/// See: <see cref="forwardLook"/>
 		/// TODO: This function uses .magnitude quite a lot, can it be optimized?
@@ -288,5 +288,5 @@ namespace Pathfinding.Legacy {
 			offset = Mathf.Clamp(offset+closest, 0.0F, 1.0F);
 			return (b-a)*offset + a;
 		}
-	}
+    }
 }

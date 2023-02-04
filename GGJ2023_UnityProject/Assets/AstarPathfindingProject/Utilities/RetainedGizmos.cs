@@ -39,7 +39,144 @@ namespace Pathfinding.Util {
 	/// </code>
 	/// </summary>
 	public class RetainedGizmos {
-		/// <summary>Combines hashes into a single hash value</summary>
+        /// <summary>Material to use for the navmesh in the editor</summary>
+		public Material surfaceMaterial;
+
+        /// <summary>Material to use for the navmesh outline in the editor</summary>
+		public Material lineMaterial;
+
+        List<MeshWithHash> meshes = new List<MeshWithHash>();
+        HashSet<ulong> usedHashes = new HashSet<ulong>();
+        HashSet<ulong> existingHashes = new HashSet<ulong>();
+        Stack<Mesh> cachedMeshes = new Stack<Mesh>();
+
+        public GraphGizmoHelper GetSingleFrameGizmoHelper (AstarPath active) {
+			var uniqHash = new RetainedGizmos.Hasher();
+
+			uniqHash.AddHash(Time.realtimeSinceStartup.GetHashCode());
+			Draw(uniqHash);
+			return GetGizmoHelper(active, uniqHash);
+		}
+
+        public GraphGizmoHelper GetGizmoHelper (AstarPath active, Hasher hasher) {
+			var helper = ObjectPool<GraphGizmoHelper>.Claim();
+
+			helper.Init(active, hasher, this);
+			return helper;
+		}
+
+        void PoolMesh (Mesh mesh) {
+			mesh.Clear();
+			cachedMeshes.Push(mesh);
+		}
+
+        Mesh GetMesh () {
+			if (cachedMeshes.Count > 0) {
+				return cachedMeshes.Pop();
+			} else {
+				return new Mesh {
+						   hideFlags = HideFlags.DontSave
+				};
+			}
+		}
+
+        /// <summary>True if there already is a mesh with the specified hash</summary>
+		public bool HasCachedMesh (Hasher hasher) {
+			return existingHashes.Contains(hasher.Hash);
+		}
+
+        /// <summary>
+		/// Schedules the meshes for the specified hash to be drawn.
+		/// Returns: False if there is no cached mesh for this hash, you may want to
+		///  submit one in that case. The draw command will be issued regardless of the return value.
+		/// </summary>
+		public bool Draw (Hasher hasher) {
+			usedHashes.Add(hasher.Hash);
+			return HasCachedMesh(hasher);
+		}
+
+        /// <summary>
+		/// Schedules all meshes that were drawn the last frame (last time FinalizeDraw was called) to be drawn again.
+		/// Also draws any new meshes that have been added since FinalizeDraw was last called.
+		/// </summary>
+		public void DrawExisting () {
+			for (int i = 0; i < meshes.Count; i++) {
+				usedHashes.Add(meshes[i].hash);
+			}
+		}
+
+        /// <summary>Call after all <see cref="Draw"/> commands for the frame have been done to draw everything</summary>
+		public void FinalizeDraw () {
+			RemoveUnusedMeshes(meshes);
+
+#if UNITY_EDITOR
+			// Make sure the material references are correct
+			if (surfaceMaterial == null) surfaceMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath(EditorResourceHelper.editorAssets + "/Materials/Navmesh.mat", typeof(Material)) as Material;
+			if (lineMaterial == null) lineMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath(EditorResourceHelper.editorAssets + "/Materials/NavmeshOutline.mat", typeof(Material)) as Material;
+#endif
+
+			var cam = Camera.current;
+			var planes = GeometryUtility.CalculateFrustumPlanes(cam);
+
+			// Silently do nothing if the materials are not set
+			if (surfaceMaterial == null || lineMaterial == null) return;
+
+			Profiler.BeginSample("Draw Retained Gizmos");
+			// First surfaces, then lines
+			for (int matIndex = 0; matIndex <= 1; matIndex++) {
+				var mat = matIndex == 0 ? surfaceMaterial : lineMaterial;
+				for (int pass = 0; pass < mat.passCount; pass++) {
+					mat.SetPass(pass);
+					for (int i = 0; i < meshes.Count; i++) {
+						if (meshes[i].lines == (mat == lineMaterial) && GeometryUtility.TestPlanesAABB(planes, meshes[i].mesh.bounds)) {
+							Graphics.DrawMeshNow(meshes[i].mesh, Matrix4x4.identity);
+						}
+					}
+				}
+			}
+
+			usedHashes.Clear();
+			Profiler.EndSample();
+		}
+
+        /// <summary>
+		/// Destroys all cached meshes.
+		/// Used to make sure that no memory leaks happen in the Unity Editor.
+		/// </summary>
+		public void ClearCache () {
+			usedHashes.Clear();
+			RemoveUnusedMeshes(meshes);
+
+			while (cachedMeshes.Count > 0) {
+				Mesh.DestroyImmediate(cachedMeshes.Pop());
+			}
+
+			UnityEngine.Assertions.Assert.IsTrue(meshes.Count == 0);
+		}
+
+        void RemoveUnusedMeshes (List<MeshWithHash> meshList) {
+			// Walk the array with two pointers
+			// i pointing to the entry that should be filled with something
+			// and j pointing to the entry that is a potential candidate for
+			// filling the entry at i.
+			// When j reaches the end of the list it will be reduced in size
+			for (int i = 0, j = 0; i < meshList.Count;) {
+				if (j == meshList.Count) {
+					j--;
+					meshList.RemoveAt(j);
+				} else if (usedHashes.Contains(meshList[j].hash)) {
+					meshList[i] = meshList[j];
+					i++;
+					j++;
+				} else {
+					PoolMesh(meshList[j].mesh);
+					existingHashes.Remove(meshList[j].hash);
+					j++;
+				}
+			}
+		}
+
+        /// <summary>Combines hashes into a single hash value</summary>
 		public struct Hasher {
 			ulong hash;
 			bool includePathSearchInfo;
@@ -80,13 +217,19 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>Helper for drawing gizmos</summary>
+        /// <summary>Helper for drawing gizmos</summary>
 		public class Builder : IAstarPooledObject {
-			List<Vector3> lines = new List<Vector3>();
-			List<Color32> lineColors = new List<Color32>();
-			List<Mesh> meshes = new List<Mesh>();
+            List<Vector3> lines = new List<Vector3>();
+            List<Color32> lineColors = new List<Color32>();
+            List<Mesh> meshes = new List<Mesh>();
 
-			public void DrawMesh (RetainedGizmos gizmos, Vector3[] vertices, List<int> triangles, Color[] colors) {
+            void IAstarPooledObject.OnEnterPool () {
+				lines.Clear();
+				lineColors.Clear();
+				meshes.Clear();
+			}
+
+            public void DrawMesh (RetainedGizmos gizmos, Vector3[] vertices, List<int> triangles, Color[] colors) {
 				var mesh = gizmos.GetMesh();
 
 				// Set all data on the mesh
@@ -99,7 +242,7 @@ namespace Pathfinding.Util {
 				meshes.Add(mesh);
 			}
 
-			/// <summary>Draws a wire cube after being transformed the specified transformation</summary>
+            /// <summary>Draws a wire cube after being transformed the specified transformation</summary>
 			public void DrawWireCube (GraphTransform tr, Bounds bounds, Color color) {
 				var min = bounds.min;
 				var max = bounds.max;
@@ -120,7 +263,7 @@ namespace Pathfinding.Util {
 				DrawLine(tr.Transform(new Vector3(min.x, min.y, max.z)), tr.Transform(new Vector3(min.x, max.y, max.z)), color);
 			}
 
-			public void DrawLine (Vector3 start, Vector3 end, Color color) {
+            public void DrawLine (Vector3 start, Vector3 end, Color color) {
 				lines.Add(start);
 				lines.Add(end);
 				var col32 = (Color32)color;
@@ -128,19 +271,19 @@ namespace Pathfinding.Util {
 				lineColors.Add(col32);
 			}
 
-			public void Submit (RetainedGizmos gizmos, Hasher hasher) {
+            public void Submit (RetainedGizmos gizmos, Hasher hasher) {
 				SubmitLines(gizmos, hasher.Hash);
 				SubmitMeshes(gizmos, hasher.Hash);
 			}
 
-			void SubmitMeshes (RetainedGizmos gizmos, ulong hash) {
+            void SubmitMeshes (RetainedGizmos gizmos, ulong hash) {
 				for (int i = 0; i < meshes.Count; i++) {
 					gizmos.meshes.Add(new MeshWithHash { hash = hash, mesh = meshes[i], lines = false });
 					gizmos.existingHashes.Add(hash);
 				}
 			}
 
-			void SubmitLines (RetainedGizmos gizmos, ulong hash) {
+            void SubmitLines (RetainedGizmos gizmos, ulong hash) {
 				// Unity only supports 65535 vertices per mesh. 65532 used because MaxLineEndPointsPerBatch needs to be even.
 				const int MaxLineEndPointsPerBatch = 65532/2;
 				int batches = (lines.Count + MaxLineEndPointsPerBatch - 1)/MaxLineEndPointsPerBatch;
@@ -222,155 +365,12 @@ namespace Pathfinding.Util {
 					gizmos.existingHashes.Add(hash);
 				}
 			}
+        }
 
-			void IAstarPooledObject.OnEnterPool () {
-				lines.Clear();
-				lineColors.Clear();
-				meshes.Clear();
-			}
-		}
-
-		struct MeshWithHash {
+        struct MeshWithHash {
 			public ulong hash;
 			public Mesh mesh;
 			public bool lines;
 		}
-
-		List<MeshWithHash> meshes = new List<MeshWithHash>();
-		HashSet<ulong> usedHashes = new HashSet<ulong>();
-		HashSet<ulong> existingHashes = new HashSet<ulong>();
-		Stack<Mesh> cachedMeshes = new Stack<Mesh>();
-
-		public GraphGizmoHelper GetSingleFrameGizmoHelper (AstarPath active) {
-			var uniqHash = new RetainedGizmos.Hasher();
-
-			uniqHash.AddHash(Time.realtimeSinceStartup.GetHashCode());
-			Draw(uniqHash);
-			return GetGizmoHelper(active, uniqHash);
-		}
-
-		public GraphGizmoHelper GetGizmoHelper (AstarPath active, Hasher hasher) {
-			var helper = ObjectPool<GraphGizmoHelper>.Claim();
-
-			helper.Init(active, hasher, this);
-			return helper;
-		}
-
-		void PoolMesh (Mesh mesh) {
-			mesh.Clear();
-			cachedMeshes.Push(mesh);
-		}
-
-		Mesh GetMesh () {
-			if (cachedMeshes.Count > 0) {
-				return cachedMeshes.Pop();
-			} else {
-				return new Mesh {
-						   hideFlags = HideFlags.DontSave
-				};
-			}
-		}
-
-		/// <summary>Material to use for the navmesh in the editor</summary>
-		public Material surfaceMaterial;
-
-		/// <summary>Material to use for the navmesh outline in the editor</summary>
-		public Material lineMaterial;
-
-		/// <summary>True if there already is a mesh with the specified hash</summary>
-		public bool HasCachedMesh (Hasher hasher) {
-			return existingHashes.Contains(hasher.Hash);
-		}
-
-		/// <summary>
-		/// Schedules the meshes for the specified hash to be drawn.
-		/// Returns: False if there is no cached mesh for this hash, you may want to
-		///  submit one in that case. The draw command will be issued regardless of the return value.
-		/// </summary>
-		public bool Draw (Hasher hasher) {
-			usedHashes.Add(hasher.Hash);
-			return HasCachedMesh(hasher);
-		}
-
-		/// <summary>
-		/// Schedules all meshes that were drawn the last frame (last time FinalizeDraw was called) to be drawn again.
-		/// Also draws any new meshes that have been added since FinalizeDraw was last called.
-		/// </summary>
-		public void DrawExisting () {
-			for (int i = 0; i < meshes.Count; i++) {
-				usedHashes.Add(meshes[i].hash);
-			}
-		}
-
-		/// <summary>Call after all <see cref="Draw"/> commands for the frame have been done to draw everything</summary>
-		public void FinalizeDraw () {
-			RemoveUnusedMeshes(meshes);
-
-#if UNITY_EDITOR
-			// Make sure the material references are correct
-			if (surfaceMaterial == null) surfaceMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath(EditorResourceHelper.editorAssets + "/Materials/Navmesh.mat", typeof(Material)) as Material;
-			if (lineMaterial == null) lineMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath(EditorResourceHelper.editorAssets + "/Materials/NavmeshOutline.mat", typeof(Material)) as Material;
-#endif
-
-			var cam = Camera.current;
-			var planes = GeometryUtility.CalculateFrustumPlanes(cam);
-
-			// Silently do nothing if the materials are not set
-			if (surfaceMaterial == null || lineMaterial == null) return;
-
-			Profiler.BeginSample("Draw Retained Gizmos");
-			// First surfaces, then lines
-			for (int matIndex = 0; matIndex <= 1; matIndex++) {
-				var mat = matIndex == 0 ? surfaceMaterial : lineMaterial;
-				for (int pass = 0; pass < mat.passCount; pass++) {
-					mat.SetPass(pass);
-					for (int i = 0; i < meshes.Count; i++) {
-						if (meshes[i].lines == (mat == lineMaterial) && GeometryUtility.TestPlanesAABB(planes, meshes[i].mesh.bounds)) {
-							Graphics.DrawMeshNow(meshes[i].mesh, Matrix4x4.identity);
-						}
-					}
-				}
-			}
-
-			usedHashes.Clear();
-			Profiler.EndSample();
-		}
-
-		/// <summary>
-		/// Destroys all cached meshes.
-		/// Used to make sure that no memory leaks happen in the Unity Editor.
-		/// </summary>
-		public void ClearCache () {
-			usedHashes.Clear();
-			RemoveUnusedMeshes(meshes);
-
-			while (cachedMeshes.Count > 0) {
-				Mesh.DestroyImmediate(cachedMeshes.Pop());
-			}
-
-			UnityEngine.Assertions.Assert.IsTrue(meshes.Count == 0);
-		}
-
-		void RemoveUnusedMeshes (List<MeshWithHash> meshList) {
-			// Walk the array with two pointers
-			// i pointing to the entry that should be filled with something
-			// and j pointing to the entry that is a potential candidate for
-			// filling the entry at i.
-			// When j reaches the end of the list it will be reduced in size
-			for (int i = 0, j = 0; i < meshList.Count;) {
-				if (j == meshList.Count) {
-					j--;
-					meshList.RemoveAt(j);
-				} else if (usedHashes.Contains(meshList[j].hash)) {
-					meshList[i] = meshList[j];
-					i++;
-					j++;
-				} else {
-					PoolMesh(meshList[j].mesh);
-					existingHashes.Remove(meshList[j].hash);
-					j++;
-				}
-			}
-		}
-	}
+    }
 }

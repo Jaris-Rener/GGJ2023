@@ -3,7 +3,7 @@ using System;
 namespace Pathfinding.Util {
 	/// <summary>Various utilities for handling arrays and memory</summary>
 	public static class Memory {
-		/// <summary>
+        /// <summary>
 		/// Sets all values in an array to a specific value faster than a loop.
 		/// Only faster for large arrays. Slower for small ones.
 		/// Tests indicate it becomes faster somewhere when the length of the array grows above around 100.
@@ -44,7 +44,7 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Sets all values in an array to a specific value faster than a loop.
 		/// Only faster for large arrays. Slower for small ones.
 		/// Tests indicate it becomes faster somewhere when the length of the array grows above around 100.
@@ -87,7 +87,7 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns a new array with at most length newLength.
 		/// The array will contain a copy of all elements of arr up to but excluding the index newLength.
 		/// </summary>
@@ -98,12 +98,12 @@ namespace Pathfinding.Util {
 			return shrunkArr;
 		}
 
-		/// <summary>Swaps the variables a and b</summary>
+        /// <summary>Swaps the variables a and b</summary>
 		public static void Swap<T>(ref T a, ref T b) {
 			T tmp = a;
 
 			a = b;
 			b = tmp;
 		}
-	}
+    }
 }

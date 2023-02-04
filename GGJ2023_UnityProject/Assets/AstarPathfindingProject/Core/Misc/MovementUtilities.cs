@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace Pathfinding.Util {
 	public static class MovementUtilities {
-		/// <summary>
+        /// <summary>
 		/// Clamps the velocity to the max speed and optionally the forwards direction.
 		///
 		/// Note that all vectors are 2D vectors, not 3D vectors.
@@ -59,7 +59,7 @@ namespace Pathfinding.Util {
 			}
 		}
 
-		/// <summary>Calculate an acceleration to move deltaPosition units and get there with approximately a velocity of targetVelocity</summary>
+        /// <summary>Calculate an acceleration to move deltaPosition units and get there with approximately a velocity of targetVelocity</summary>
 		public static Vector2 CalculateAccelerationToReachPoint (Vector2 deltaPosition, Vector2 targetVelocity, Vector2 currentVelocity, float forwardsAcceleration, float rotationSpeed, float maxSpeed, Vector2 forwardsVector) {
 			// Guard against div by zero
 			if (forwardsAcceleration <= 0) return Vector2.zero;
@@ -170,5 +170,5 @@ namespace Pathfinding.Util {
 				return VectorMath.ComplexMultiply(finalAcceleration, forwardsVector);
 			}
 		}
-	}
+    }
 }

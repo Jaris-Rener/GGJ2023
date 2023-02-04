@@ -7,11 +7,11 @@ namespace Pathfinding {
 	/// Modifier
 	/// </summary>
 	public interface IPathModifier {
-		int Order { get; }
+        int Order { get; }
 
-		void Apply(Path path);
-		void PreProcess(Path path);
-	}
+        void Apply(Path path);
+        void PreProcess(Path path);
+    }
 
 	/// <summary>
 	/// Base class for path modifiers which are not attached to GameObjects.
@@ -19,35 +19,35 @@ namespace Pathfinding {
 	/// </summary>
 	[System.Serializable]
 	public abstract class PathModifier : IPathModifier {
-		[System.NonSerialized]
+        [System.NonSerialized]
 		public Seeker seeker;
 
-		/// <summary>
+        /// <summary>
 		/// Modifiers will be executed from lower order to higher order.
 		/// This value is assumed to stay constant.
 		/// </summary>
 		public abstract int Order { get; }
 
-		public void Awake (Seeker seeker) {
+        public virtual void PreProcess (Path path) {
+			// Required by IPathModifier
+		}
+
+        /// <summary>Main Post-Processing function</summary>
+		public abstract void Apply(Path path);
+
+        public void Awake (Seeker seeker) {
 			this.seeker = seeker;
 			if (seeker != null) {
 				seeker.RegisterModifier(this);
 			}
 		}
 
-		public void OnDestroy (Seeker seeker) {
+        public void OnDestroy (Seeker seeker) {
 			if (seeker != null) {
 				seeker.DeregisterModifier(this);
 			}
 		}
-
-		public virtual void PreProcess (Path path) {
-			// Required by IPathModifier
-		}
-
-		/// <summary>Main Post-Processing function</summary>
-		public abstract void Apply(Path path);
-	}
+    }
 
 	/// <summary>
 	/// Base class for path modifiers which can be attached to GameObjects.
@@ -55,10 +55,10 @@ namespace Pathfinding {
 	/// </summary>
 	[System.Serializable]
 	public abstract class MonoModifier : VersionedMonoBehaviour, IPathModifier {
-		[System.NonSerialized]
+        [System.NonSerialized]
 		public Seeker seeker;
 
-		/// <summary>Alerts the Seeker that this modifier exists</summary>
+        /// <summary>Alerts the Seeker that this modifier exists</summary>
 		protected virtual void OnEnable () {
 			seeker = GetComponent<Seeker>();
 
@@ -67,23 +67,23 @@ namespace Pathfinding {
 			}
 		}
 
-		protected virtual void OnDisable () {
+        protected virtual void OnDisable () {
 			if (seeker != null) {
 				seeker.DeregisterModifier(this);
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Modifiers will be executed from lower order to higher order.
 		/// This value is assumed to stay constant.
 		/// </summary>
 		public abstract int Order { get; }
 
-		public virtual void PreProcess (Path path) {
+        public virtual void PreProcess (Path path) {
 			// Required by IPathModifier
 		}
 
-		/// <summary>Called for each path that the Seeker calculates after the calculation has finished</summary>
+        /// <summary>Called for each path that the Seeker calculates after the calculation has finished</summary>
 		public abstract void Apply(Path path);
-	}
+    }
 }

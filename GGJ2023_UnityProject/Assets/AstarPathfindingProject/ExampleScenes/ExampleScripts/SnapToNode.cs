@@ -9,7 +9,7 @@ using Pathfinding;
 [ExecuteInEditMode]
 [HelpURL("http://arongranberg.com/astar/docs/class_snap_to_node.php")]
 public class SnapToNode : MonoBehaviour {
-	void Update () {
+    void Update () {
 		if (transform.hasChanged && AstarPath.active != null) {
 			var node = AstarPath.active.GetNearest(transform.position, NNConstraint.None).node;
 			if (node != null) {

@@ -19,6 +19,28 @@ namespace DG.Tweening
 {
 	public static class DOTweenModuleUI
     {
+        // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+        // ███ INTERNAL CLASSES ████████████████████████████████████████████████████████████████████████████████████████████████
+        // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
+        public static class Utils
+        {
+            /// <summary>
+            /// Converts the anchoredPosition of the first RectTransform to the second RectTransform,
+            /// taking into consideration offset, anchors and pivot, and returns the new anchoredPosition
+            /// </summary>
+            public static Vector2 SwitchToRectTransform(RectTransform from, RectTransform to)
+            {
+                Vector2 localPoint;
+                Vector2 fromPivotDerivedOffset = new Vector2(from.rect.width * 0.5f + from.rect.xMin, from.rect.height * 0.5f + from.rect.yMin);
+                Vector2 screenP = RectTransformUtility.WorldToScreenPoint(null, from.position);
+                screenP += fromPivotDerivedOffset;
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(to, screenP, null, out localPoint);
+                Vector2 pivotDerivedOffset = new Vector2(to.rect.width * 0.5f + to.rect.xMin, to.rect.height * 0.5f + to.rect.yMin);
+                return to.anchoredPosition + localPoint - pivotDerivedOffset;
+            }
+        }
+
         #region Shortcuts
 
         #region CanvasGroup
@@ -211,6 +233,7 @@ namespace DG.Tweening
             t.SetOptions(snapping).SetTarget(target);
             return t;
         }
+
         /// <summary>Tweens a RectTransform's anchoredPosition X to the given value.
         /// Also stores the RectTransform as the tween's target so it can be used for filtered operations</summary>
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
@@ -221,6 +244,7 @@ namespace DG.Tweening
             t.SetOptions(AxisConstraint.X, snapping).SetTarget(target);
             return t;
         }
+
         /// <summary>Tweens a RectTransform's anchoredPosition Y to the given value.
         /// Also stores the RectTransform as the tween's target so it can be used for filtered operations</summary>
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
@@ -242,6 +266,7 @@ namespace DG.Tweening
             t.SetOptions(snapping).SetTarget(target);
             return t;
         }
+
         /// <summary>Tweens a RectTransform's anchoredPosition3D X to the given value.
         /// Also stores the RectTransform as the tween's target so it can be used for filtered operations</summary>
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
@@ -252,6 +277,7 @@ namespace DG.Tweening
             t.SetOptions(AxisConstraint.X, snapping).SetTarget(target);
             return t;
         }
+
         /// <summary>Tweens a RectTransform's anchoredPosition3D Y to the given value.
         /// Also stores the RectTransform as the tween's target so it can be used for filtered operations</summary>
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
@@ -262,6 +288,7 @@ namespace DG.Tweening
             t.SetOptions(AxisConstraint.Y, snapping).SetTarget(target);
             return t;
         }
+
         /// <summary>Tweens a RectTransform's anchoredPosition3D Z to the given value.
         /// Also stores the RectTransform as the tween's target so it can be used for filtered operations</summary>
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
@@ -304,6 +331,7 @@ namespace DG.Tweening
             t.SetTarget(target);
             return t;
         }
+
         /// <summary>Tweens a RectTransform's pivot X to the given value.
         /// Also stores the RectTransform as the tween's target so it can be used for filtered operations</summary>
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
@@ -313,6 +341,7 @@ namespace DG.Tweening
             t.SetOptions(AxisConstraint.X).SetTarget(target);
             return t;
         }
+
         /// <summary>Tweens a RectTransform's pivot Y to the given value.
         /// Also stores the RectTransform as the tween's target so it can be used for filtered operations</summary>
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
@@ -365,6 +394,7 @@ namespace DG.Tweening
             return DOTween.Shake(() => target.anchoredPosition, x => target.anchoredPosition = x, duration, strength, vibrato, randomness, true, fadeOut, randomnessMode)
                 .SetTarget(target).SetSpecialStartupMode(SpecialStartupMode.SetShake).SetOptions(snapping);
         }
+
         /// <summary>Shakes a RectTransform's anchoredPosition with the given values.
         /// Also stores the RectTransform as the tween's target so it can be used for filtered operations</summary>
         /// <param name="duration">The duration of the tween</param>
@@ -440,6 +470,7 @@ namespace DG.Tweening
                 }, endValue, duration)
                 .SetOptions(snapping).SetTarget(target);
         }
+
         /// <summary>Tweens a ScrollRect's horizontalNormalizedPosition to the given value.
         /// Also stores the ScrollRect as the tween's target so it can be used for filtered operations</summary>
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
@@ -449,6 +480,7 @@ namespace DG.Tweening
             return DOTween.To(() => target.horizontalNormalizedPosition, x => target.horizontalNormalizedPosition = x, endValue, duration)
                 .SetOptions(snapping).SetTarget(target);
         }
+
         /// <summary>Tweens a ScrollRect's verticalNormalizedPosition to the given value.
         /// Also stores the ScrollRect as the tween's target so it can be used for filtered operations</summary>
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
@@ -635,28 +667,6 @@ namespace DG.Tweening
         #endregion
 
         #endregion
-
-        // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-        // ███ INTERNAL CLASSES ████████████████████████████████████████████████████████████████████████████████████████████████
-        // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-
-        public static class Utils
-        {
-            /// <summary>
-            /// Converts the anchoredPosition of the first RectTransform to the second RectTransform,
-            /// taking into consideration offset, anchors and pivot, and returns the new anchoredPosition
-            /// </summary>
-            public static Vector2 SwitchToRectTransform(RectTransform from, RectTransform to)
-            {
-                Vector2 localPoint;
-                Vector2 fromPivotDerivedOffset = new Vector2(from.rect.width * 0.5f + from.rect.xMin, from.rect.height * 0.5f + from.rect.yMin);
-                Vector2 screenP = RectTransformUtility.WorldToScreenPoint(null, from.position);
-                screenP += fromPivotDerivedOffset;
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(to, screenP, null, out localPoint);
-                Vector2 pivotDerivedOffset = new Vector2(to.rect.width * 0.5f + to.rect.xMin, to.rect.height * 0.5f + to.rect.yMin);
-                return to.anchoredPosition + localPoint - pivotDerivedOffset;
-            }
-        }
-	}
+    }
 }
 #endif

@@ -15,7 +15,7 @@ namespace Pathfinding {
 	/// \ingroup utils
 	/// </summary>
 	public static class GraphUtilities {
-		/// <summary>
+        /// <summary>
 		/// Convenience method to get a list of all segments of the contours of a graph.
 		/// Returns: A list of segments. Every 2 elements form a line segment. The first segment is (result[0], result[1]), the second one is (result[2], result[3]) etc.
 		/// The line segments are oriented so that the navmesh is on the right side of the segments when seen from above.
@@ -66,7 +66,7 @@ namespace Pathfinding {
 			return result;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Traces the contour of a navmesh.
 		///
 		/// [Open online documentation to see images]
@@ -128,7 +128,7 @@ namespace Pathfinding {
 		}
 
 #if !ASTAR_NO_GRID_GRAPH
-		/// <summary>
+        /// <summary>
 		/// Finds all contours of a collection of nodes in a grid graph.
 		///
 		/// <code>
@@ -266,5 +266,5 @@ namespace Pathfinding {
 			}
 		}
 #endif
-	}
+    }
 }

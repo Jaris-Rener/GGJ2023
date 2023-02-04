@@ -13,47 +13,47 @@ namespace Pathfinding {
 	/// Hiding the internal methods cleans up the documentation and IntelliSense suggestions.
 	/// </summary>
 	public interface IGraphInternals {
-		string SerializedEditorSettings { get; set; }
-		void OnDestroy();
-		void DestroyAllNodes();
-		IEnumerable<Progress> ScanInternal();
-		void SerializeExtraInfo(GraphSerializationContext ctx);
-		void DeserializeExtraInfo(GraphSerializationContext ctx);
-		void PostDeserialization(GraphSerializationContext ctx);
-		void DeserializeSettingsCompatibility(GraphSerializationContext ctx);
-	}
+        string SerializedEditorSettings { get; set; }
+        void OnDestroy();
+        void DestroyAllNodes();
+        IEnumerable<Progress> ScanInternal();
+        void SerializeExtraInfo(GraphSerializationContext ctx);
+        void DeserializeExtraInfo(GraphSerializationContext ctx);
+        void PostDeserialization(GraphSerializationContext ctx);
+        void DeserializeSettingsCompatibility(GraphSerializationContext ctx);
+    }
 
 	/// <summary>Base class for all graphs</summary>
 	public abstract class NavGraph : IGraphInternals {
-		/// <summary>Reference to the AstarPath object in the scene</summary>
+        /// <summary>Reference to the AstarPath object in the scene</summary>
 		public AstarPath active;
 
-		/// <summary>
+        /// <summary>
 		/// Used as an ID of the graph, considered to be unique.
 		/// Note: This is Pathfinding.Util.Guid not System.Guid. A replacement for System.Guid was coded for better compatibility with iOS
 		/// </summary>
 		[JsonMember]
 		public Guid guid;
 
-		/// <summary>Default penalty to apply to all nodes</summary>
+        /// <summary>Default penalty to apply to all nodes</summary>
 		[JsonMember]
 		public uint initialPenalty;
 
-		/// <summary>Is the graph open in the editor</summary>
+        /// <summary>Is the graph open in the editor</summary>
 		[JsonMember]
 		public bool open;
 
-		/// <summary>Index of the graph, used for identification purposes</summary>
+        /// <summary>Index of the graph, used for identification purposes</summary>
 		public uint graphIndex;
 
-		/// <summary>
+        /// <summary>
 		/// Name of the graph.
 		/// Can be set in the unity editor
 		/// </summary>
 		[JsonMember]
 		public string name;
 
-		/// <summary>
+        /// <summary>
 		/// Enable to draw gizmos in the Unity scene view.
 		/// In the inspector this value corresponds to the state of
 		/// the 'eye' icon in the top left corner of every graph inspector.
@@ -61,7 +61,7 @@ namespace Pathfinding {
 		[JsonMember]
 		public bool drawGizmos = true;
 
-		/// <summary>
+        /// <summary>
 		/// Used in the editor to check if the info screen is open.
 		/// Should be inside UNITY_EDITOR only \<see cref="ifs"/> but just in case anyone tries to serialize a NavGraph instance using Unity, I have left it like this as it would otherwise cause a crash when building.
 		/// Version 3.0.8.1 was released because of this bug only
@@ -69,15 +69,29 @@ namespace Pathfinding {
 		[JsonMember]
 		public bool infoScreenOpen;
 
-		/// <summary>Used in the Unity editor to store serialized settings for graph inspectors</summary>
+        /// <summary>
+		/// A matrix for translating/rotating/scaling the graph.
+		/// Deprecated: Use the transform field (only available on some graph types) instead
+		/// </summary>
+		[System.Obsolete("Use the transform field (only available on some graph types) instead", true)]
+		public Matrix4x4 matrix = Matrix4x4.identity;
+
+        /// <summary>
+		/// Inverse of matrix.
+		/// Deprecated: Use the transform field (only available on some graph types) instead
+		/// </summary>
+		[System.Obsolete("Use the transform field (only available on some graph types) instead", true)]
+		public Matrix4x4 inverseMatrix = Matrix4x4.identity;
+
+
+        /// <summary>True if the graph exists, false if it has been destroyed</summary>
+		internal bool exists { get { return active != null; } }
+
+        /// <summary>Used in the Unity editor to store serialized settings for graph inspectors</summary>
 		[JsonMember]
 		string serializedEditorSettings;
 
-
-		/// <summary>True if the graph exists, false if it has been destroyed</summary>
-		internal bool exists { get { return active != null; } }
-
-		/// <summary>
+        /// <summary>
 		/// Number of nodes in the graph.
 		/// Note that this is, unless the graph type has overriden it, an O(n) operation.
 		///
@@ -91,7 +105,7 @@ namespace Pathfinding {
 			return count;
 		}
 
-		/// <summary>Calls a delegate with all nodes in the graph until the delegate returns false</summary>
+        /// <summary>Calls a delegate with all nodes in the graph until the delegate returns false</summary>
 		public void GetNodes (System.Func<GraphNode, bool> action) {
 			bool cont = true;
 
@@ -100,7 +114,7 @@ namespace Pathfinding {
 			});
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Calls a delegate with all nodes in the graph.
 		/// This is the primary way of iterating through all nodes in a graph.
 		///
@@ -129,21 +143,7 @@ namespace Pathfinding {
 		/// </summary>
 		public abstract void GetNodes(System.Action<GraphNode> action);
 
-		/// <summary>
-		/// A matrix for translating/rotating/scaling the graph.
-		/// Deprecated: Use the transform field (only available on some graph types) instead
-		/// </summary>
-		[System.Obsolete("Use the transform field (only available on some graph types) instead", true)]
-		public Matrix4x4 matrix = Matrix4x4.identity;
-
-		/// <summary>
-		/// Inverse of matrix.
-		/// Deprecated: Use the transform field (only available on some graph types) instead
-		/// </summary>
-		[System.Obsolete("Use the transform field (only available on some graph types) instead", true)]
-		public Matrix4x4 inverseMatrix = Matrix4x4.identity;
-
-		/// <summary>
+        /// <summary>
 		/// Use to set both matrix and inverseMatrix at the same time.
 		/// Deprecated: Use the transform field (only available on some graph types) instead
 		/// </summary>
@@ -153,7 +153,7 @@ namespace Pathfinding {
 			inverseMatrix = m.inverse;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Moves nodes in this graph.
 		/// Deprecated: Use RelocateNodes(Matrix4x4) instead.
 		///  To keep the same behavior you can call RelocateNodes(newMatrix * oldMatrix.inverse).
@@ -163,7 +163,7 @@ namespace Pathfinding {
 			RelocateNodes(newMatrix * oldMatrix.inverse);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Moves the nodes in this graph.
 		/// Multiplies all node positions by deltaMatrix.
 		///
@@ -189,7 +189,7 @@ namespace Pathfinding {
 			GetNodes(node => node.position = ((Int3)deltaMatrix.MultiplyPoint((Vector3)node.position)));
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the nearest node to a position.
 		/// See: Pathfinding.NNConstraint.None
 		/// </summary>
@@ -198,14 +198,14 @@ namespace Pathfinding {
 			return GetNearest(position, NNConstraint.None);
 		}
 
-		/// <summary>Returns the nearest node to a position using the specified NNConstraint.</summary>
+        /// <summary>Returns the nearest node to a position using the specified NNConstraint.</summary>
 		/// <param name="position">The position to try to find a close node to</param>
 		/// <param name="constraint">Can for example tell the function to try to return a walkable node. If you do not get a good node back, consider calling GetNearestForce.</param>
 		public NNInfoInternal GetNearest (Vector3 position, NNConstraint constraint) {
 			return GetNearest(position, constraint, null);
 		}
 
-		/// <summary>Returns the nearest node to a position using the specified NNConstraint.</summary>
+        /// <summary>Returns the nearest node to a position using the specified NNConstraint.</summary>
 		/// <param name="position">The position to try to find a close node to</param>
 		/// <param name="hint">Can be passed to enable some graph generators to find the nearest node faster.</param>
 		/// <param name="constraint">Can for example tell the function to try to return a walkable node. If you do not get a good node back, consider calling GetNearestForce.</param>
@@ -250,7 +250,7 @@ namespace Pathfinding {
 			return nnInfo;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the nearest node to a position using the specified \link Pathfinding.NNConstraint constraint \endlink.
 		/// Returns: an NNInfo. This method will only return an empty NNInfo if there are no nodes which comply with the specified constraint.
 		/// </summary>
@@ -258,7 +258,7 @@ namespace Pathfinding {
 			return GetNearest(position, constraint);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Function for cleaning up references.
 		/// This will be called on the same time as OnDisable on the gameObject which the AstarPath script is attached to (remember, not in the editor).
 		/// Use for any cleanup code such as cleaning up static variables which otherwise might prevent resources from being collected.
@@ -269,7 +269,7 @@ namespace Pathfinding {
 			DestroyAllNodes();
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Destroys all nodes in the graph.
 		/// Warning: This is an internal method. Unless you have a very good reason, you should probably not call it.
 		/// </summary>
@@ -277,7 +277,7 @@ namespace Pathfinding {
 			GetNodes(node => node.Destroy());
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Scan the graph.
 		/// Deprecated: Use AstarPath.Scan() instead
 		/// </summary>
@@ -286,7 +286,7 @@ namespace Pathfinding {
 			Scan();
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Scan the graph.
 		///
 		/// Consider using AstarPath.Scan() instead since this function only scans this graph and if you are using multiple graphs
@@ -296,7 +296,7 @@ namespace Pathfinding {
 			active.Scan(this);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Internal method to scan the graph.
 		/// Called from AstarPath.ScanAsync.
 		/// Override this function to implement custom scanning logic.
@@ -305,7 +305,7 @@ namespace Pathfinding {
 		/// </summary>
 		protected abstract IEnumerable<Progress> ScanInternal();
 
-		/// <summary>
+        /// <summary>
 		/// Serializes graph type specific node data.
 		/// This function can be overriden to serialize extra node information (or graph information for that matter)
 		/// which cannot be serialized using the standard serialization.
@@ -316,21 +316,21 @@ namespace Pathfinding {
 		protected virtual void SerializeExtraInfo (GraphSerializationContext ctx) {
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Deserializes graph type specific node data.
 		/// See: SerializeExtraInfo
 		/// </summary>
 		protected virtual void DeserializeExtraInfo (GraphSerializationContext ctx) {
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Called after all deserialization has been done for all graphs.
 		/// Can be used to set up more graph data which is not serialized
 		/// </summary>
 		protected virtual void PostDeserialization (GraphSerializationContext ctx) {
 		}
 
-		/// <summary>
+        /// <summary>
 		/// An old format for serializing settings.
 		/// Deprecated: This is deprecated now, but the deserialization code is kept to
 		/// avoid loosing data when upgrading from older versions.
@@ -344,7 +344,7 @@ namespace Pathfinding {
 			infoScreenOpen = ctx.reader.ReadBoolean();
 		}
 
-		/// <summary>Draw gizmos for the graph</summary>
+        /// <summary>Draw gizmos for the graph</summary>
 		public virtual void OnDrawGizmos (RetainedGizmos gizmos, bool drawNodes) {
 			if (!drawNodes) {
 				return;
@@ -367,25 +367,26 @@ namespace Pathfinding {
 			if (active.showUnwalkableNodes) DrawUnwalkableNodes(active.unwalkableNodeDebugSize);
 		}
 
-		protected void DrawUnwalkableNodes (float size) {
+        protected void DrawUnwalkableNodes (float size) {
 			Gizmos.color = AstarColor.UnwalkableNode;
 			GetNodes(node => {
 				if (!node.Walkable) Gizmos.DrawCube((Vector3)node.position, Vector3.one*size);
 			});
 		}
 
-		#region IGraphInternals implementation
-		string IGraphInternals.SerializedEditorSettings { get { return serializedEditorSettings; } set { serializedEditorSettings = value; } }
-		void IGraphInternals.OnDestroy () { OnDestroy(); }
-		void IGraphInternals.DestroyAllNodes () { DestroyAllNodes(); }
-		IEnumerable<Progress> IGraphInternals.ScanInternal () { return ScanInternal(); }
-		void IGraphInternals.SerializeExtraInfo (GraphSerializationContext ctx) { SerializeExtraInfo(ctx); }
-		void IGraphInternals.DeserializeExtraInfo (GraphSerializationContext ctx) { DeserializeExtraInfo(ctx); }
-		void IGraphInternals.PostDeserialization (GraphSerializationContext ctx) { PostDeserialization(ctx); }
-		void IGraphInternals.DeserializeSettingsCompatibility (GraphSerializationContext ctx) { DeserializeSettingsCompatibility(ctx); }
+        #region IGraphInternals implementation
 
-		#endregion
-	}
+        string IGraphInternals.SerializedEditorSettings { get { return serializedEditorSettings; } set { serializedEditorSettings = value; } }
+        void IGraphInternals.OnDestroy () { OnDestroy(); }
+        void IGraphInternals.DestroyAllNodes () { DestroyAllNodes(); }
+        IEnumerable<Progress> IGraphInternals.ScanInternal () { return ScanInternal(); }
+        void IGraphInternals.SerializeExtraInfo (GraphSerializationContext ctx) { SerializeExtraInfo(ctx); }
+        void IGraphInternals.DeserializeExtraInfo (GraphSerializationContext ctx) { DeserializeExtraInfo(ctx); }
+        void IGraphInternals.PostDeserialization (GraphSerializationContext ctx) { PostDeserialization(ctx); }
+        void IGraphInternals.DeserializeSettingsCompatibility (GraphSerializationContext ctx) { DeserializeSettingsCompatibility(ctx); }
+
+        #endregion
+    }
 
 
 	/// <summary>
@@ -394,13 +395,22 @@ namespace Pathfinding {
 	/// </summary>
 	[System.Serializable]
 	public class GraphCollision {
-		/// <summary>
+        /// <summary>Offset to apply after each raycast to make sure we don't hit the same point again in CheckHeightAll</summary>
+		public const float RaycastErrorMargin = 0.005F;
+
+        /// <summary>
+		/// Just so that the Physics2D.OverlapPoint method has some buffer to store things in.
+		/// We never actually read from this array, so we don't even care if this is thread safe.
+		/// </summary>
+		private static Collider2D[] dummyArray = new Collider2D[1];
+
+        /// <summary>
 		/// Collision shape to use.
 		/// See: <see cref="Pathfinding.ColliderType"/>
 		/// </summary>
 		public ColliderType type = ColliderType.Capsule;
 
-		/// <summary>
+        /// <summary>
 		/// Diameter of capsule or sphere when checking for collision.
 		/// When checking for collisions the system will check if any colliders
 		/// overlap a specific shape at the node's position. The shape is determined
@@ -415,7 +425,7 @@ namespace Pathfinding {
 		/// </summary>
 		public float diameter = 1F;
 
-		/// <summary>
+        /// <summary>
 		/// Height of capsule or length of ray when checking for collision.
 		/// If <see cref="type"/> is set to Sphere, this does not affect anything.
 		///
@@ -426,7 +436,7 @@ namespace Pathfinding {
 		/// </summary>
 		public float height = 2F;
 
-		/// <summary>
+        /// <summary>
 		/// Height above the ground that collision checks should be done.
 		/// For example, if the ground was found at y=0, collisionOffset = 2
 		/// type = Capsule and height = 3 then the physics system
@@ -438,19 +448,19 @@ namespace Pathfinding {
 		/// </summary>
 		public float collisionOffset;
 
-		/// <summary>
+        /// <summary>
 		/// Direction of the ray when checking for collision.
 		/// If <see cref="type"/> is not Ray, this does not affect anything
 		/// </summary>
 		public RayDirection rayDirection = RayDirection.Both;
 
-		/// <summary>Layers to be treated as obstacles.</summary>
+        /// <summary>Layers to be treated as obstacles.</summary>
 		public LayerMask mask;
 
-		/// <summary>Layers to be included in the height check.</summary>
+        /// <summary>Layers to be included in the height check.</summary>
 		public LayerMask heightMask = -1;
 
-		/// <summary>
+        /// <summary>
 		/// The height to check from when checking height ('ray length' in the inspector).
 		///
 		/// As the image below visualizes, different ray lengths can make the ray hit different things.
@@ -460,71 +470,65 @@ namespace Pathfinding {
 		/// </summary>
 		public float fromHeight = 100;
 
-		/// <summary>
+        /// <summary>
 		/// Toggles thick raycast.
 		/// See: https://docs.unity3d.com/ScriptReference/Physics.SphereCast.html
 		/// </summary>
 		public bool thickRaycast;
 
-		/// <summary>
+        /// <summary>
 		/// Diameter of the thick raycast in nodes.
 		/// 1 equals \link Pathfinding.GridGraph.nodeSize nodeSize \endlink
 		/// </summary>
 		public float thickRaycastDiameter = 1;
 
-		/// <summary>Make nodes unwalkable when no ground was found with the height raycast. If height raycast is turned off, this doesn't affect anything.</summary>
+        /// <summary>Make nodes unwalkable when no ground was found with the height raycast. If height raycast is turned off, this doesn't affect anything.</summary>
 		public bool unwalkableWhenNoGround = true;
 
-		/// <summary>
+        /// <summary>
 		/// Use Unity 2D Physics API.
 		/// See: http://docs.unity3d.com/ScriptReference/Physics2D.html
 		/// </summary>
 		public bool use2D;
 
-		/// <summary>Toggle collision check</summary>
+        /// <summary>Toggle collision check</summary>
 		public bool collisionCheck = true;
 
-		/// <summary>Toggle height check. If false, the grid will be flat</summary>
+        /// <summary>Toggle height check. If false, the grid will be flat</summary>
 		public bool heightCheck = true;
 
-		/// <summary>
+        /// <summary>
 		/// Direction to use as UP.
 		/// See: Initialize
 		/// </summary>
 		public Vector3 up;
 
-		/// <summary>
-		/// <see cref="up"/> * <see cref="height"/>.
-		/// See: Initialize
-		/// </summary>
-		private Vector3 upheight;
-
-		/// <summary>Used for 2D collision queries</summary>
+        /// <summary>Used for 2D collision queries</summary>
 		private ContactFilter2D contactFilter;
 
-		/// <summary>
-		/// Just so that the Physics2D.OverlapPoint method has some buffer to store things in.
-		/// We never actually read from this array, so we don't even care if this is thread safe.
-		/// </summary>
-		private static Collider2D[] dummyArray = new Collider2D[1];
-
-		/// <summary>
+        /// <summary>
 		/// <see cref="diameter"/> * scale * 0.5.
 		/// Where scale usually is \link Pathfinding.GridGraph.nodeSize nodeSize \endlink
 		/// See: Initialize
 		/// </summary>
 		private float finalRadius;
 
-		/// <summary>
+        /// <summary>
 		/// <see cref="thickRaycastDiameter"/> * scale * 0.5.
 		/// Where scale usually is \link Pathfinding.GridGraph.nodeSize nodeSize \endlink See: Initialize
 		/// </summary>
 		private float finalRaycastRadius;
 
-		/// <summary>Offset to apply after each raycast to make sure we don't hit the same point again in CheckHeightAll</summary>
-		public const float RaycastErrorMargin = 0.005F;
+        /// <summary>Internal buffer used by <see cref="CheckHeightAll"/></summary>
+		RaycastHit[] hitBuffer = new RaycastHit[8];
 
-		/// <summary>
+        /// <summary>
+		/// <see cref="up"/> * <see cref="height"/>.
+		/// See: Initialize
+		/// </summary>
+		private Vector3 upheight;
+
+        /// <summary>
 		/// Sets up several variables using the specified matrix and scale.
 		/// See: GraphCollision.up
 		/// See: GraphCollision.upheight
@@ -539,7 +543,7 @@ namespace Pathfinding {
 			contactFilter = new ContactFilter2D { layerMask = mask, useDepth = false, useLayerMask = true, useNormalAngle = false, useTriggers = false };
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns true if the position is not obstructed.
 		/// If <see cref="collisionCheck"/> is false, this will always return true.\n
 		/// </summary>
@@ -576,7 +580,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the position with the correct height.
 		/// If <see cref="heightCheck"/> is false, this will return position.
 		/// </summary>
@@ -587,7 +591,7 @@ namespace Pathfinding {
 			return CheckHeight(position, out hit, out walkable);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the position with the correct height.
 		/// If <see cref="heightCheck"/> is false, this will return position.\n
 		/// walkable will be set to false if nothing was hit.
@@ -619,10 +623,7 @@ namespace Pathfinding {
 			return position;
 		}
 
-		/// <summary>Internal buffer used by <see cref="CheckHeightAll"/></summary>
-		RaycastHit[] hitBuffer = new RaycastHit[8];
-
-		/// <summary>
+        /// <summary>
 		/// Returns all hits when checking height for position.
 		/// Warning: Does not work well with thick raycast, will only return an object a single time
 		///
@@ -657,7 +658,7 @@ namespace Pathfinding {
 #endif
 		}
 
-		public void DeserializeSettingsCompatibility (GraphSerializationContext ctx) {
+        public void DeserializeSettingsCompatibility (GraphSerializationContext ctx) {
 			type = (ColliderType)ctx.reader.ReadInt32();
 			diameter = ctx.reader.ReadSingle();
 			height = ctx.reader.ReadSingle();
@@ -674,7 +675,7 @@ namespace Pathfinding {
 			collisionCheck = ctx.reader.ReadBoolean();
 			heightCheck = ctx.reader.ReadBoolean();
 		}
-	}
+    }
 
 
 	/// <summary>

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Pathfinding {
 	[CustomPropertyDrawer(typeof(EnumFlagAttribute))]
 	public class EnumFlagDrawer : PropertyDrawer {
-		public override void OnGUI (Rect position, SerializedProperty property, GUIContent label) {
+        public override void OnGUI (Rect position, SerializedProperty property, GUIContent label) {
 			Enum targetEnum = GetBaseProperty<Enum>(property);
 
 			EditorGUI.BeginProperty(position, label, property);
@@ -22,7 +22,7 @@ namespace Pathfinding {
 			EditorGUI.EndProperty();
 		}
 
-		static T GetBaseProperty<T>(SerializedProperty prop) {
+        static T GetBaseProperty<T>(SerializedProperty prop) {
 			// Separate the steps it takes to get to this property
 			string[] separatedPaths = prop.propertyPath.Split('.');
 
@@ -35,5 +35,5 @@ namespace Pathfinding {
 			}
 			return (T)reflectionTarget;
 		}
-	}
+    }
 }

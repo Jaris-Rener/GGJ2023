@@ -6,79 +6,39 @@ namespace Pathfinding.Examples {
 	/// <summary>Example script for generating an infinite procedural world</summary>
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_examples_1_1_procedural_world.php")]
 	public class ProceduralWorld : MonoBehaviour {
-		public Transform target;
+        public enum RotationRandomness {
+			AllAxes,
+			Y
+		}
 
-		public ProceduralPrefab[] prefabs;
+        public Transform target;
 
-		/// <summary>How far away to generate tiles</summary>
+        public ProceduralPrefab[] prefabs;
+
+        /// <summary>How far away to generate tiles</summary>
 		public int range = 1;
 
-		public int disableAsyncLoadWithinRange = 1;
+        public int disableAsyncLoadWithinRange = 1;
 
-		/// <summary>World size of tiles</summary>
+        /// <summary>World size of tiles</summary>
 		public float tileSize = 100;
-		public int subTiles = 20;
 
-		/// <summary>
+        public int subTiles = 20;
+
+        /// <summary>
 		/// Enable static batching on generated tiles.
 		/// Will improve overall FPS, but might cause FPS drops on
 		/// some frames when static batching is done
 		/// </summary>
 		public bool staticBatching = false;
 
-		Queue<IEnumerator> tileGenerationQueue = new Queue<IEnumerator>();
+        Queue<IEnumerator> tileGenerationQueue = new Queue<IEnumerator>();
 
-		public enum RotationRandomness {
-			AllAxes,
-			Y
-		}
-
-		[System.Serializable]
-		public class ProceduralPrefab {
-			/// <summary>Prefab to use</summary>
-			public GameObject prefab;
-
-			/// <summary>Number of objects per square world unit</summary>
-			public float density = 0;
-
-			/// <summary>
-			/// Multiply by [perlin noise].
-			/// Value from 0 to 1 indicating weight.
-			/// </summary>
-			public float perlin = 0;
-
-			/// <summary>
-			/// Perlin will be raised to this power.
-			/// A higher value gives more distinct edges
-			/// </summary>
-			public float perlinPower = 1;
-
-			/// <summary>Some offset to avoid identical density maps</summary>
-			public Vector2 perlinOffset = Vector2.zero;
-
-			/// <summary>
-			/// Perlin noise scale.
-			/// A higher value spreads out the maximums and minimums of the density.
-			/// </summary>
-			public float perlinScale = 1;
-
-			/// <summary>
-			/// Multiply by [random].
-			/// Value from 0 to 1 indicating weight.
-			/// </summary>
-			public float random = 1;
-
-			public RotationRandomness randomRotation = RotationRandomness.AllAxes;
-
-			/// <summary>If checked, a single object will be created in the center of each tile</summary>
-			public bool singleFixed = false;
-		}
-
-		/// <summary>All tiles</summary>
+        /// <summary>All tiles</summary>
 		Dictionary<Int2, ProceduralTile> tiles = new Dictionary<Int2, ProceduralTile>();
 
-		// Use this for initialization
-		void Start () {
+        // Use this for initialization
+        void Start () {
 			// Calculate the closest tiles
 			// and then recalculate the graph
 			Update();
@@ -87,8 +47,8 @@ namespace Pathfinding.Examples {
 			StartCoroutine(GenerateTiles());
 		}
 
-		// Update is called once per frame
-		void Update () {
+        // Update is called once per frame
+        void Update () {
 			// Calculate the tile the target is standing on
 			Int2 p = new Int2(Mathf.RoundToInt((target.position.x - tileSize*0.5f) / tileSize), Mathf.RoundToInt((target.position.z - tileSize*0.5f) / tileSize));
 
@@ -135,7 +95,7 @@ namespace Pathfinding.Examples {
 			}
 		}
 
-		IEnumerator GenerateTiles () {
+        IEnumerator GenerateTiles () {
 			while (true) {
 				if (tileGenerationQueue.Count > 0) {
 					var generator = tileGenerationQueue.Dequeue();
@@ -145,25 +105,65 @@ namespace Pathfinding.Examples {
 			}
 		}
 
-		class ProceduralTile {
-			int x, z;
-			System.Random rnd;
+        [System.Serializable]
+		public class ProceduralPrefab {
+            /// <summary>Prefab to use</summary>
+			public GameObject prefab;
 
-			ProceduralWorld world;
+            /// <summary>Number of objects per square world unit</summary>
+			public float density = 0;
 
-			public bool destroyed { get; private set; }
+            /// <summary>
+			/// Multiply by [perlin noise].
+			/// Value from 0 to 1 indicating weight.
+			/// </summary>
+			public float perlin = 0;
 
-			public ProceduralTile (ProceduralWorld world, int x, int z) {
+            /// <summary>
+			/// Perlin will be raised to this power.
+			/// A higher value gives more distinct edges
+			/// </summary>
+			public float perlinPower = 1;
+
+            /// <summary>Some offset to avoid identical density maps</summary>
+			public Vector2 perlinOffset = Vector2.zero;
+
+            /// <summary>
+			/// Perlin noise scale.
+			/// A higher value spreads out the maximums and minimums of the density.
+			/// </summary>
+			public float perlinScale = 1;
+
+            /// <summary>
+			/// Multiply by [random].
+			/// Value from 0 to 1 indicating weight.
+			/// </summary>
+			public float random = 1;
+
+            public RotationRandomness randomRotation = RotationRandomness.AllAxes;
+
+            /// <summary>If checked, a single object will be created in the center of each tile</summary>
+			public bool singleFixed = false;
+        }
+
+        class ProceduralTile {
+            public bool destroyed { get; private set; }
+            int x, z;
+            System.Random rnd;
+
+            ProceduralWorld world;
+
+            Transform root;
+            IEnumerator ie;
+
+            public ProceduralTile (ProceduralWorld world, int x, int z) {
 				this.x = x;
 				this.z = z;
 				this.world = world;
 				rnd = new System.Random((x * 10007) ^ (z*36007));
 			}
 
-			Transform root;
-			IEnumerator ie;
-
-			public IEnumerator Generate () {
+            public IEnumerator Generate () {
 				ie = InternalGenerate();
 				GameObject rt = new GameObject("Tile " + x + " " + z);
 				root = rt.transform;
@@ -171,12 +171,12 @@ namespace Pathfinding.Examples {
 				ie = null;
 			}
 
-			public void ForceFinish () {
+            public void ForceFinish () {
 				while (ie != null && root != null && ie.MoveNext()) {}
 				ie = null;
 			}
 
-			Vector3 RandomInside () {
+            Vector3 RandomInside () {
 				Vector3 v = new Vector3();
 
 				v.x = (x + (float)rnd.NextDouble())*world.tileSize;
@@ -184,7 +184,7 @@ namespace Pathfinding.Examples {
 				return v;
 			}
 
-			Vector3 RandomInside (float px, float pz) {
+            Vector3 RandomInside (float px, float pz) {
 				Vector3 v = new Vector3();
 
 				v.x = (px + (float)rnd.NextDouble()/world.subTiles)*world.tileSize;
@@ -192,11 +192,11 @@ namespace Pathfinding.Examples {
 				return v;
 			}
 
-			Quaternion RandomYRot (ProceduralPrefab prefab) {
+            Quaternion RandomYRot (ProceduralPrefab prefab) {
 				return prefab.randomRotation == RotationRandomness.AllAxes ? Quaternion.Euler(360*(float)rnd.NextDouble(), 360*(float)rnd.NextDouble(), 360*(float)rnd.NextDouble()) : Quaternion.Euler(0, 360 * (float)rnd.NextDouble(), 0);
 			}
 
-			IEnumerator InternalGenerate () {
+            IEnumerator InternalGenerate () {
 				Debug.Log("Generating tile " + x + ", " + z);
 				int counter = 0;
 
@@ -266,7 +266,7 @@ namespace Pathfinding.Examples {
 				}
 			}
 
-			public void Destroy () {
+            public void Destroy () {
 				if (root != null) {
 					Debug.Log("Destroying tile " + x + ", " + z);
 					GameObject.Destroy(root.gameObject);
@@ -276,6 +276,6 @@ namespace Pathfinding.Examples {
 				// Make sure the tile generator coroutine is destroyed
 				ie = null;
 			}
-		}
-	}
+        }
+    }
 }

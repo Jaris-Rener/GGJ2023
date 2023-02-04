@@ -12,19 +12,20 @@ namespace Pathfinding {
 	/// </summary>
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_target_mover.php")]
 	public class TargetMover : MonoBehaviour {
-		/// <summary>Mask for the raycast placement</summary>
+        /// <summary>Mask for the raycast placement</summary>
 		public LayerMask mask;
 
-		public Transform target;
-		IAstarAI[] ais;
+        public Transform target;
 
-		/// <summary>Determines if the target position should be updated every frame or only on double-click</summary>
+        /// <summary>Determines if the target position should be updated every frame or only on double-click</summary>
 		public bool onlyOnDoubleClick;
-		public bool use2D;
 
-		Camera cam;
+        public bool use2D;
+        IAstarAI[] ais;
 
-		public void Start () {
+        Camera cam;
+
+        public void Start () {
 			//Cache the Main Camera
 			cam = Camera.main;
 			// Slightly inefficient way of finding all AIs, but this is just an example script, so it doesn't matter much.
@@ -33,20 +34,20 @@ namespace Pathfinding {
 			useGUILayout = false;
 		}
 
-		public void OnGUI () {
-			if (onlyOnDoubleClick && cam != null && Event.current.type == EventType.MouseDown && Event.current.clickCount == 2) {
-				UpdateTargetPosition();
-			}
-		}
-
-		/// <summary>Update is called once per frame</summary>
+        /// <summary>Update is called once per frame</summary>
 		void Update () {
 			if (!onlyOnDoubleClick && cam != null) {
 				UpdateTargetPosition();
 			}
 		}
 
-		public void UpdateTargetPosition () {
+        public void OnGUI () {
+			if (onlyOnDoubleClick && cam != null && Event.current.type == EventType.MouseDown && Event.current.clickCount == 2) {
+				UpdateTargetPosition();
+			}
+		}
+
+        public void UpdateTargetPosition () {
 			Vector3 newPosition = Vector3.zero;
 			bool positionFound = false;
 
@@ -73,5 +74,5 @@ namespace Pathfinding {
 				}
 			}
 		}
-	}
+    }
 }

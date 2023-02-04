@@ -12,7 +12,10 @@ namespace Pathfinding {
 	/// \ingroup utils
 	/// </summary>
 	public static class PathUtilities {
-		/// <summary>
+        static Queue<GraphNode> BFSQueue;
+        static Dictionary<GraphNode, int> BFSMap;
+
+        /// <summary>
 		/// Returns if there is a walkable path from node1 to node2.
 		/// This method is extremely fast because it only uses precalculated information.
 		///
@@ -32,7 +35,7 @@ namespace Pathfinding {
 			return node1.Walkable && node2.Walkable && node1.Area == node2.Area;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if there are walkable paths between all nodes.
 		///
 		/// See: graph-updates (view in online documentation for working links)
@@ -49,7 +52,7 @@ namespace Pathfinding {
 			return true;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns if there are walkable paths between all nodes.
 		/// See: graph-updates (view in online documentation for working links)
 		///
@@ -91,7 +94,7 @@ namespace Pathfinding {
 			return result;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns all nodes reachable from the seed node.
 		/// This function performs a DFS (depth-first-search) or flood fill of the graph and returns all nodes which can be reached from
 		/// the seed node. In almost all cases this will be identical to returning all nodes which have the same area as the seed node.
@@ -150,10 +153,7 @@ namespace Pathfinding {
 			return reachable;
 		}
 
-		static Queue<GraphNode> BFSQueue;
-		static Dictionary<GraphNode, int> BFSMap;
-
-		/// <summary>
+        /// <summary>
 		/// Returns all nodes up to a given node-distance from the seed node.
 		/// This function performs a BFS (<a href="https://en.wikipedia.org/wiki/Breadth-first_search">breadth-first search</a>) or flood fill of the graph and returns all nodes within a specified node distance which can be reached from
 		/// the seed node. In almost all cases when depth is large enough this will be identical to returning all nodes which have the same area as the seed node.
@@ -247,7 +247,7 @@ namespace Pathfinding {
 			return result;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns points in a spiral centered around the origin with a minimum clearance from other points.
 		/// The points are laid out on the involute of a circle
 		/// See: http://en.wikipedia.org/wiki/Involute
@@ -297,7 +297,7 @@ namespace Pathfinding {
 			return pts;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns the XZ coordinate of the involute of circle.
 		/// See: http://en.wikipedia.org/wiki/Involute
 		/// </summary>
@@ -305,7 +305,7 @@ namespace Pathfinding {
 			return new Vector3(a*(Mathf.Cos(t) + t*Mathf.Sin(t)), 0, a*(Mathf.Sin(t) - t*Mathf.Cos(t)));
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Will calculate a number of points around p which are on the graph and are separated by clearance from each other.
 		/// This is like GetPointsAroundPoint except that previousPoints are treated as being in world space.
 		/// The average of the points will be found and then that will be treated as the group center.
@@ -329,7 +329,7 @@ namespace Pathfinding {
 			GetPointsAroundPoint(p, g, previousPoints, radius, clearanceRadius);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Will calculate a number of points around center which are on the graph and are separated by clearance from each other.
 		/// The maximum distance from center to any point will be radius.
 		/// Points will first be tried to be laid out as previousPoints and if that fails, random points will be selected.
@@ -432,7 +432,7 @@ namespace Pathfinding {
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Returns randomly selected points on the specified nodes with each point being separated by clearanceRadius from each other.
 		/// Selecting points ON the nodes only works for TriangleMeshNode (used by Recast Graph and Navmesh Graph) and GridNode (used by GridGraph).
 		/// For other node types, only the positions of the nodes will be used.
@@ -532,5 +532,5 @@ namespace Pathfinding {
 
 			return pts;
 		}
-	}
+    }
 }

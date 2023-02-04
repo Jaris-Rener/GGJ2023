@@ -4,12 +4,12 @@ using UnityEditor;
 namespace Pathfinding {
 	[CustomGraphEditor(typeof(PointGraph), "Point Graph")]
 	public class PointGraphEditor : GraphEditor {
-		static readonly GUIContent[] nearestNodeDistanceModeLabels = {
+        static readonly GUIContent[] nearestNodeDistanceModeLabels = {
 			new GUIContent("Node"),
 			new GUIContent("Connection (pro version only)"),
 		};
 
-		public override void OnInspectorGUI (NavGraph target) {
+        public override void OnInspectorGUI (NavGraph target) {
 			var graph = target as PointGraph;
 
 			graph.root = ObjectField(new GUIContent("Root", "All childs of this object will be used as nodes, if it is not set, a tag search will be used instead (see below)"), graph.root, typeof(Transform), true, false) as Transform;
@@ -47,5 +47,5 @@ namespace Pathfinding {
 
 			EditorGUILayout.Popup(new GUIContent("Nearest node queries find closest"), 0, nearestNodeDistanceModeLabels);
 		}
-	}
+    }
 }

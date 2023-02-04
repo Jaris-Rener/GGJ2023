@@ -11,25 +11,16 @@ using UnityEngine.Profiling;
 
 namespace Pathfinding {
 	public class AstarProfiler {
-		public class ProfilePoint {
-			//public DateTime lastRecorded;
-			//public TimeSpan totalTime;
-			public System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-			public int totalCalls;
-			public long tmpBytes;
-			public long totalBytes;
+        public static ProfilePoint[] fastProfiles;
+        public static string[] fastProfileNames;
+
+        static readonly Dictionary<string, ProfilePoint> profiles = new Dictionary<string, ProfilePoint>();
+        static DateTime startTime = DateTime.UtcNow;
+
+        private AstarProfiler() {
 		}
 
-		static readonly Dictionary<string, ProfilePoint> profiles = new Dictionary<string, ProfilePoint>();
-		static DateTime startTime = DateTime.UtcNow;
-
-		public static ProfilePoint[] fastProfiles;
-		public static string[] fastProfileNames;
-
-		private AstarProfiler() {
-		}
-
-		[System.Diagnostics.Conditional("ProfileAstar")]
+        [System.Diagnostics.Conditional("ProfileAstar")]
 		public static void InitializeFastProfile (string[] profileNames) {
 			fastProfileNames = new string[profileNames.Length+2];
 			Array.Copy(profileNames, fastProfileNames, profileNames.Length);
@@ -39,13 +30,13 @@ namespace Pathfinding {
 			for (int i = 0; i < fastProfiles.Length; i++) fastProfiles[i] = new ProfilePoint();
 		}
 
-		[System.Diagnostics.Conditional("ProfileAstar")]
+        [System.Diagnostics.Conditional("ProfileAstar")]
 		public static void StartFastProfile (int tag) {
 			//profiles.TryGetValue(tag, out point);
 			fastProfiles[tag].watch.Start();//lastRecorded = DateTime.UtcNow;
 		}
 
-		[System.Diagnostics.Conditional("ProfileAstar")]
+        [System.Diagnostics.Conditional("ProfileAstar")]
 		public static void EndFastProfile (int tag) {
 			/*if (!profiles.ContainsKey(tag))
 			 * {
@@ -61,12 +52,12 @@ namespace Pathfinding {
 			//fastProfiles[tag] = point;
 		}
 
-		[System.Diagnostics.Conditional("ASTAR_UNITY_PRO_PROFILER")]
+        [System.Diagnostics.Conditional("ASTAR_UNITY_PRO_PROFILER")]
 		public static void EndProfile () {
 			Profiler.EndSample();
 		}
 
-		[System.Diagnostics.Conditional("ProfileAstar")]
+        [System.Diagnostics.Conditional("ProfileAstar")]
 		public static void StartProfile (string tag) {
 #if ASTAR_UNITY_PRO_PROFILER
 			Profiler.BeginSample(tag);
@@ -86,7 +77,7 @@ namespace Pathfinding {
 #endif
 		}
 
-		[System.Diagnostics.Conditional("ProfileAstar")]
+        [System.Diagnostics.Conditional("ProfileAstar")]
 		public static void EndProfile (string tag) {
 #if !ASTAR_UNITY_PRO_PROFILER
 			if (!profiles.ContainsKey(tag)) {
@@ -107,7 +98,7 @@ namespace Pathfinding {
 #endif
 		}
 
-		[System.Diagnostics.Conditional("ProfileAstar")]
+        [System.Diagnostics.Conditional("ProfileAstar")]
 		public static void Reset () {
 			profiles.Clear();
 			startTime = DateTime.UtcNow;
@@ -119,7 +110,7 @@ namespace Pathfinding {
 			}
 		}
 
-		[System.Diagnostics.Conditional("ProfileAstar")]
+        [System.Diagnostics.Conditional("ProfileAstar")]
 		public static void PrintFastResults () {
 			if (fastProfiles == null)
 				return;
@@ -172,7 +163,7 @@ namespace Pathfinding {
 			Debug.Log(output.ToString());
 		}
 
-		[System.Diagnostics.Conditional("ProfileAstar")]
+        [System.Diagnostics.Conditional("ProfileAstar")]
 		public static void PrintResults () {
 			TimeSpan endTime = DateTime.UtcNow - startTime;
 			var output = new System.Text.StringBuilder();
@@ -221,5 +212,14 @@ namespace Pathfinding {
 			output.Append(" seconds\n============================");
 			Debug.Log(output.ToString());
 		}
-	}
+
+        public class ProfilePoint {
+            //public DateTime lastRecorded;
+            //public TimeSpan totalTime;
+            public System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+            public int totalCalls;
+            public long tmpBytes;
+            public long totalBytes;
+        }
+    }
 }

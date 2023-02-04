@@ -20,7 +20,7 @@ namespace Pathfinding {
 	/// </summary>
 	[HelpURL("http://arongranberg.com/astar/docs/class_pathfinding_1_1_funnel_modifier.php")]
 	public class FunnelModifier : MonoModifier {
-		/// <summary>
+        /// <summary>
 		/// Determines if twists and bends should be straightened out before running the funnel algorithm.
 		/// If the unwrap option is disabled the funnel will simply be projected onto the XZ plane.
 		/// If the unwrap option is enabled then the funnel may be oriented arbitrarily and may have twists and bends.
@@ -38,7 +38,7 @@ namespace Pathfinding {
 		/// </summary>
 		public bool unwrap = true;
 
-		/// <summary>
+        /// <summary>
 		/// Insert a vertex every time the path crosses a portal instead of only at the corners of the path.
 		/// The resulting path will have exactly one vertex per portal if this is enabled.
 		/// This may introduce vertices with the same position in the output (esp. in corners where many portals meet).
@@ -46,16 +46,16 @@ namespace Pathfinding {
 		/// </summary>
 		public bool splitAtEveryPortal;
 
+        public override int Order { get { return 10; } }
+
 #if UNITY_EDITOR
-		[UnityEditor.MenuItem("CONTEXT/Seeker/Add Funnel Modifier")]
+        [UnityEditor.MenuItem("CONTEXT/Seeker/Add Funnel Modifier")]
 		public static void AddComp (UnityEditor.MenuCommand command) {
 			(command.context as Component).gameObject.AddComponent(typeof(FunnelModifier));
 		}
 #endif
 
-		public override int Order { get { return 10; } }
-
-		public override void Apply (Path p) {
+        public override void Apply (Path p) {
 			if (p.path == null || p.path.Count == 0 || p.vectorPath == null || p.vectorPath.Count == 0) {
 				return;
 			}
@@ -104,5 +104,5 @@ namespace Pathfinding {
 			ListPool<Vector3>.Release(ref p.vectorPath);
 			p.vectorPath = funnelPath;
 		}
-	}
+    }
 }

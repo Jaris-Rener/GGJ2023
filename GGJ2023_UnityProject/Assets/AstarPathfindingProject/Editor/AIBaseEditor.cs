@@ -5,10 +5,10 @@ namespace Pathfinding {
 	[CustomEditor(typeof(AIBase), true)]
 	[CanEditMultipleObjects]
 	public class BaseAIEditor : EditorBase {
-		float lastSeenCustomGravity = float.NegativeInfinity;
-		bool debug = false;
+        bool debug = false;
+        float lastSeenCustomGravity = float.NegativeInfinity;
 
-		protected void AutoRepathInspector () {
+        protected void AutoRepathInspector () {
 			var mode = FindProperty("autoRepath.mode");
 
 			PropertyField(mode, "Recalculate paths automatically");
@@ -30,7 +30,7 @@ namespace Pathfinding {
 			}
 		}
 
-		protected void DebugInspector () {
+        protected void DebugInspector () {
 			debug = EditorGUILayout.Foldout(debug, "Debug info");
 			if (debug) {
 				var ai = target as IAstarAI;
@@ -44,7 +44,7 @@ namespace Pathfinding {
 			}
 		}
 
-		protected override void Inspector () {
+        protected override void Inspector () {
 			var isAIPath = typeof(AIPath).IsAssignableFrom(target.GetType());
 
 			Section("Shape");
@@ -157,5 +157,5 @@ namespace Pathfinding {
 				EditorGUILayout.HelpBox("You are using both a Rigidbody and a Character Controller. Those components are not really designed for that. Please use only one of them.", MessageType.Warning);
 			}
 		}
-	}
+    }
 }

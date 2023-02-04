@@ -4,7 +4,7 @@ namespace Pathfinding {
 	[CustomEditor(typeof(RaycastModifier))]
 	[CanEditMultipleObjects]
 	public class RaycastModifierEditor : EditorBase {
-		protected override void Inspector () {
+        protected override void Inspector () {
 			PropertyField("quality");
 
 			if (PropertyField("useRaycasting", "Use Physics Raycasting")) {
@@ -30,5 +30,5 @@ namespace Pathfinding {
 				EditorGUILayout.HelpBox("You should use either raycasting, graph raycasting or both, otherwise this modifier will not do anything", MessageType.Warning);
 			}
 		}
-	}
+    }
 }

@@ -91,7 +91,7 @@ namespace Pathfinding {
 
 	/// <summary>Interface to expose a subset of the WorkItemProcessor functionality</summary>
 	public interface IWorkItemContext {
-		/// <summary>
+        /// <summary>
 		/// Call during work items to queue a flood fill.
 		/// An instant flood fill can be done via FloodFill()
 		/// but this method can be used to batch several updates into one
@@ -106,7 +106,7 @@ namespace Pathfinding {
 		[System.Obsolete("Avoid using. This will force a full recalculation of the connected components. In most cases the HierarchicalGraph class takes care of things automatically behind the scenes now. In pretty much all cases you should be able to remove the call to this function.")]
 		void QueueFloodFill();
 
-		/// <summary>
+        /// <summary>
 		/// If a WorkItem needs to have a valid area information during execution, call this method to ensure there are no pending flood fills.
 		/// If you are using the <see cref="Pathfinding.GraphNode.Area"/> property or the <see cref="Pathfinding.PathUtilities.IsPathPossible"/> method in your work items, then you might want to call this method before you use them
 		/// to ensure that the data is up to date.
@@ -126,36 +126,25 @@ namespace Pathfinding {
 		/// </summary>
 		void EnsureValidFloodFill();
 
-		/// <summary>
+        /// <summary>
 		/// Trigger a graph modification event.
 		/// This will cause a <see cref="Pathfinding.GraphModifier.PostUpdate"/> event to be issued after all graph updates have finished.
 		/// Some scripts listen for this event. For example off-mesh links listen to it and will recalculate which nodes they are connected to when it it sent.
 		/// If a graph is dirtied multiple times, or even if multiple graphs are dirtied, the event will only be sent once.
 		/// </summary>
 		void SetGraphDirty(NavGraph graph);
-	}
+    }
 
 	class WorkItemProcessor : IWorkItemContext {
-		/// <summary>Used to prevent waiting for work items to complete inside other work items as that will cause the program to hang</summary>
+        /// <summary>Used to prevent waiting for work items to complete inside other work items as that will cause the program to hang</summary>
 		public bool workItemsInProgressRightNow { get; private set; }
 
-		readonly AstarPath astar;
-		readonly IndexedQueue<AstarWorkItem> workItems = new IndexedQueue<AstarWorkItem>();
-
-		/// <summary>True if any work items are queued right now</summary>
+        /// <summary>True if any work items are queued right now</summary>
 		public bool anyQueued {
 			get { return workItems.Count > 0; }
 		}
 
-		/// <summary>
-		/// True if any work items have queued a flood fill.
-		/// See: QueueWorkItemFloodFill
-		/// </summary>
-		bool queuedWorkItemFloodFill = false;
-
-		bool anyGraphsDirty = true;
-
-		/// <summary>
+        /// <summary>
 		/// True while a batch of work items are being processed.
 		/// Set to true when a work item is started to be processed, reset to false when all work items are complete.
 		///
@@ -164,48 +153,22 @@ namespace Pathfinding {
 		/// </summary>
 		public bool workItemsInProgress { get; private set; }
 
-		/// <summary>Similar to Queue<T> but allows random access</summary>
-		class IndexedQueue<T> {
-			T[] buffer = new T[4];
-			int start;
+        readonly AstarPath astar;
+        readonly IndexedQueue<AstarWorkItem> workItems = new IndexedQueue<AstarWorkItem>();
 
-			public T this[int index] {
-				get {
-					if (index < 0 || index >= Count) throw new System.IndexOutOfRangeException();
-					return buffer[(start + index) % buffer.Length];
-				}
-				set {
-					if (index < 0 || index >= Count) throw new System.IndexOutOfRangeException();
-					buffer[(start + index) % buffer.Length] = value;
-				}
-			}
+        /// <summary>
+		/// True if any work items have queued a flood fill.
+		/// See: QueueWorkItemFloodFill
+		/// </summary>
+		bool queuedWorkItemFloodFill = false;
 
-			public int Count { get; private set; }
+        bool anyGraphsDirty = true;
 
-			public void Enqueue (T item) {
-				if (Count == buffer.Length) {
-					var newBuffer = new T[buffer.Length*2];
-					for (int i = 0; i < Count; i++) {
-						newBuffer[i] = this[i];
-					}
-					buffer = newBuffer;
-					start = 0;
-				}
-
-				buffer[(start + Count) % buffer.Length] = item;
-				Count++;
-			}
-
-			public T Dequeue () {
-				if (Count == 0) throw new System.InvalidOperationException();
-				var item = buffer[start];
-				start = (start + 1) % buffer.Length;
-				Count--;
-				return item;
-			}
+        public WorkItemProcessor (AstarPath astar) {
+			this.astar = astar;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Call during work items to queue a flood fill.
 		/// An instant flood fill can be done via FloodFill()
 		/// but this method can be used to batch several updates into one
@@ -219,11 +182,11 @@ namespace Pathfinding {
 			queuedWorkItemFloodFill = true;
 		}
 
-		void IWorkItemContext.SetGraphDirty (NavGraph graph) {
+        void IWorkItemContext.SetGraphDirty (NavGraph graph) {
 			anyGraphsDirty = true;
 		}
 
-		/// <summary>If a WorkItem needs to have a valid area information during execution, call this method to ensure there are no pending flood fills</summary>
+        /// <summary>If a WorkItem needs to have a valid area information during execution, call this method to ensure there are no pending flood fills</summary>
 		public void EnsureValidFloodFill () {
 			if (queuedWorkItemFloodFill) {
 				astar.hierarchicalGraph.RecalculateAll();
@@ -232,15 +195,11 @@ namespace Pathfinding {
 			}
 		}
 
-		public WorkItemProcessor (AstarPath astar) {
-			this.astar = astar;
-		}
-
-		public void OnFloodFill () {
+        public void OnFloodFill () {
 			queuedWorkItemFloodFill = false;
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Add a work item to be processed when pathfinding is paused.
 		///
 		/// See: ProcessWorkItems
@@ -249,7 +208,7 @@ namespace Pathfinding {
 			workItems.Enqueue(item);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Process graph updating work items.
 		/// Process all queued work items, e.g graph updates and the likes.
 		///
@@ -334,5 +293,45 @@ namespace Pathfinding {
 			astar.data.UnlockGraphStructure();
 			return true;
 		}
-	}
+
+        /// <summary>Similar to Queue<T> but allows random access</summary>
+		class IndexedQueue<T> {
+            public int Count { get; private set; }
+            T[] buffer = new T[4];
+            int start;
+
+            public T this[int index] {
+				get {
+					if (index < 0 || index >= Count) throw new System.IndexOutOfRangeException();
+					return buffer[(start + index) % buffer.Length];
+				}
+				set {
+					if (index < 0 || index >= Count) throw new System.IndexOutOfRangeException();
+					buffer[(start + index) % buffer.Length] = value;
+				}
+			}
+
+            public void Enqueue (T item) {
+				if (Count == buffer.Length) {
+					var newBuffer = new T[buffer.Length*2];
+					for (int i = 0; i < Count; i++) {
+						newBuffer[i] = this[i];
+					}
+					buffer = newBuffer;
+					start = 0;
+				}
+
+				buffer[(start + Count) % buffer.Length] = item;
+				Count++;
+			}
+
+            public T Dequeue () {
+				if (Count == 0) throw new System.InvalidOperationException();
+				var item = buffer[start];
+				start = (start + 1) % buffer.Length;
+				Count--;
+				return item;
+			}
+        }
+    }
 }

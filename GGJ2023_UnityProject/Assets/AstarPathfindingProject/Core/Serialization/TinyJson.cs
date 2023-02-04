@@ -8,10 +8,8 @@ using WinRTLegacy;
 #endif
 
 namespace Pathfinding.Serialization {
-	public class JsonMemberAttribute : System.Attribute {
-	}
-	public class JsonOptInAttribute : System.Attribute {
-	}
+	public class JsonMemberAttribute : System.Attribute {}
+	public class JsonOptInAttribute : System.Attribute {}
 
 	/// <summary>
 	/// A very tiny json serializer.
@@ -19,19 +17,13 @@ namespace Pathfinding.Serialization {
 	/// well enough.
 	/// </summary>
 	public class TinyJsonSerializer {
-		System.Text.StringBuilder output = new System.Text.StringBuilder();
+        System.Text.StringBuilder output = new System.Text.StringBuilder();
 
-		Dictionary<Type, Action<System.Object> > serializers = new Dictionary<Type, Action<object> >();
+        Dictionary<Type, Action<System.Object> > serializers = new Dictionary<Type, Action<object> >();
 
-		static readonly System.Globalization.CultureInfo invariantCulture = System.Globalization.CultureInfo.InvariantCulture;
+        static readonly System.Globalization.CultureInfo invariantCulture = System.Globalization.CultureInfo.InvariantCulture;
 
-		public static void Serialize (System.Object obj, System.Text.StringBuilder output) {
-			new TinyJsonSerializer() {
-				output = output
-			}.Serialize(obj);
-		}
-
-		TinyJsonSerializer () {
+        TinyJsonSerializer () {
 			serializers[typeof(float)] = v => output.Append(((float)v).ToString("R", invariantCulture));
 			serializers[typeof(bool)] = v => output.Append((bool)v ? "true" : "false");
 			serializers[typeof(Version)] = serializers[typeof(uint)] = serializers[typeof(int)] = v => output.Append(v.ToString());
@@ -42,7 +34,13 @@ namespace Pathfinding.Serialization {
 			serializers[typeof(LayerMask)] = v => output.AppendFormat("{{ \"value\": {0} }}", ((int)(LayerMask)v).ToString());
 		}
 
-		void Serialize (System.Object obj) {
+        public static void Serialize (System.Object obj, System.Text.StringBuilder output) {
+			new TinyJsonSerializer() {
+				output = output
+			}.Serialize(obj);
+		}
+
+        void Serialize (System.Object obj) {
 			if (obj == null) {
 				output.Append("null");
 				return;
@@ -111,11 +109,11 @@ namespace Pathfinding.Serialization {
 			}
 		}
 
-		void QuotedField (string name, string contents) {
+        void QuotedField (string name, string contents) {
 			output.AppendFormat("\"{0}\": \"{1}\"", name, contents);
 		}
 
-		void SerializeUnityObject (UnityEngine.Object obj) {
+        void SerializeUnityObject (UnityEngine.Object obj) {
 			// Note that a unityengine can be destroyed as well
 			if (obj == null) {
 				Serialize(null);
@@ -159,7 +157,7 @@ namespace Pathfinding.Serialization {
 			}
 			output.Append("}");
 		}
-	}
+    }
 
 	/// <summary>
 	/// A very tiny json deserializer.
@@ -167,12 +165,14 @@ namespace Pathfinding.Serialization {
 	/// well enough. Not much validation of the input is done.
 	/// </summary>
 	public class TinyJsonDeserializer {
-		System.IO.TextReader reader;
-		GameObject contextRoot;
+        System.IO.TextReader reader;
+        GameObject contextRoot;
 
-		static readonly System.Globalization.NumberFormatInfo numberFormat = System.Globalization.NumberFormatInfo.InvariantInfo;
+        static readonly System.Globalization.NumberFormatInfo numberFormat = System.Globalization.NumberFormatInfo.InvariantInfo;
 
-		/// <summary>
+        System.Text.StringBuilder builder = new System.Text.StringBuilder();
+
+        /// <summary>
 		/// Deserializes an object of the specified type.
 		/// Will load all fields into the populate object if it is set (only works for classes).
 		/// </summary>
@@ -183,7 +183,7 @@ namespace Pathfinding.Serialization {
 			}.Deserialize(type, populate);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Deserializes an object of type tp.
 		/// Will load all fields into the populate object if it is set (only works for classes).
 		/// </summary>
@@ -284,14 +284,14 @@ namespace Pathfinding.Serialization {
 			}
 		}
 
-		UnityEngine.Object DeserializeUnityObject () {
+        UnityEngine.Object DeserializeUnityObject () {
 			Eat("{");
 			var result = DeserializeUnityObjectInner();
 			Eat("}");
 			return result;
 		}
 
-		UnityEngine.Object DeserializeUnityObjectInner () {
+        UnityEngine.Object DeserializeUnityObjectInner () {
 			// Ignore InstanceID field (compatibility only)
 			var fieldName = EatField();
 
@@ -371,12 +371,12 @@ namespace Pathfinding.Serialization {
 			return null;
 		}
 
-		void EatWhitespace () {
+        void EatWhitespace () {
 			while (char.IsWhiteSpace((char)reader.Peek()))
 				reader.Read();
 		}
 
-		void Eat (string s) {
+        void Eat (string s) {
 			EatWhitespace();
 			for (int i = 0; i < s.Length; i++) {
 				var c = (char)reader.Read();
@@ -386,8 +386,7 @@ namespace Pathfinding.Serialization {
 			}
 		}
 
-		System.Text.StringBuilder builder = new System.Text.StringBuilder();
-		string EatUntil (string c, bool inString) {
+        string EatUntil (string c, bool inString) {
 			builder.Length = 0;
 			bool escape = false;
 			while (true) {
@@ -414,7 +413,7 @@ namespace Pathfinding.Serialization {
 			return builder.ToString();
 		}
 
-		bool TryEat (char c) {
+        bool TryEat (char c) {
 			EatWhitespace();
 			if ((char)reader.Peek() == c) {
 				reader.Read();
@@ -423,7 +422,7 @@ namespace Pathfinding.Serialization {
 			return false;
 		}
 
-		string EatField () {
+        string EatField () {
 			var result = EatUntil("\",}]", TryEat('"'));
 
 			TryEat('\"');
@@ -432,7 +431,7 @@ namespace Pathfinding.Serialization {
 			return result;
 		}
 
-		void SkipFieldData () {
+        void SkipFieldData () {
 			var indent = 0;
 
 			while (true) {
@@ -462,5 +461,5 @@ namespace Pathfinding.Serialization {
 				reader.Read();
 			}
 		}
-	}
+    }
 }
