@@ -300,7 +300,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.551
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -338,6 +338,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet (7)
       objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: maxSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: slowWhenNotFacingTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 894113533}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
 --- !u!1001 &209676140
@@ -357,7 +369,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.551
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -395,6 +407,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: maxSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: slowWhenNotFacingTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 894113533}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
 --- !u!1 &222368600
@@ -541,7 +565,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.551
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -579,6 +603,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet (10)
       objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: maxSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: slowWhenNotFacingTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 894113533}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
 --- !u!114 &446506104 stripped
@@ -661,7 +697,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 493484900}
-  m_LocalRotation: {x: 0.05622481, y: -0.0000000021473956, z: 1.2092821e-10, w: 0.99841815}
+  m_LocalRotation: {x: 0.053944193, y: 0.2814757, z: -0.01585099, w: 0.9579198}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -739,7 +775,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 499723505}
-  m_LocalRotation: {x: 0.074376225, y: -0.00000000428968, z: 3.1993636e-10, w: 0.9972303}
+  m_LocalRotation: {x: 0.071359344, y: 0.2811408, z: -0.020968268, w: 0.9567801}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -776,7 +812,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.551
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -814,6 +850,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet (11)
       objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: maxSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: slowWhenNotFacingTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 894113533}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
 --- !u!114 &641311945 stripped
@@ -836,13 +884,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 689758565}
+  - component: {fileID: 689758566}
   m_Layer: 0
   m_Name: Pathfinder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &689758565
 Transform:
   m_ObjectHideFlags: 0
@@ -858,6 +907,18 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 23
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &689758566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 689758564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66f008a8a08a96f4f86daaf833b6d8b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -985,6 +1046,7 @@ GameObject:
   - component: {fileID: 727695934}
   - component: {fileID: 727695933}
   - component: {fileID: 727695932}
+  - component: {fileID: 727695936}
   m_Layer: 0
   m_Name: Ground
   m_TagString: Untagged
@@ -1071,6 +1133,61 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &727695936
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 727695931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78396926cbbfc4ac3b48fc5fc34a87d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 1
+  data:
+    dataString: UEsDBBQAAAgIAABYIez/Xu4LVQIAAB8FAAALACQAZ3JhcGgwLmpzb24KACAAAAAAAAEAGAAAgD7V3rGdAQCAPtXesZ0BAIA+1d6xnQGFVMtymzAU/RWP1k0GnDptumuJ43ThxBOnkw0bIV2MxkJiJOFHMv73XgkZqLMoG+Cc+zj3IX0QoWwDzGmzMIIvNQfyY0L8N/kyGchHONCNVmvxDmebN8Fd5Y1osHmhTmjEU+9mdQ3OCPZTbaQ3ThBslSi1qed8A5m2ziJcUmkBKaOd91YIfUzIIToc4/vdvycn/GKgHJj/WbWKSVo3wL3awfgmuU78k95FrwEIbgrrih7J9Y3PpqUUNsoi7tiEsjPa2BaLQgMuKJYZBCXXMwQqEJvK9b99gOeytOCiUEOP98Jgx7rI5Jfu2lhTu+3U7qhsoS+nC7r8xF6lgS6Nrh/PedPEZ3CVYNsXemTUulGXx/D9ID0NLdtTuaWFhLcK1JNeGN0qjqQzrXdtLUzvR6H6yrIK2Haw67RegG3zeWLpMLFTqP2QSVEXkcHftdSh33feAwzO5jfKDVtiYxxEvYQ/Fl7pZrxOkXgQxjqkYlDltRW6Nd6UzEPHfCmty7RREOCouAFFpTuuMIy7HN8FN0p7wTxQf3Bi8sidz8OFS4AH+yS5oFZ634/KVnq/BFs9t04KBYNoTzxhnzKtVLdd456c3datKSkbuW1awf9dLFIm/JYldyl8ZUXJktkVZ9+KYjpLOJ9Nb6fFdxI2Tyisk8pVJzS2B6emhuAKt+x8n0wWhjZh07mh+4V4r/Wo5UKVes0MgHruIvTCwWASPJd8zgU2aA3OCRXmTT5yIjXbAs/7QHmodH5whuZDlJw0YqedR3KShVskJx7uF3llYCdg75Ofg53I6S9QSwMEFAAACAgAAFgh7Know81tAAAAeAAAAAkAJABtZXRhLmpzb24KACAAAAAAAAEAGAAAgD7V3rGdAQCAPtXesZ0BAIA+1d6xnQGrVipLLSrOzM9TslIw0TPSMzTXUVBKL0osyCgGihiCOKWZKSB2tFKaQYpZsoGlYapJclJasoGpbkqyeVKSkalBSoqpkZlRkoVSLFB9SWVBql9ibipET0BiSUZaZl5KZl66nntRZoo7yGil2FoAUEsBAi0AFAAACAgAAFgh7P9e7gtVAgAAHwUAAAsAJAAAAAAAAAAAAAAAAAAAAGdyYXBoMC5qc29uCgAgAAAAAAABABgAAIA+1d6xnQEAgD7V3rGdAQCAPtXesZ0BUEsBAi0AFAAACAgAAFgh7Know81tAAAAeAAAAAkAJAAAAAAAAAAAAAAAogIAAG1ldGEuanNvbgoAIAAAAAAAAQAYAACAPtXesZ0BAIA+1d6xnQEAgD7V3rGdAVBLBQYAAAAAAgACALgAAABaAwAAAAA=
+    upgradeData: 
+    file_cachedStartup: {fileID: 0}
+    data_cachedStartup: 
+    cacheStartup: 0
+  showNavGraphs: 1
+  showUnwalkableNodes: 1
+  debugMode: 0
+  debugFloor: 0
+  debugRoof: 1
+  manualDebugFloorRoof: 0
+  showSearchTree: 0
+  unwalkableNodeDebugSize: 0.3
+  logPathResults: 1
+  maxNearestNodeDistance: 100
+  scanOnStartup: 1
+  fullGetNearestSearch: 0
+  prioritizeGraphs: 0
+  prioritizeGraphsLimit: 1
+  colorSettings:
+    _SolidColor: {r: 0.11764706, g: 0.4, b: 0.7882353, a: 0.9}
+    _UnwalkableNode: {r: 1, g: 0, b: 0, a: 0.5}
+    _BoundsHandles: {r: 0.29, g: 0.454, b: 0.741, a: 0.9}
+    _ConnectionLowLerp: {r: 0, g: 1, b: 0, a: 0.5}
+    _ConnectionHighLerp: {r: 1, g: 0, b: 0, a: 0.5}
+    _MeshEdgeColor: {r: 0, g: 0, b: 0, a: 0.5}
+    _AreaColors:
+    - {r: 0, g: 0, b: 0, a: 0}
+  tagNames: []
+  heuristic: 2
+  heuristicScale: 1
+  threadCount: 1
+  maxFrameTime: 10
+  batchGraphUpdates: 0
+  graphUpdateBatchingInterval: 0.2
+  euclideanEmbedding:
+    mode: 0
+    seed: 0
+    pivotPointRoot: {fileID: 0}
+    spreadOutCount: 1
+  showGraphs: 1
 --- !u!4 &811894339 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1840878593709043124, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
@@ -1093,7 +1210,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.551
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1131,6 +1248,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: maxSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: slowWhenNotFacingTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 894113533}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
 --- !u!114 &830005236 stripped
@@ -1274,7 +1403,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 838845401}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.5, z: -10}
+  m_LocalPosition: {x: 0.6902766, y: 2.5, z: -8.410404}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1395,8 +1524,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0.056224816, y: -0.000000002147396, z: 1.2092824e-10, w: 0.99841815}
-  m_LocalPosition: {x: 0, y: 2.5, z: -10}
+  m_LocalRotation: {x: 0.05394421, y: 0.28147578, z: -0.015850997, w: 0.9579198}
+  m_LocalPosition: {x: 0.6902766, y: 2.5, z: -8.410404}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1596,7 +1725,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.551
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1634,6 +1763,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet (9)
       objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: maxSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: slowWhenNotFacingTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 894113533}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
 --- !u!1001 &1171869148
@@ -2149,7 +2290,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1491672615}
-  m_LocalRotation: {x: 0.038102806, y: -0.0000000021492357, z: 8.1951425e-11, w: 0.99927384}
+  m_LocalRotation: {x: 0.036557253, y: 0.28171688, z: -0.010742001, w: 0.9587408}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -2197,7 +2338,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.551
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2235,6 +2376,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: maxSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: slowWhenNotFacingTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 894113533}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
 --- !u!1001 &1732998681
@@ -2254,7 +2407,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.551
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2292,6 +2445,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet (8)
       objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: maxSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: slowWhenNotFacingTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 894113533}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
 --- !u!1001 &1877371111
@@ -2364,11 +2529,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2
+      value: -5.25
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.551
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2406,6 +2571,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: maxSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: slowWhenNotFacingTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 894113533}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
 --- !u!1001 &2013394967
@@ -2425,7 +2602,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.551
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2463,6 +2640,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet (6)
       objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: maxSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: slowWhenNotFacingTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 894113533}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
 --- !u!1001 &2076830018
@@ -2482,7 +2671,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.551
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2520,6 +2709,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet (5)
       objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: maxSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: slowWhenNotFacingTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 894113533}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
 --- !u!114 &2136851394 stripped
@@ -2601,6 +2802,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 116321854839810243, guid: c899aca7b2e0b0240abd819f91d9e319, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 249527430187000411, guid: c899aca7b2e0b0240abd819f91d9e319, type: 3}
       propertyPath: m_Name
       value: MushroomSeed
@@ -2712,7 +2917,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1840878593656913162, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 6.1
       objectReference: {fileID: 0}
     - target: {fileID: 1840878593656913162, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2750,6 +2955,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1840878593656913163, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
     - target: {fileID: 1840878593656913166, guid: 1944625eb66cf9245b3608301b20410e, type: 3}
       propertyPath: m_Name
       value: Player
@@ -2769,15 +2978,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.551
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -1
+      value: -2.5
       objectReference: {fileID: 0}
     - target: {fileID: 4034463867328412113, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2811,5 +3020,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterDroplet
       objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: maxSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699318, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: slowWhenNotFacingTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4034463868936699320, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
+      propertyPath: target
+      value: 
+      objectReference: {fileID: 894113533}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a526e28791f23447aa511e80e6edc0a, type: 3}
