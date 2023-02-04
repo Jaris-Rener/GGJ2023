@@ -139,7 +139,7 @@ namespace LemonBerry
                 if (interactable is Grabbable { IsHeld: true })
                     return;
 
-                for (int i = 0; i < Mathf.Min(growable.RemainingGrowCost, _followers.Count); i++)
+                for (int i = 0; i < Mathf.Min(growable.RemainingGrowCost - growable.PendingWater, _followers.Count); i++)
                 {
                     _followers[i].CommandTo(growable);
                 }

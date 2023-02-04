@@ -13,6 +13,7 @@ namespace LemonBerry
         public int GrowCost { get; }
         bool IsGrown { get; set; }
         int RemainingGrowCost { get; }
+        int PendingWater { get; set; }
         void Grow();
         void UnGrow();
         void AddWater(WaterDroplet waterDroplet);
@@ -51,6 +52,7 @@ namespace LemonBerry
         }
 
         public int RemainingGrowCost => GrowCost - _droplets.Count;
+        public int PendingWater { get; set; }
 
         private void Start()
         {

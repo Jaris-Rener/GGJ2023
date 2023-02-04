@@ -54,7 +54,7 @@ namespace LemonBerry
             if (growable == _target)
             {
                 StopCoroutine(_followRoutine);
-                OnArrivedAtSeed();
+                OnArrivedAtSeed(_target);
             }
         }
 
@@ -77,10 +77,12 @@ namespace LemonBerry
 
         public void CommandTo(IGrowable growable)
         {
+            growable.PendingWater++;
             _target = growable;
+            OnArrivedAtSeed(_target);
             StopCoroutine(_followRoutine);
             _followTransform.position = growable.Position;
-            _followRoutine = StartCoroutine(CheckForSeed());
+            // _followRoutine = StartCoroutine(CheckForSeed());
         }
 
         public IEnumerator CheckForSeed()
@@ -91,11 +93,12 @@ namespace LemonBerry
                 yield return null;
             }
 
-            OnArrivedAtSeed();
+            // OnArrivedAtSeed();
         }
 
-        private void OnArrivedAtSeed()
+        private void OnArrivedAtSeed(IGrowable growable)
         {
+            growable.PendingWater--;
             gameObject.SetActive(false);
             OnEnteredSeed?.Invoke(this);
             _target.AddWater(this);
