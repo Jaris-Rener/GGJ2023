@@ -3413,7 +3413,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 1ef70c96e288da547bac7eb708e74aed, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 5a9dd65f432a8fb4cbdd8e83b6dafa71, type: 2}
+      objectReference: {fileID: 2100000, guid: 9f68fd5d0a367fb4b8657c8361b803a8, type: 2}
     - target: {fileID: 919132149155446097, guid: 1ef70c96e288da547bac7eb708e74aed, type: 3}
       propertyPath: m_Name
       value: DirtWall (1)
@@ -3760,7 +3760,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 1ef70c96e288da547bac7eb708e74aed, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 5a9dd65f432a8fb4cbdd8e83b6dafa71, type: 2}
+      objectReference: {fileID: 2100000, guid: 9f68fd5d0a367fb4b8657c8361b803a8, type: 2}
     - target: {fileID: 919132149155446097, guid: 1ef70c96e288da547bac7eb708e74aed, type: 3}
       propertyPath: m_Name
       value: DirtWall (3)
