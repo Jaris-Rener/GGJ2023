@@ -288,7 +288,6 @@ GameObject:
   - component: {fileID: 5230641068242591778}
   - component: {fileID: 8233483026535429014}
   - component: {fileID: 7742036388734069295}
-  - component: {fileID: 826524316}
   m_Layer: 6
   m_Name: SunBeam
   m_TagString: Untagged
@@ -361,17 +360,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &826524316
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8882716297675390873}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 4
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 2534964839176971238, guid: 3b6ac940dfd240d42967b4f429afb40a, type: 3}
