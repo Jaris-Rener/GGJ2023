@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028305, g: 0.22571313, b: 0.3069213, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -729,6 +729,11 @@ PrefabInstance:
     - target: {fileID: 3170679164122571074, guid: 8686e82d8063d4f2c85635b7903624e6, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_StringArgument
       value: Level01A
+      objectReference: {fileID: 0}
+    - target: {fileID: 4822080040193894591, guid: 8686e82d8063d4f2c85635b7903624e6, type: 3}
+      propertyPath: m_text
+      value: Created by Ed Whitehead, Jaris Rener, Nat Bott, Chrispy, and Abby Phillips
+        for Global Game Jam Melbourne
       objectReference: {fileID: 0}
     - target: {fileID: 7782919134000367165, guid: 8686e82d8063d4f2c85635b7903624e6, type: 3}
       propertyPath: m_AnchoredPosition.y
