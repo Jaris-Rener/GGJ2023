@@ -10,13 +10,13 @@ namespace LemonBerry
 
         public void PlayGame(string _nextScene)
         {
-            StartCoroutine(StartGame());
+            HUD.Instance.StartCoroutine(StartGame());
 
             IEnumerator StartGame()
             {
                 yield return HUD.Instance.TransitionIn();
-                yield return new WaitForSeconds(1.5f);
                 GameManager.Instance.StartLevel(_nextScene);
+                yield return new WaitForSeconds(1.5f);
                 yield return HUD.Instance.TransitionOut();
             }
         }

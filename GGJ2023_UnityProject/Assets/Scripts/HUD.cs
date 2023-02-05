@@ -9,6 +9,7 @@ namespace LemonBerry
 
     public class HUD : Singleton<HUD>
     {
+        public override bool DontDestroyOnLoad => true;
         [SerializeField] private Image _screenWipe;
         [SerializeField] private TextMeshProUGUI _promptText;
         [SerializeField] private TextMeshProUGUI _waterCountText;
@@ -54,11 +55,13 @@ namespace LemonBerry
 
         public IEnumerator TransitionIn()
         {
+            print("transition in");
             yield return _screenWipe.transform.DOScale(0.0f, 1.0f).WaitForCompletion();
         }
 
         public IEnumerator TransitionOut()
         {
+            print("transition out");
             yield return _screenWipe.transform.DOScale(3.0f, 1.0f).WaitForCompletion();
         }
     }
