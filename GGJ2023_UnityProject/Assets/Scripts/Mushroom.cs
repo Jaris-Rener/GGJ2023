@@ -14,11 +14,13 @@ namespace LemonBerry
             if (rb == null)
                 return;
 
-            _audioSource.PlayOneShot(_bounceSound);
             var normal = collision.contacts[0].normal;
             var dot = Vector3.Dot(Vector3.up, normal);
             if (dot < -0.5f)
                 rb.AddForce(Vector3.up*_bounceForce);
+
+            if (_audioSource != null)
+                _audioSource.PlayOneShot(_bounceSound);
         }
     }
 }
