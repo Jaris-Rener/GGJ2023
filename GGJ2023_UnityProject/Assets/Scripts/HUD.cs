@@ -4,10 +4,12 @@ namespace LemonBerry
     using DG.Tweening;
     using TMPro;
     using UnityEngine;
+    using UnityEngine.SceneManagement;
     using UnityEngine.UI;
 
     public class HUD : Singleton<HUD>
     {
+        public override bool DontDestroyOnLoad => true;
         [SerializeField] private Image _screenWipe;
         [SerializeField] private TextMeshProUGUI _promptText;
         [SerializeField] private TextMeshProUGUI _waterCountText;
@@ -15,12 +17,10 @@ namespace LemonBerry
         private void Start()
         {
             GameManager.Instance.OnLevelComplete += OnLevelComplete;
-            PlayerController.Instance.OnHoveredInteractable += UpdatePrompt;
         }
 
         private void OnDestroy()
         {
-            PlayerController.Instance.OnHoveredInteractable -= UpdatePrompt;
             GameManager.Instance.OnLevelComplete -= OnLevelComplete;
         }
 
@@ -30,29 +30,39 @@ namespace LemonBerry
 
             IEnumerator LevelComplete()
             {
-                yield return _screenWipe.transform.DOScale(0.0f, 1.0f).WaitForCompletion();
-                GameManager.Instance.StartLevel();
+                yield return TransitionIn();
+                SceneManager.LoadScene("StartMenu");
                 yield return new WaitForSeconds(1.5f);
-                yield return _screenWipe.transform.DOScale(3.0f, 1.0f).WaitForCompletion();
+                yield return TransitionOut();
             }
         }
 
         private void Update()
         {
+            if (PlayerController.Instance == null)
+                return;
+
             _waterCountText.text = PlayerController.Instance.Droplets.ToString();
-            if (_promptInteractable == null)
+            var interactable = PlayerController.Instance.HoveredInteractable;
+            if (interactable == null)
             {
                 _promptText.text = string.Empty;
                 return;
             }
 
-            _promptText.text = _promptInteractable.Prompt;
+            _promptText.text = interactable.Prompt;
         }
 
-        private Interactable _promptInteractable;
-        private void UpdatePrompt(Interactable obj)
+        public IEnumerator TransitionIn()
         {
-            _promptInteractable = obj;
+            print("transition in");
+            yield return _screenWipe.transform.DOScale(0.0f, 1.0f).WaitForCompletion();
+        }
+
+        public IEnumerator TransitionOut()
+        {
+            print("transition out");
+            yield return _screenWipe.transform.DOScale(3.0f, 1.0f).WaitForCompletion();
         }
     }
 

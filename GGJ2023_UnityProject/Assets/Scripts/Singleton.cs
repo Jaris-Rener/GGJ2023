@@ -5,6 +5,7 @@ namespace LemonBerry
     public class Singleton<T> : MonoBehaviour
         where T : MonoBehaviour
     {
+        public virtual bool DontDestroyOnLoad => false;
         public static T Instance { get; private set; }
 
         public virtual void Awake()
@@ -12,7 +13,10 @@ namespace LemonBerry
             if (Instance == null)
                 Instance = this as T;
             else
-                Destroy(this);
+                Destroy(gameObject);
+
+            if (DontDestroyOnLoad)
+                DontDestroyOnLoad(gameObject);
         }
     }
 }
