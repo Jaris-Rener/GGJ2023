@@ -12,10 +12,14 @@ namespace LemonBerry
 
         private void Update()
         {
-            var hits = Physics.SphereCastAll(_sunOrigin.position, _radius, _sunOrigin.forward, _distance);
-            if (hits.Any())
+            var raycastCount = 8;
+            for (int i = 0; i < raycastCount; i++)
             {
-                foreach (var hit in hits)
+                const float radius = 0.35f;
+                var origin = _sunOrigin.TransformPoint(new Vector3(Mathf.Cos(i), Mathf.Sin(i), 0)*radius);
+                var ray = new Ray(origin, _sunOrigin.forward);
+                Debug.DrawRay(origin, _sunOrigin.forward, Color.red);
+                if (Physics.Raycast(ray, out var hit, maxDistance: _distance))
                 {
                     var sunReceiver = hit.transform.GetComponent<ISunReceiver>();
                     if (sunReceiver == null)
