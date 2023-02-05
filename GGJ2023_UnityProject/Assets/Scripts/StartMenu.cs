@@ -6,11 +6,15 @@ namespace LemonBerry
 
     public class StartMenu : MonoBehaviour 
     {
+        public void Start() {
+            Cursor.lockState = CursorLockMode.Confined;
+        }
         //[SerializeField] private string _nextScene = "";
 
         public void PlayGame(string _nextScene)
         {
             HUD.Instance.StartCoroutine(StartGame());
+            Cursor.lockState = CursorLockMode.Locked;
 
             IEnumerator StartGame()
             {
