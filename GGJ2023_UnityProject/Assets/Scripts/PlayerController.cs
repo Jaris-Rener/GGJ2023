@@ -50,9 +50,11 @@ namespace LemonBerry
         private Rigidbody _rigidbody;
         private Vector3 _startPos;
         public int Droplets => _followers.Count;
+        public bool IsGrounded => _grounded;
 
         private void Start()
         {
+            GameManager.Instance.OnLevelStart += OnLevelStart;
             _startPos = transform.position;
             _rigidbody = GetComponent<Rigidbody>();
             _jumpInput.action.performed += PrepareJump;
@@ -62,8 +64,15 @@ namespace LemonBerry
             _removeWaterInput.action.performed += RemoveWater;
         }
 
+        private void OnLevelStart()
+        {
+            OnRespawn();
+            Instance.enabled = true;
+        }
+
         private void OnDestroy()
         {
+            GameManager.Instance.OnLevelStart -= OnLevelStart;
             _jumpInput.action.performed -= PrepareJump;
             _jumpInput.action.canceled -= Jump;
             _interactInput.action.performed -= Interact;
@@ -106,14 +115,6 @@ namespace LemonBerry
 
             _moveDir = forward*_moveInputVec.y + right*_moveInputVec.x;
             _rigidbody.position += _moveDir*_moveSpeed*Time.deltaTime;
-        }
-
-        private void OnGUI()
-        {
-            foreach (var seed in FindObjectsOfType<Seed>())
-            {
-                GUILayout.Label($"{seed.name}: {seed.GrowCost - seed.RemainingGrowCost}/{seed.GrowCost}");
-            }
         }
 
         private void RemoveFollower(WaterDroplet obj)
