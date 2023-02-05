@@ -50,6 +50,7 @@ namespace LemonBerry
         private Rigidbody _rigidbody;
         private Vector3 _startPos;
         public int Droplets => _followers.Count;
+        public bool IsGrounded => _grounded;
 
         private void Start()
         {
