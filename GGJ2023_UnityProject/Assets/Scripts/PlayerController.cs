@@ -51,6 +51,7 @@ namespace LemonBerry
         private Vector3 _startPos;
         public int Droplets => _followers.Count;
         public bool IsGrounded => _grounded;
+        public Interactable HoveredInteractable => _hoveredInteractables.LastOrDefault();
 
         private void Start()
         {

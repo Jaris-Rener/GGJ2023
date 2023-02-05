@@ -1,6 +1,7 @@
 ﻿namespace LemonBerry
 {
     using System;
+    using UnityEngine.SceneManagement;
 
     public class GameManager : Singleton<GameManager>
     {
@@ -12,8 +13,9 @@
             OnLevelComplete?.Invoke();
         }
 
-        public void StartLevel()
+        public void StartLevel(string sceneName)
         {
+            SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
             OnLevelStart?.Invoke();
         }
     }
