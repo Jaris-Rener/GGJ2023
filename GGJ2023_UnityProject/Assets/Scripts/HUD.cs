@@ -19,14 +19,9 @@ namespace LemonBerry
             GameManager.Instance.OnLevelComplete += OnLevelComplete;
         }
 
-        private void OnDestroy()
-        {
-            GameManager.Instance.OnLevelComplete -= OnLevelComplete;
-        }
-
         private void OnLevelComplete()
         {
-            StartCoroutine(LevelComplete());
+            GameManager.Instance.StartCoroutine(LevelComplete());
 
             IEnumerator LevelComplete()
             {

@@ -5,6 +5,8 @@
 
     public class GameManager : Singleton<GameManager>
     {
+        public override bool DontDestroyOnLoad => true;
+
         public event Action OnLevelComplete;
         public event Action OnLevelStart;
 
