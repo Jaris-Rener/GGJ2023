@@ -1,12 +1,15 @@
 namespace LemonBerry 
 {
     using UnityEngine;
+    using UnityEngine.SceneManagement;
 
     public class StartMenu : MonoBehaviour 
     {
-        public void PlayGame()
-        {
+        //[SerializeField] private string _nextScene = "";
 
+        public void PlayGame(string _nextScene)
+        {
+            SceneManager.LoadScene(_nextScene, LoadSceneMode.Single);
         }
 
         public void QuitGame()
